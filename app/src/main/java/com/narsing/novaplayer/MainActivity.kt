@@ -39,6 +39,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.TrackSelectionDialogBuilder
 import kotlin.math.abs
 import org.json.JSONArray
 import org.json.JSONObject
@@ -232,13 +233,27 @@ private fun NovaHome() {
                             factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
                             update = { view -> view.player = player; view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT } }
                         )
-                        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                             TextButton(onClick = { player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L)) }) { Text("−10 sec") }
                             TextButton(onClick = { player.seekTo(player.currentPosition + 10_000L) }) { Text("+10 sec") }
-                            TextButton(onClick = { val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }; playbackSpeed = nextSpeed; player.setPlaybackSpeed(nextSpeed); status = "Playback speed: " + nextSpeed + "×" }) { Text(playbackSpeed.toString() + "×") }
-                            TextButton(onClick = { aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }; status = "Screen mode: " + aspectMode }) { Text(aspectMode) }
+                            TextButton(onClick = {
+                                val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }
+                                playbackSpeed = nextSpeed
+                                player.setPlaybackSpeed(nextSpeed)
+                                status = "Playback speed: " + nextSpeed + "×"
+                            }) { Text(playbackSpeed.toString() + "×") }
+                        }
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                            TextButton(onClick = {
+                                aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
+                                status = "Screen mode: " + aspectMode
+                            }) { Text(aspectMode) }
+                            TextButton(onClick = {
+                                try { TrackSelectionDialogBuilder(context, "Audio tracks", player, C.TRACK_TYPE_AUDIO).build().show() }
+                                catch (_: Exception) { status = "Audio track selection is unavailable for this media." }
+                            }) { Icon(Icons.Default.Audiotrack, null, tint = Lavender); Text("Audio") }
                             TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
-                                Icon(Icons.Default.Subtitles, null, tint = Lavender); Spacer(Modifier.width(4.dp)); Text("Subtitles")
+                                Icon(Icons.Default.Subtitles, null, tint = Lavender); Text("Subtitles")
                             }
                             TextButton(onClick = {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
