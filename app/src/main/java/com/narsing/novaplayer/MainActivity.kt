@@ -11,6 +11,7 @@ import android.content.ContentUris
 import android.os.Bundle
 import android.app.PictureInPictureParams
 import android.content.Context
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.app.Activity
 import android.os.Build
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -174,6 +176,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun NovaHome(player: Player) {
     val context = LocalContext.current
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedTitle by remember { mutableStateOf("") }
@@ -364,10 +367,12 @@ private fun NovaHome(player: Player) {
         prefs.edit().putString("player_orientation", orientationMode).apply()
     }
 
-    LaunchedEffect(fullScreen) {
+    val immersivePlayback = fullScreen || (selectedUri != null && isLandscape)
+
+    LaunchedEffect(immersivePlayback) {
         val activity = context.findActivity() ?: return@LaunchedEffect
         val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
-        if (fullScreen) {
+        if (immersivePlayback) {
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         } else {
@@ -490,7 +495,7 @@ private fun NovaHome(player: Player) {
 
     Surface(Modifier.fillMaxSize(), color = Color(0xFF0A0E1A)) {
         Column(Modifier.fillMaxSize().background(Color(0xFF0A0E1A))) {
-            if (!fullScreen) Row(
+            if (!fullScreen && !(selectedUri != null && isLandscape)) Row(
                 Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1024,9 +1029,9 @@ private fun NovaHome(player: Player) {
 
             if (selectedUri != null) {
                 Card(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = if (fullScreen || isLandscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f),
                     colors = CardDefaults.cardColors(containerColor = Color.Black),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = if (fullScreen || isLandscape) RoundedCornerShape(0.dp) else RoundedCornerShape(12.dp)
                 ) {
                     Column(Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxWidth().weight(1f)) {
@@ -1290,11 +1295,16 @@ private fun NovaHome(player: Player) {
                                     tint = if (isQueued) Mint else Color.White
                                 )
                             }
-                            if (fullScreen) {
+                            if (fullScreen || isLandscape) {
                                 IconButton(
                                     onClick = {
-                                        fullScreen = false
-                                        status = "Immersive full-screen disabled"
+                                        if (fullScreen) {
+                                            fullScreen = false
+                                            status = "Immersive full-screen disabled"
+                                        } else {
+                                            orientationMode = "Portrait"
+                                            status = "Returned to portrait playback"
+                                        }
                                     },
                                     modifier = Modifier.background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
                                 ) {
@@ -1303,7 +1313,7 @@ private fun NovaHome(player: Player) {
                             }
                         }
                         }
-                        if (!fullScreen && !controlsLocked) {
+                        if (!fullScreen && !isLandscape && !controlsLocked) {
                         Row(
                             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1485,7 +1495,7 @@ private fun NovaHome(player: Player) {
                         }
                     }
                 }
-                if (!fullScreen && !controlsLocked) {
+                if (!fullScreen && !isLandscape && !controlsLocked) {
                     Text(
                         if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
                         color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
