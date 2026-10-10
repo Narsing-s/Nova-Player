@@ -223,7 +223,7 @@ private fun NovaHome() {
         val updated = if (queueItems.isEmpty() && player.mediaItemCount > 0) {
             val current = player.currentMediaItem
             val currentUri = current?.localConfiguration?.uri
-            val currentTitle = current?.mediaMetadata?.title?.toString().orEmpty()
+            val currentTitle = selectedTitle.ifBlank { current?.mediaMetadata?.title?.toString().orEmpty() }
             if (currentUri != null && currentUri.toString() != entry.uri) {
                 listOf(HistoryEntry(currentUri.toString(), currentTitle.ifBlank { currentUri.lastPathSegment ?: "Now playing" })) + entry
             } else listOf(entry)
