@@ -84,6 +84,31 @@ private const val KEY_FAVORITES = "favorite_videos"
 private const val KEY_PLAYLISTS = "saved_playlists"
 private const val KEY_QUEUE = "play_queue"
 
+private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): Uri? {
+    if (offsetMs == 0L) return source
+    return try {
+        val original = context.contentResolver.openInputStream(source)?.bufferedReader()?.use { it.readText() } ?: return null
+        val timestamp = Regex("""\d{2}:\d{2}:\d{2}[,.]\d{3}""")
+        fun shift(value: String): String {
+            val parts = value.replace(',', '.').split(':')
+            val millis = ((parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].substringBefore('.').toLong()) * 1000) + parts[2].substringAfter('.').toLong()
+            val shifted = (millis + offsetMs).coerceAtLeast(0L)
+            val hours = shifted / 3600000
+            val minutes = (shifted % 3600000) / 60000
+            val seconds = (shifted % 60000) / 1000
+            val fraction = shifted % 1000
+            return "%02d:%02d:%02d.%03d".format(hours, minutes, seconds, fraction)
+        }
+        val adjusted = timestamp.replace(original) { match -> shift(match.value) }
+        val suffix = if (source.lastPathSegment?.endsWith(".vtt", true) == true) ".vtt" else ".srt"
+        val output = java.io.File(context.cacheDir, "subtitle-${source.lastPathSegment.hashCode()}-${offsetMs}$suffix")
+        output.writeText(adjusted)
+        Uri.fromFile(output)
+    } catch (_: Exception) {
+        null
+    }
+}
+
 class MainActivity : ComponentActivity() {
     private val playbackPlayer = mutableStateOf<Player?>(null)
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -154,10 +179,13 @@ private fun NovaHome(player: Player) {
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
     val uiScope = rememberCoroutineScope()
     var showSubtitleSettings by remember { mutableStateOf(false) }
+    var showSubtitleSyncDialog by remember { mutableStateOf(false) }
+    var subtitleDelayMs by remember { mutableIntStateOf(prefs.getInt("subtitle_delay_ms", 0)) }
+    var loadedSubtitleSource by remember { mutableStateOf<Uri?>(null) }
     var showGestureSettings by remember { mutableStateOf(false) }
     var gestureSeekEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_seek_enabled", true)) }
     var gestureBrightnessEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_brightness_enabled", true)) }
-    var gestureVolumeEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_volume_enabled", true))
+    var gestureVolumeEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_volume_enabled", true)) }
     var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
     var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
     var aspectMode by remember { mutableStateOf("Fit") }
@@ -180,6 +208,7 @@ private fun NovaHome(player: Player) {
             .putBoolean("gesture_seek_enabled", gestureSeekEnabled)
             .putBoolean("gesture_brightness_enabled", gestureBrightnessEnabled)
             .putBoolean("gesture_volume_enabled", gestureVolumeEnabled)
+            .putInt("subtitle_delay_ms", subtitleDelayMs)
             .apply()
         player.shuffleModeEnabled = shuffleEnabled
         player.repeatMode = repeatMode
@@ -328,8 +357,14 @@ private fun NovaHome(player: Player) {
             try { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
             val name = uri.lastPathSegment?.substringAfterLast('/') ?: "subtitle"
             if (name.endsWith(".srt", true) || name.endsWith(".vtt", true)) {
-                playMedia(selectedUri!!, selectedTitle, uri)
-                status = "Subtitle loaded: $name"
+                loadedSubtitleSource = uri
+                val adjustedSubtitle = shiftedSubtitleUri(context, uri, subtitleDelayMs.toLong())
+                if (adjustedSubtitle == null) {
+                    status = "Could not read the subtitle file. Try selecting it again."
+                } else {
+                    playMedia(selectedUri!!, selectedTitle, adjustedSubtitle)
+                    status = "Subtitle loaded: $name ($subtitleDelayMs ms offset)"
+                }
             } else status = "Choose an .srt or .vtt subtitle file."
         } else status = "Start a video before loading external subtitles."
     }
@@ -909,6 +944,9 @@ private fun NovaHome(player: Player) {
                             TextButton(onClick = { showSubtitleSettings = true }) {
                                 Icon(Icons.Default.TextFields, null, tint = Lavender); Text("Text")
                             }
+                            TextButton(onClick = { showSubtitleSyncDialog = true }) {
+                                Icon(Icons.Default.Sync, null, tint = Lavender); Text("Sync")
+                            }
                             TextButton(onClick = { showGestureSettings = true }) {
                                 Icon(Icons.Default.Tune, null, tint = Lavender)
                                 Text("Gestures", color = Color.White)
@@ -1092,6 +1130,54 @@ private fun NovaHome(player: Player) {
                         showGestureSettings = false
                         status = "Gesture preferences saved"
                     }) { Text("Done", color = Mint) }
+                },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
+            )
+        }
+        if (showSubtitleSyncDialog) {
+            AlertDialog(
+                onDismissRequest = { showSubtitleSyncDialog = false },
+                title = { Text("Subtitle timing") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Adjust when subtitles appear relative to the video.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        Text(
+                            if (subtitleDelayMs == 0) "No delay" else if (subtitleDelayMs < 0) "Earlier by ${-subtitleDelayMs} ms" else "Later by ${subtitleDelayMs} ms",
+                            color = Mint,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Slider(value = subtitleDelayMs.toFloat(), onValueChange = { subtitleDelayMs = it.toInt() }, valueRange = -5000f..5000f, steps = 99)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { subtitleDelayMs = (subtitleDelayMs - 250).coerceAtLeast(-5000) }) { Text("−250 ms") }
+                            OutlinedButton(onClick = { subtitleDelayMs = (subtitleDelayMs + 250).coerceAtMost(5000) }) { Text("+250 ms") }
+                        }
+                        Text("Offset is applied to the selected .srt or .vtt file when you tap Apply.", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        prefs.edit().putInt("subtitle_delay_ms", subtitleDelayMs).apply()
+                        val source = loadedSubtitleSource
+                        val video = selectedUri
+                        if (source != null && video != null) {
+                            val adjusted = shiftedSubtitleUri(context, source, subtitleDelayMs.toLong())
+                            if (adjusted != null) {
+                                playMedia(video, selectedTitle, adjusted)
+                                status = "Subtitle timing applied: ${subtitleDelayMs} ms"
+                            } else status = "Could not apply subtitle timing. Re-select the subtitle file."
+                        } else {
+                            status = "Timing saved. Load an external subtitle file to apply it."
+                        }
+                        showSubtitleSyncDialog = false
+                    }) { Text("Apply", color = Mint) }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        subtitleDelayMs = 0
+                        prefs.edit().putInt("subtitle_delay_ms", 0).apply()
+                    }) { Text("Reset") }
                 },
                 containerColor = Panel,
                 titleContentColor = Color.White,
