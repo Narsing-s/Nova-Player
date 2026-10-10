@@ -1350,11 +1350,11 @@ private fun NovaHome(player: Player) {
                                     TextButton(onClick = {
                                         val start = abLoopStartMs
                                         val end = abLoopEndMs
-                                        if (start == null || end != null) {
+                                        if (start == null) {
                                             abLoopStartMs = player.currentPosition.coerceAtLeast(0L)
                                             abLoopEndMs = null
                                             status = "A–B loop point A set at " + formatTime(player.currentPosition)
-                                        } else {
+                                        } else if (end == null) {
                                             val current = player.currentPosition.coerceAtLeast(0L)
                                             if (current > start) {
                                                 abLoopEndMs = current
@@ -1362,6 +1362,10 @@ private fun NovaHome(player: Player) {
                                             } else {
                                                 status = "Point B must be after point A"
                                             }
+                                        } else {
+                                            abLoopStartMs = null
+                                            abLoopEndMs = null
+                                            status = "A–B loop cleared"
                                         }
                                     }) {
                                         Icon(Icons.Default.RepeatOne, contentDescription = "Set or clear A-B loop", tint = if (abLoopStartMs != null) Lavender else Color.White)
