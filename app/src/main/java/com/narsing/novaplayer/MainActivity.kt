@@ -705,6 +705,25 @@ private fun NovaHome(player: Player) {
                         else -> list.sortedByDescending { it.dateAdded }
                     }
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (visibleVideos.size == localVideos.size) "${visibleVideos.size} videos" else "${visibleVideos.size} of ${localVideos.size} videos",
+                        color = Color(0xFF9BA8C7),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.weight(1f))
+                    if (librarySearch.isNotBlank()) {
+                        Text("SEARCHED", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    } else if (selectedFolder != null) {
+                        Text("FOLDER FILTER", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    } else if (durationFilter != "All" || watchFilter != "All videos") {
+                        Text("FILTERED", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    }
+                }
                 if (visibleVideos.isEmpty()) {
                     val hasActiveLibraryFilters = librarySearch.isNotBlank() || selectedFolder != null || durationFilter != "All" || watchFilter != "All videos"
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
