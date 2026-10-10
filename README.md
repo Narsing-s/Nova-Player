@@ -4,7 +4,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 [**Repository**](https://github.com/Narsing-s/Nova-Player) · [**Builds & APK artifacts**](https://github.com/Narsing-s/Nova-Player/actions) · [**Releases**](https://github.com/Narsing-s/Nova-Player/releases)
 
-> **Development status:** active preview. The latest source changes add folder-based browsing; the corresponding Android CI build is running. Install and test the APK on a physical Android device before treating the preview as release-ready.
+> **Development status:** active preview. The app includes offline video browsing, playback controls, a session queue and locally saved playlists. Android CI builds the debug APK; physical-device playback testing is still required before release.
 
 ## Features implemented
 
@@ -20,6 +20,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
 - **Play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue.
+- **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
 - **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability.
 - **Playback speed** cycling from 0.5× to 2×.
@@ -42,7 +43,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Basic recent playback history (up to eight entries)
 - [x] Local favourites
 - [x] Session play queue with add, play-from-item, remove and clear actions
-- [ ] Saved playlists with names and persistent queue restoration
+- [x] Named playlists persisted locally with play, add-to-queue and delete actions
+- [ ] Restore the last session queue automatically after app restart
 - [x] Basic brightness/volume/seek swipe gestures
 - [x] Immersive system-bar toggle for playback
 - [x] Subtitle text-size and background styling controls
@@ -66,7 +68,7 @@ The launcher uses an original midnight-blue tile with a cyan orbit, violet ring 
 - Kotlin, Android SDK 35, JDK 17
 - Jetpack Compose, Material 3
 - AndroidX Media3 ExoPlayer and PlayerView
-- SharedPreferences for the initial resume-state implementation
+- SharedPreferences for resume state, favorites, history and saved playlist metadata
 - GitHub Actions
 
 ## Build locally
