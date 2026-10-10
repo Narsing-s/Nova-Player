@@ -11,8 +11,6 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Modern dark UI** with Compose and Material 3.
 - **Indexed device video library** using MediaStore, with permission-gated scanning, search, recent/name sorting, duration and file-size metadata.
 - **Local video picker** using Android's system document picker as a fallback.
-- **Direct HTTPS streaming** with Media3 / ExoPlayer.
-- **HLS and DASH playback support** through Media3 modules (subject to URL, codec, server and device compatibility).
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **External subtitles** for .srt and .vtt files.
@@ -45,7 +43,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 - Kotlin, Android SDK 35, JDK 17
 - Jetpack Compose, Material 3
-- AndroidX Media3 ExoPlayer, HLS, DASH and PlayerView
+- AndroidX Media3 ExoPlayer and PlayerView
 - SharedPreferences for the initial resume-state implementation
 - GitHub Actions
 
@@ -67,17 +65,14 @@ app/build/outputs/apk/debug/app-debug.apk
 
 A previous app-code revision built successfully and uploaded `nova-player-debug`. The latest library, playback-control and gesture changes are awaiting a fresh successful CI run. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open a successful run, and download its `nova-player-debug` artifact. Debug APKs are for testing, not public release distribution.
 
-## Streaming and compatibility
+## Offline-only library
 
-Enter a direct **HTTPS media URL** such as a supported MP4, HLS (.m3u8) or DASH (.mpd) resource. Web pages, playlist pages requiring browser login, unsupported codecs, DRM-protected streams and hosts requiring custom authentication may not play. Plain HTTP streaming is intentionally disabled by Android network security configuration.
-
-Only play media you own or are authorized to access. Nova Player does not include a content catalogue or bypass DRM.
+Nova Player is designed to work with videos already stored on your Android device. On launch, it requests video-library permission and scans the device media index; videos from available device folders appear in the Videos tab, with search, sorting, duration and file-size details. If permission is denied or a video is not indexed, use **Browse files** to select it with Android’s system picker. No online-stream tab or streaming URL input is provided.
 
 ## Privacy
 
 - Local files are selected through Android's document picker; the app does not request broad storage access for this flow.
 - The most recent media URI, title and resume position are stored locally in app preferences.
-- URLs entered for streaming are sent to the media host when playback starts.
 - No analytics or account backend is configured in this preview.
 - Publish a full privacy policy before a public release.
 
