@@ -2,6 +2,11 @@ package com.narsing.novaplayer
 
 import android.net.Uri
 import android.os.Bundle
+import android.app.PictureInPictureParams
+import android.content.Context
+import android.app.Activity
+import android.os.Build
+import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -224,4 +229,14 @@ private fun NovaHome() {
 private fun formatTime(milliseconds: Long): String {
     val seconds = milliseconds / 1_000L
     return "%02d:%02d".format(seconds / 60L, seconds % 60L)
+}
+
+
+private fun Context.findActivity(): Activity? {
+    var current = this
+    while (current is android.content.ContextWrapper) {
+        if (current is Activity) return current
+        current = current.baseContext
+    }
+    return current as? Activity
 }
