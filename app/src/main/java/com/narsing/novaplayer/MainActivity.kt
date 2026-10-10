@@ -173,6 +173,7 @@ private fun NovaHome() {
                     Text("NOVA PLAYER", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     Text("LOCAL VIDEO PLAYER", color = Color(0xFFAAAAAA), fontSize = 9.sp, letterSpacing = 1.4.sp)
                 }
+                if (selectedUri != null) IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
                 IconButton(onClick = {
                     if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
                         localVideos = loadLocalVideos(context)
@@ -193,7 +194,7 @@ private fun NovaHome() {
                 }
             }
 
-            if (activeTab == "Videos") {
+            if (selectedUri == null && activeTab == "Videos") {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = librarySearch, onValueChange = { librarySearch = it },
@@ -264,7 +265,7 @@ private fun NovaHome() {
                         }
                     }
                 }
-            } else if (activeTab == "Recent") {
+            } else if (selectedUri == null && activeTab == "Recent") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Text("PLAYBACK HISTORY", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.height(8.dp))
@@ -283,7 +284,7 @@ private fun NovaHome() {
                         Divider(color = Color(0xFF292929))
                     }
                 }
-            } else {
+            } else if (selectedUri == null) {
                 Column(Modifier.weight(1f).padding(16.dp)) {
                     Text("Play a network video", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("Paste a direct HTTPS video, HLS or DASH URL.", color = Color(0xFFAAAAAA), fontSize = 13.sp)
