@@ -89,7 +89,7 @@ private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): U
     return try {
         val original = context.contentResolver.openInputStream(source)?.bufferedReader()?.use { it.readText() } ?: return null
         // Handles standard SRT timestamps and both WEBVTT timestamp forms (MM:SS.mmm / HH:MM:SS.mmm).
-        val timestamp = Regex("""(?:\\d{2}:)?\\d{2}:\\d{2}[,.]\\d{3}""")
+        val timestamp = Regex("""(?:\d{2}:)?\d{2}:\d{2}[,.]\d{3}""")
         fun shift(value: String): String {
             val separator = if (value.contains(',')) ',' else '.'
             val clock = value.substringBeforeLast(separator)
