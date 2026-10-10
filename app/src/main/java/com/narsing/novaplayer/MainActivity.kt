@@ -1392,8 +1392,29 @@ private fun NovaHome(player: Player) {
                                 Text(value, color = Color.White, fontSize = 13.sp)
                             }
                         }
-                        OutlinedButton(onClick = { selectedVideoInfo = null; playMedia(video.uri, video.title) }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play video")
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            OutlinedButton(onClick = {
+                                selectedVideoInfo = null
+                                playMedia(video.uri, video.title)
+                            }, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play")
+                            }
+                            OutlinedButton(onClick = {
+                                try {
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "video/*"
+                                        putExtra(Intent.EXTRA_STREAM, video.uri)
+                                        putExtra(Intent.EXTRA_TITLE, video.title)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share video"))
+                                    status = "Choose an app to share ${video.title}"
+                                } catch (_: Exception) {
+                                    status = "No compatible app is available to share this video."
+                                }
+                            }, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.Share, null); Spacer(Modifier.width(6.dp)); Text("Share")
+                            }
                         }
                     }
                 },
