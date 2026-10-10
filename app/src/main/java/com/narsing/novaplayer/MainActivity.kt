@@ -1510,6 +1510,26 @@ private fun NovaHome(player: Player) {
                             steps = 14
                         )
                         Text("Preview size: ${(subtitleScale * 100).toInt()}%", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        Text("Quick presets", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            listOf("Compact" to 0.045f, "Standard" to 0.065f, "Large" to 0.085f).forEach { (label, size) ->
+                                FilterChip(
+                                    selected = kotlin.math.abs(subtitleScale - size) < 0.001f,
+                                    onClick = { subtitleScale = size },
+                                    label = { Text(label, fontSize = 10.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Lavender.copy(alpha = 0.25f),
+                                        selectedLabelColor = Mint,
+                                        labelColor = Color.White
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Dark subtitle background", color = Color.White)
