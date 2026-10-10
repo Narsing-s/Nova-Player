@@ -73,6 +73,7 @@ private const val KEY_LAST_TITLE = "last_title"
 private const val KEY_LAST_POSITION = "last_position"
 private const val KEY_HISTORY = "playback_history"
 private const val KEY_FAVORITES = "favorite_videos"
+private const val KEY_PLAYLISTS = "saved_playlists"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +103,9 @@ private fun NovaHome() {
     var shuffleEnabled by remember { mutableStateOf(false) }
     var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
     var queueItems by remember { mutableStateOf(emptyList<HistoryEntry>()) }
+    var playlists by remember { mutableStateOf(readPlaylists(prefs)) }
+    var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+    var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
     var showSubtitleSettings by remember { mutableStateOf(false) }
     var subtitleScale by remember { mutableFloatStateOf(0.065f) }
@@ -438,6 +442,61 @@ private fun NovaHome() {
                 }
             }
 
+            if (selectedUri == null && activeTab == "Playlists") {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("SAVED PLAYLISTS", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("Stored on this device · Works offline", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                        }
+                        Button(onClick = { playlistName = ""; showCreatePlaylistDialog = true }, colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
+                            Icon(Icons.Default.Add, null); Spacer(Modifier.width(5.dp)); Text("Save queue")
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    if (playlists.isEmpty()) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.LibraryMusic, null, tint = Lavender, modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text("Build your own playlists", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Add videos to the queue, then save it as a playlist.", color = Color(0xFF9BA8C7), fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    } else playlists.forEach { playlist ->
+                        Card(Modifier.fillMaxWidth().padding(bottom = 9.dp), colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(14.dp)) {
+                            Column(Modifier.padding(13.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(42.dp).background(Color(0xFF202A40), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.LibraryMusic, null, tint = Mint, modifier = Modifier.size(25.dp))
+                                    }
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(playlist.name, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 2)
+                                        Text("${playlist.items.size} video${if (playlist.items.size == 1) "" else "s"} · Saved on this device", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                                    }
+                                    IconButton(onClick = {
+                                        playlists = playlists.filterNot { it.name == playlist.name }
+                                        savePlaylists(prefs, playlists)
+                                        status = "Deleted playlist: ${playlist.name}"
+                                    }) { Icon(Icons.Default.DeleteOutline, "Delete ${playlist.name}", tint = Color(0xFF9BA8C7)) }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(onClick = { queueItems = playlist.items; playQueue(0) }, enabled = playlist.items.isNotEmpty(), modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
+                                        Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(5.dp)); Text("Play playlist")
+                                    }
+                                    OutlinedButton(onClick = {
+                                        queueItems = (queueItems + playlist.items).distinctBy { it.uri }
+                                        status = "Added ${playlist.items.size} playlist videos to queue"
+                                    }, modifier = Modifier.weight(1f)) {
+                                        Icon(Icons.Default.PlaylistAdd, null); Spacer(Modifier.width(5.dp)); Text("Add to queue")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (selectedUri == null && activeTab == "Queue") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -749,15 +808,42 @@ private fun NovaHome() {
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Folders", "Recent", "Favorites", "Queue").forEach { tab ->
+                listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.Default.QueueMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.Default.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
                 }
             }
+        }
+        if (showCreatePlaylistDialog) {
+            AlertDialog(
+                onDismissRequest = { showCreatePlaylistDialog = false },
+                title = { Text("Save playlist") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Save the current queue for later. It stays on this device and is available offline.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        OutlinedTextField(value = playlistName, onValueChange = { playlistName = it.take(50) }, singleLine = true, label = { Text("Playlist name") }, placeholder = { Text("e.g. Weekend movies") })
+                        Text("${queueItems.size} videos in current queue", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val name = playlistName.trim()
+                        if (name.isNotBlank() && queueItems.isNotEmpty()) {
+                            val saved = PlaylistEntry(name, queueItems.toList())
+                            playlists = listOf(saved) + playlists.filterNot { it.name.equals(name, ignoreCase = true) }
+                            savePlaylists(prefs, playlists)
+                            showCreatePlaylistDialog = false
+                            status = "Saved playlist: $name"
+                        } else status = if (queueItems.isEmpty()) "Add videos to the queue before saving a playlist" else "Enter a playlist name"
+                    }, enabled = playlistName.isNotBlank() && queueItems.isNotEmpty()) { Text("Save", color = Mint) }
+                },
+                dismissButton = { TextButton(onClick = { showCreatePlaylistDialog = false }) { Text("Cancel") } },
+                containerColor = Panel, titleContentColor = Color.White, textContentColor = Color.White
+            )
         }
         if (showSubtitleSettings) {
             AlertDialog(
@@ -873,6 +959,7 @@ private fun formatBytes(bytes: Long): String {
 }
 
 private data class HistoryEntry(val uri: String, val title: String)
+private data class PlaylistEntry(val name: String, val items: List<HistoryEntry>)
 
 private fun readHistory(prefs: android.content.SharedPreferences): List<HistoryEntry> {
     return try {
@@ -908,6 +995,34 @@ private fun saveFavorites(prefs: android.content.SharedPreferences, items: List<
         array.put(JSONObject().put("uri", item.uri).put("title", item.title))
     }
     prefs.edit().putString(KEY_FAVORITES, array.toString()).apply()
+}
+
+private fun readPlaylists(prefs: android.content.SharedPreferences): List<PlaylistEntry> {
+    return try {
+        val array = JSONArray(prefs.getString(KEY_PLAYLISTS, "[]"))
+        (0 until array.length()).mapNotNull { index ->
+            val item = array.optJSONObject(index) ?: return@mapNotNull null
+            val name = item.optString("name").trim()
+            val videos = item.optJSONArray("items") ?: JSONArray()
+            val entries = (0 until videos.length()).mapNotNull { videoIndex ->
+                val video = videos.optJSONObject(videoIndex) ?: return@mapNotNull null
+                val uri = video.optString("uri")
+                val title = video.optString("title")
+                if (uri.isBlank() || title.isBlank()) null else HistoryEntry(uri, title)
+            }
+            if (name.isBlank()) null else PlaylistEntry(name, entries)
+        }
+    } catch (_: Exception) { emptyList() }
+}
+
+private fun savePlaylists(prefs: android.content.SharedPreferences, playlists: List<PlaylistEntry>) {
+    val array = JSONArray()
+    playlists.forEach { playlist ->
+        val items = JSONArray()
+        playlist.items.forEach { item -> items.put(JSONObject().put("uri", item.uri).put("title", item.title)) }
+        array.put(JSONObject().put("name", playlist.name).put("items", items))
+    }
+    prefs.edit().putString(KEY_PLAYLISTS, array.toString()).apply()
 }
 
 private fun saveHistory(prefs: android.content.SharedPreferences, items: List<HistoryEntry>) {
