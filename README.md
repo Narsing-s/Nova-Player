@@ -19,7 +19,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Video details panel**: inspect each indexed video's duration, file size, device folder, date added and media URI from either grid or list view, with a direct Play action. The panel also opens Android's native share sheet so users can send the selected video to compatible apps.
 - **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
 - **Local video picker** using Android's system document picker as a fallback.
-- **Playback resume** stores the last media URI and position locally and offers a prominent **Continue Watching** card on the Videos tab, showing the saved resume point when available.
+- **Playback resume with periodic checkpoints** stores the current media URI, title and position locally every five seconds while watching, as well as on pause, and offers a prominent **Continue Watching** card on the Videos tab. This reduces lost progress if the app process is interrupted.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
