@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Narsing-s/Nova-Player/actions/runs/38076384534"><img alt="Latest Android build" src="https://img.shields.io/badge/Android%20CI-passing-27C7A5?style=for-the-badge&logo=android&logoColor=white"/></a>
+  <a href="https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml"><img alt="Android CI" src="https://img.shields.io/github/actions/workflow/status/Narsing-s/Nova-Player/android-ci.yml?branch=main&style=for-the-badge&logo=android&logoColor=white&label=Android%20CI"/></a>
   <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Android-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white"/>
   <img alt="Jetpack Compose" src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
   <img alt="Media3" src="https://img.shields.io/badge/Playback-AndroidX%20Media3-00BFA5?style=for-the-badge&logo=android&logoColor=white"/>
@@ -18,7 +18,7 @@
   <a href="https://github.com/Narsing-s/Nova-Player/issues">Report an issue</a>
 </p>
 
-> **Project status:** Active preview. The latest Android CI build succeeded and the debug APK artifact is available. Real-device playback, notification, PiP, and release-signing checks are still required before a production release.
+> **Project status:** Active preview. The latest completed Android CI build passed; a newer run may still be building. Open [Android CI](https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml) to see the current status and download the APK artifact from a completed successful run. Real-device playback, notification, PiP, and release-signing checks are still required before a production release.
 
 ---
 
@@ -83,7 +83,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 
 ## 📲 Get the latest test APK
 
-1. Open the [latest successful GitHub Actions run](https://github.com/Narsing-s/Nova-Player/actions/runs/38076384534).
+1. Open [Android CI workflow runs](https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml) and select the newest run with a green **Success** status.
 2. Scroll to **Artifacts**.
 3. Download **`nova-player-debug`** and extract the ZIP.
 4. Transfer the APK to your Android device and install it. If Android asks, allow installs from the app you used to open the APK.
