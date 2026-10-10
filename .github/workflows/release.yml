@@ -17,17 +17,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate signing secrets
+      - name: Check signing secrets
+        id: signing
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
         run: |
-          test -n "$KEYSTORE_BASE64" || (echo "::error::Add ANDROID_KEYSTORE_BASE64 in repository Actions secrets." && exit 1)
-          test -n "$KEYSTORE_PASSWORD" || (echo "::error::Add ANDROID_KEYSTORE_PASSWORD in repository Actions secrets." && exit 1)
-          test -n "$KEY_ALIAS" || (echo "::error::Add ANDROID_KEY_ALIAS in repository Actions secrets." && exit 1)
-          test -n "$KEY_PASSWORD" || (echo "::error::Add ANDROID_KEY_PASSWORD in repository Actions secrets." && exit 1)
+          if [[ -n "$KEYSTORE_BASE64" && -n "$KEYSTORE_PASSWORD" && -n "$KEY_ALIAS" && -n "$KEY_PASSWORD" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "All Android signing secrets are configured."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Android signing secrets are incomplete. A debug APK will be built and uploaded instead; no signed GitHub Release will be published."
+          fi
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -41,6 +46,7 @@ jobs:
           gradle-version: "8.11.1"
 
       - name: Prepare signing key
+        if: steps.signing.outputs.ready == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
@@ -48,6 +54,7 @@ jobs:
           test -s "$RUNNER_TEMP/nova-release.jks"
 
       - name: Build signed release APK
+        if: steps.signing.outputs.ready == 'true'
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/nova-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -56,6 +63,7 @@ jobs:
         run: gradle --no-daemon assembleRelease
 
       - name: Create GitHub Release and upload APK
+        if: steps.signing.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -70,9 +78,23 @@ jobs:
             }
 
       - name: Upload signed APK as workflow artifact
+        if: steps.signing.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: nova-player-signed-release
           path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 90
+
+      - name: Build debug APK when signing is not configured
+        if: steps.signing.outputs.ready != 'true'
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload debug APK fallback
+        if: steps.signing.outputs.ready != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-player-debug-fallback
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
