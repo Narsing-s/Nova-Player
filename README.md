@@ -12,7 +12,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Original Nova Player identity**: custom orbit-and-play launcher icon with adaptive resources on Android 8.0+ and vector fallbacks on older devices.
 - **Indexed device video library** using MediaStore, with permission-gated scanning, search, recent/name sorting, duration and file-size metadata.
 - **Switchable library layouts**: browse a thumbnail-rich two-column grid or a compact list, with the layout choice remembered locally; grid cards expose quick favorite and queue actions.
-- **Quick duration filters**: instantly narrow the local video library to all videos, clips under 10 minutes, videos from 10–60 minutes, or feature-length videos over an hour; the selected filter is remembered on-device.\n- **Watched / unwatched tracking**: mark videos watched or unwatched from grid or list view, see a watched badge on thumbnails, and filter the library by watched state; choices persist locally on the device.
+- **Quick duration filters**: instantly narrow the local video library to all videos, clips under 10 minutes, videos from 10–60 minutes, or feature-length videos over an hour; the selected filter is remembered on-device.
+- **Watched / unwatched tracking**: mark videos watched or unwatched from grid or list view, see a watched badge on thumbnails, and filter the library by watched state; choices persist locally on the device.
 - **Keep-awake playback control**: prevent the display from sleeping while a video is playing, or allow normal screen timeout; the preference is saved locally and the screen-on flag is cleared when playback is closed.
 - **Advanced library sorting**: sort videos by newest, title A–Z or Z–A, longest duration, or largest file size from a quick sort menu; the selected order is remembered locally.
 - **Video details panel**: inspect each indexed video's duration, file size, device folder, date added and media URI from either grid or list view, with a direct Play action. The panel also opens Android's native share sheet so users can send the selected video to compatible apps.
@@ -32,7 +33,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Persistent play queue**: add videos from the library, play the queue from any item, move entries up/down, remove individual items or clear the queue. Queue order is saved locally and restored when the app is reopened.
 - **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
-- **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability; your preference is remembered locally.
+- **Subtitle appearance**: adjust subtitle text size, choose one-tap Compact, Standard, or Large presets, and toggle a dark subtitle background for readability; your preference is remembered locally.
 - **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
 - **Playback speed** cycling from 0.5× to 2×.
 - **Offline sleep timer**: automatically pause playback after 15, 30, 45, 60 or 90 minutes, with the ability to cancel or replace an active timer.
