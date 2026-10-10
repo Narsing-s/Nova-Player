@@ -13,20 +13,20 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Indexed device video library** using MediaStore, with permission-gated scanning, search, recent/name sorting, duration and file-size metadata.
 - **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
 - **Local video picker** using Android's system document picker as a fallback.
-- **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
+- **Playback resume** stores the last media URI and position locally and offers a prominent **Continue Watching** card on the Videos tab, showing the saved resume point when available.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
-- **Persistent play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue. The queue is saved locally and restored when the app is reopened.
+- **Persistent play queue**: add videos from the library, play the queue from any item, move entries up/down, remove individual items or clear the queue. Queue order is saved locally and restored when the app is reopened.
 - **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
 - **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability; your preference is remembered locally.
 - **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
 - **Playback speed** cycling from 0.5× to 2×.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
-- **Playback failure feedback** surfaces Media3 playback errors in the player view instead of leaving the user guessing.
+- **Playback recovery actions** surface Media3 playback errors with Retry playback and Back to library actions instead of leaving the user guessing.
 - **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
 - **Audio-track selection** using Media3's track selection dialog when the media exposes selectable tracks.
 - **Picture-in-Picture (PiP)** action on Android 8.0+ devices, with manifest support enabled.
@@ -43,7 +43,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Original Nova Player launcher icon with adaptive and legacy Android resources
 - [x] Basic recent playback history (up to eight entries)
 - [x] Local favourites
-- [x] Session play queue with add, play-from-item, remove and clear actions
+- [x] Session play queue with add, play-from-item, reorder, remove and clear actions
 - [x] Named playlists persisted locally with play, add-to-queue and delete actions
 - [x] Restore the last session queue automatically after app restart
 - [x] Basic brightness/volume/seek swipe gestures
@@ -54,7 +54,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Basic subtitle appearance controls (text size and background)
 - [ ] Subtitle timing offset controls
 - [ ] Background playback via MediaSession service
-- [x] Basic playback error reporting for Media3 playback failures
+- [x] Playback error reporting with retry and return-to-library actions
+- [x] Continue Watching card with saved resume position
 - [ ] More recovery guidance for unsupported or damaged local files
 - [ ] Automated tests and accessibility checks
 - [x] Signed release APK workflow and public GitHub Releases (requires owner-configured signing secrets)
