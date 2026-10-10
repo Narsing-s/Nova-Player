@@ -38,7 +38,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
 - **Precision playback-speed picker** with one-tap presets from 0.25× slow motion through 3×, highlighted active speed, and immediate changes while watching; the chosen speed is remembered locally.
 - **Offline sleep timer**: automatically pause playback after 15, 30, 45, 60 or 90 minutes, with the ability to cancel or replace an active timer.
-- **Screen-fit modes** cycling through Fit, Fill and Zoom. **Player orientation modes** cycle between Auto, Landscape and Portrait, and remember your preference on-device. **Pinch-to-zoom** lets you magnify video up to 2.5× with two fingers, shows the active zoom level, and offers a one-tap Reset control; zoom resets when you open another video.
+- **Screen-fit modes** cycling through Fit, Fill and Zoom. **Landscape-first immersive playback** automatically hides the app header, library chrome and extra control rows when a video is viewed in landscape, expands the video surface edge-to-edge, and hides system bars while preserving the video's aspect ratio in Fit mode. A visible on-video exit/return control remains available. **Player orientation modes** cycle between Auto, Landscape and Portrait, and remember your preference on-device. **Pinch-to-zoom** lets you magnify video up to 2.5× with two fingers, shows the active zoom level, and offers a one-tap Reset control; zoom resets when you open another video.
 - **Playback recovery actions** surface Media3 playback errors with Retry playback and Back to library actions instead of leaving the user guessing.
 - **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
 - **Audio-track selection** using Media3's track selection dialog when the media exposes selectable tracks.
@@ -63,7 +63,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Basic brightness/volume/seek swipe gestures
 - [x] Immersive system-bar toggle for playback
 - [x] Subtitle text-size and background styling controls
-- [ ] Orientation-aware layout polish for immersive playback
+- [x] Orientation-aware immersive layout: landscape playback expands to the available screen, hides library chrome and system bars, and keeps aspect-ratio-aware video scaling
 - [x] Basic audio-track selection
 - [x] Basic subtitle appearance controls (text size and background)
 - [x] Subtitle timing offset controls
