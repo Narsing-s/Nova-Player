@@ -22,7 +22,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Persistent play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue. The queue is saved locally and restored when the app is reopened.
 - **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
-- **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability.
+- **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability; your preference is remembered locally.
+- **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
 - **Playback speed** cycling from 0.5× to 2×.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
 - **Playback failure feedback** surfaces Media3 playback errors in the player view instead of leaving the user guessing.
@@ -68,7 +69,7 @@ The launcher uses an original midnight-blue tile with a cyan orbit, violet ring 
 - Kotlin, Android SDK 35, JDK 17
 - Jetpack Compose, Material 3
 - AndroidX Media3 ExoPlayer and PlayerView
-- SharedPreferences for resume state, favorites, history and saved playlist metadata
+- SharedPreferences for resume state, favorites, history, persistent queue, saved playlists and playback preferences
 - GitHub Actions
 
 ## Build locally
