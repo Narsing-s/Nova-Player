@@ -38,6 +38,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlin.math.abs
+import org.json.JSONArray
+import org.json.JSONObject
 
 private val Midnight = Color(0xFF0B1020)
 private val Panel = Color(0xFF151D31)
@@ -47,6 +49,7 @@ private const val PREFS = "nova_player_state"
 private const val KEY_LAST_URI = "last_uri"
 private const val KEY_LAST_TITLE = "last_title"
 private const val KEY_LAST_POSITION = "last_position"
+private const val KEY_HISTORY = "playback_history"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +74,7 @@ private fun NovaHome() {
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
     var dragTotal by remember { mutableStateOf(0f) }
+    var recentItems by remember { mutableStateOf(readHistory(prefs)) }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -112,6 +116,8 @@ private fun NovaHome() {
         player.prepare()
         player.play()
         prefs.edit().putString(KEY_LAST_URI, uri.toString()).putString(KEY_LAST_TITLE, title).apply()
+        recentItems = (listOf(HistoryEntry(uri.toString(), title)) + recentItems.filterNot { it.uri == uri.toString() }).take(8)
+        saveHistory(prefs, recentItems)
         status = if (resume > 5_000L) "Resuming from " + formatTime(resume) else "Now playing: $title"
     }
 
@@ -164,6 +170,20 @@ private fun NovaHome() {
                             try { playMedia(Uri.parse(lastUri), lastTitle) }
                             catch (_: Exception) { status = "Last video unavailable. Browse and select it again." }
                         }, modifier = Modifier.fillMaxWidth()) { Text("Resume recent • $lastTitle", color = Lavender, maxLines = 1) }
+                    }
+                    if (recentItems.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Recently played", color = Color(0xFFB6C1D8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        recentItems.take(5).forEach { item ->
+                            TextButton(onClick = {
+                                try { playMedia(Uri.parse(item.uri), item.title) }
+                                catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
+                            }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.History, null, tint = Lavender)
+                                Spacer(Modifier.width(8.dp))
+                                Text(item.title, color = Color.White, maxLines = 1)
+                            }
+                        }
                     }
                 }
             }
@@ -246,4 +266,29 @@ private fun Context.findActivity(): Activity? {
         current = current.baseContext
     }
     return current as? Activity
+}
+
+
+private data class HistoryEntry(val uri: String, val title: String)
+
+private fun readHistory(prefs: android.content.SharedPreferences): List<HistoryEntry> {
+    return try {
+        val array = JSONArray(prefs.getString(KEY_HISTORY, "[]"))
+        (0 until array.length()).mapNotNull { index ->
+            val item = array.optJSONObject(index) ?: return@mapNotNull null
+            val uri = item.optString("uri")
+            val title = item.optString("title")
+            if (uri.isBlank() || title.isBlank()) null else HistoryEntry(uri, title)
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+private fun saveHistory(prefs: android.content.SharedPreferences, items: List<HistoryEntry>) {
+    val array = JSONArray()
+    items.take(8).forEach { item ->
+        array.put(JSONObject().put("uri", item.uri).put("title", item.title))
+    }
+    prefs.edit().putString(KEY_HISTORY, array.toString()).apply()
 }
