@@ -816,12 +816,21 @@ private fun NovaHome(player: Player) {
                                     }
                                     val isLastPlayedVideo = prefs.getString(KEY_LAST_URI, null) == video.uri.toString()
                                     if (isLastPlayedVideo && video.duration > 0L && lastSavedPosition > 0L) {
+                                        val resumeProgress = (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f)
                                         LinearProgressIndicator(
-                                            progress = { (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) },
+                                            progress = { resumeProgress },
                                             modifier = Modifier.fillMaxWidth().height(3.dp),
                                             color = Mint,
                                             trackColor = Color(0xFF29344A)
                                         )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("RESUME ${formatTime(lastSavedPosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                            Spacer(Modifier.weight(1f))
+                                            Text("${(resumeProgress * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
+                                        }
                                     }
                                     Text(video.title, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 10.dp), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2)
                                     Text(formatBytes(video.size) + " · " + video.folder.substringAfterLast('/').ifBlank { "Device" }, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), color = Color(0xFF9BA8C7), fontSize = 10.sp, maxLines = 1)
