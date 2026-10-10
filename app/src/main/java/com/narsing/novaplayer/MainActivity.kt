@@ -1264,6 +1264,50 @@ private fun NovaHome(player: Player) {
                                         Text("Audio", color = Color.White)
                                     }
                                     TextButton(onClick = {
+                                        shuffleEnabled = !shuffleEnabled
+                                        player.shuffleModeEnabled = shuffleEnabled
+                                        prefs.edit().putBoolean("shuffle_enabled", shuffleEnabled).apply()
+                                        status = if (shuffleEnabled) "Shuffle enabled" else "Shuffle disabled"
+                                    }) {
+                                        Icon(Icons.Default.Shuffle, contentDescription = null, tint = if (shuffleEnabled) Mint else Color.White)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Shuffle", color = if (shuffleEnabled) Mint else Color.White)
+                                    }
+                                    TextButton(onClick = {
+                                        repeatMode = when (repeatMode) {
+                                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                                            else -> Player.REPEAT_MODE_OFF
+                                        }
+                                        player.repeatMode = repeatMode
+                                        prefs.edit().putInt("repeat_mode", repeatMode).apply()
+                                        status = when (repeatMode) {
+                                            Player.REPEAT_MODE_ALL -> "Repeat all enabled"
+                                            Player.REPEAT_MODE_ONE -> "Repeat current video enabled"
+                                            else -> "Repeat disabled"
+                                        }
+                                    }) {
+                                        Icon(
+                                            if (repeatMode == Player.REPEAT_MODE_ONE) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                                            contentDescription = null,
+                                            tint = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(
+                                            when (repeatMode) {
+                                                Player.REPEAT_MODE_ALL -> "Repeat all"
+                                                Player.REPEAT_MODE_ONE -> "Repeat one"
+                                                else -> "Repeat off"
+                                            },
+                                            color = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White
+                                        )
+                                    }
+                                    TextButton(onClick = { showSleepTimerDialog = true }) {
+                                        Icon(Icons.Default.Bedtime, contentDescription = null, tint = if (sleepTimerActive) Mint else Color.White)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(if (sleepTimerActive) "Sleep on" else "Sleep timer", color = if (sleepTimerActive) Mint else Color.White)
+                                    }
+                                    TextButton(onClick = {
                                         try {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                                 context.findActivity()?.enterPictureInPictureMode(
