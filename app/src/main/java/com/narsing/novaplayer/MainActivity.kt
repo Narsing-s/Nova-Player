@@ -74,6 +74,7 @@ private const val KEY_LAST_POSITION = "last_position"
 private const val KEY_HISTORY = "playback_history"
 private const val KEY_FAVORITES = "favorite_videos"
 private const val KEY_PLAYLISTS = "saved_playlists"
+private const val KEY_QUEUE = "play_queue"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,7 +103,7 @@ private fun NovaHome() {
     var playbackSpeed by remember { mutableStateOf(1.0f) }
     var shuffleEnabled by remember { mutableStateOf(false) }
     var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
-    var queueItems by remember { mutableStateOf(emptyList<HistoryEntry>()) }
+    var queueItems by remember { mutableStateOf(readQueue(prefs)) }
     var playlists by remember { mutableStateOf(readPlaylists(prefs)) }
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
@@ -143,6 +144,10 @@ private fun NovaHome() {
                 }
             })
         }
+    }
+
+    LaunchedEffect(queueItems) {
+        saveQueue(prefs, queueItems)
     }
 
     DisposableEffect(player) {
@@ -995,6 +1000,26 @@ private fun saveFavorites(prefs: android.content.SharedPreferences, items: List<
         array.put(JSONObject().put("uri", item.uri).put("title", item.title))
     }
     prefs.edit().putString(KEY_FAVORITES, array.toString()).apply()
+}
+
+private fun readQueue(prefs: android.content.SharedPreferences): List<HistoryEntry> = readHistoryFromKey(prefs, KEY_QUEUE)
+
+private fun saveQueue(prefs: android.content.SharedPreferences, items: List<HistoryEntry>) {
+    val array = JSONArray()
+    items.forEach { item -> array.put(JSONObject().put("uri", item.uri).put("title", item.title)) }
+    prefs.edit().putString(KEY_QUEUE, array.toString()).apply()
+}
+
+private fun readHistoryFromKey(prefs: android.content.SharedPreferences, key: String): List<HistoryEntry> {
+    return try {
+        val array = JSONArray(prefs.getString(key, "[]"))
+        (0 until array.length()).mapNotNull { index ->
+            val item = array.optJSONObject(index) ?: return@mapNotNull null
+            val uri = item.optString("uri")
+            val title = item.optString("title")
+            if (uri.isBlank() || title.isBlank()) null else HistoryEntry(uri, title)
+        }
+    } catch (_: Exception) { emptyList() }
 }
 
 private fun readPlaylists(prefs: android.content.SharedPreferences): List<PlaylistEntry> {
