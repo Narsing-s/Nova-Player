@@ -209,6 +209,8 @@ private fun NovaHome(player: Player) {
     var librarySort by remember { mutableStateOf(prefs.getString("library_sort", "Recently added") ?: "Recently added") }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var durationFilter by remember { mutableStateOf(prefs.getString("library_duration_filter", "All") ?: "All") }
+    var watchFilter by remember { mutableStateOf(prefs.getString("library_watch_filter", "All videos") ?: "All videos") }
+    var watchedUris by remember { mutableStateOf(prefs.getStringSet("watched_video_uris", emptySet())?.toSet() ?: emptySet()) }
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
@@ -552,9 +554,15 @@ private fun NovaHome(player: Player) {
                         "1 hour+" -> video.duration >= 3_600_000L
                         else -> true
                     }
+                    val isWatched = watchedUris.contains(video.uri.toString())
+                    val matchesWatch = when (watchFilter) {
+                        "Watched" -> isWatched
+                        "Unwatched" -> !isWatched
+                        else -> true
+                    }
                     video.title.contains(librarySearch, ignoreCase = true) &&
                         (selectedFolder == null || video.folder == selectedFolder) &&
-                        matchesDuration
+                        matchesDuration && matchesWatch
                 }.let { list ->
                     when (librarySort) {
                         "Name A–Z" -> list.sortedBy { it.title.lowercase() }
