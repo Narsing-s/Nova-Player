@@ -7,84 +7,64 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import androidx.compose.ui.viewinterop.AndroidView
+import kotlin.math.abs
 
 private val Midnight = Color(0xFF0B1020)
 private val Panel = Color(0xFF151D31)
 private val Mint = Color(0xFF75F0D1)
 private val Lavender = Color(0xFFB9A4FF)
+private const val PREFS = "nova_player_state"
+private const val KEY_LAST_URI = "last_uri"
+private const val KEY_LAST_TITLE = "last_title"
+private const val KEY_LAST_POSITION = "last_position"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = Mint,
-                    secondary = Lavender,
-                    background = Midnight,
-                    surface = Panel
-                )
-            ) {
+            MaterialTheme(colorScheme = darkColorScheme(primary = Mint, secondary = Lavender, background = Midnight, surface = Panel)) {
                 NovaHome()
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@androidx.compose.runtime.Composable
+@OptIn(UnstableApi::class)
+@Composable
 private fun NovaHome() {
     val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
     var streamUrl by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
-    var status by remember { mutableStateOf("Choose a local video or enter a direct stream URL.") }
+    var selectedTitle by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("Choose a video or enter a secure HTTPS stream URL.") }
     var isPlaying by remember { mutableStateOf(false) }
+    var isSeekingGesture by remember { mutableStateOf(false) }
+    var dragTotal by remember { mutableStateOf(0f) }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -92,182 +72,156 @@ private fun NovaHome() {
             addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
+                    if (!playing) currentMediaItem?.localConfiguration?.uri?.let { uri ->
+                        prefs.edit().putString(KEY_LAST_URI, uri.toString()).putLong(KEY_LAST_POSITION, currentPosition.coerceAtLeast(0L)).apply()
+                    }
+                }
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
                 }
             })
         }
     }
 
     DisposableEffect(player) {
-        onDispose { player.release() }
-    }
-
-    val videoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) {
-                // Some document providers do not offer persistable grants.
+        onDispose {
+            player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
+                prefs.edit().putString(KEY_LAST_URI, uri.toString()).putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
             }
-            selectedUri = uri
-            player.setMediaItem(MediaItem.fromUri(uri))
-            player.prepare()
-            player.play()
-            status = "Local video loaded."
+            player.release()
         }
     }
 
-    LaunchedEffect(selectedUri) {
-        // Keep selected media state available for the first playback milestone.
+    fun playMedia(uri: Uri, title: String, subtitle: Uri? = null) {
+        selectedUri = uri
+        selectedTitle = title
+        val builder = MediaItem.Builder().setUri(uri).setMediaId(uri.toString())
+        if (subtitle != null) {
+            val name = subtitle.lastPathSegment.orEmpty().lowercase()
+            val mime = if (name.endsWith(".vtt")) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP
+            builder.setSubtitleConfigurations(listOf(MediaItem.SubtitleConfiguration.Builder(subtitle).setMimeType(mime).setLanguage("und").setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build()))
+        }
+        val resume = if (prefs.getString(KEY_LAST_URI, null) == uri.toString()) prefs.getLong(KEY_LAST_POSITION, 0L) else 0L
+        player.setMediaItem(builder.build(), resume)
+        player.prepare()
+        player.play()
+        prefs.edit().putString(KEY_LAST_URI, uri.toString()).putString(KEY_LAST_TITLE, title).apply()
+        status = if (resume > 5_000L) "Resuming from " + formatTime(resume) else "Now playing: $title"
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Midnight
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18))
-                    )
-                )
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
+            playMedia(uri, uri.lastPathSegment?.substringAfterLast('/') ?: "Local video")
+        }
+    }
+    val subtitlePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null && selectedUri != null) {
+            try { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
+            val name = uri.lastPathSegment?.substringAfterLast('/') ?: "subtitle"
+            if (name.endsWith(".srt", true) || name.endsWith(".vtt", true)) {
+                playMedia(selectedUri!!, selectedTitle, uri)
+                status = "Subtitle loaded: $name"
+            } else status = "Choose an .srt or .vtt subtitle file."
+        } else status = "Start a video before loading external subtitles."
+    }
+
+    Surface(Modifier.fillMaxSize(), color = Midnight) {
+        Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18)))).padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            Brush.linearGradient(listOf(Mint, Lavender)),
-                            RoundedCornerShape(16.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Midnight,
-                        modifier = Modifier.size(32.dp)
-                    )
+                Box(Modifier.size(48.dp).background(Brush.linearGradient(listOf(Mint, Lavender)), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, null, tint = Midnight, modifier = Modifier.size(32.dp))
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("NOVA PLAYER", color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                     Text("Your video space", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
+                Text(if (isPlaying) "PLAYING" else "READY", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
 
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Panel),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(Modifier.padding(18.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
+                Column(Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Mint)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Ready when you are", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        Icon(Icons.Default.VideoLibrary, null, tint = Mint); Spacer(Modifier.width(8.dp))
+                        Text("Your library", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Play a video stored on your device or stream a direct media URL.",
-                        color = Color(0xFFB6C1D8),
-                        fontSize = 14.sp
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = { videoPicker.launch(arrayOf("video/*")) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Browse videos")
+                    Text("Open a local video with Android's secure file picker.", color = Color(0xFFB6C1D8), fontSize = 13.sp)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = { videoPicker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Browse videos")
+                    }
+                    val lastTitle = prefs.getString(KEY_LAST_TITLE, null)
+                    val lastUri = prefs.getString(KEY_LAST_URI, null)
+                    if (!lastTitle.isNullOrBlank() && !lastUri.isNullOrBlank()) {
+                        TextButton(onClick = {
+                            try { playMedia(Uri.parse(lastUri), lastTitle) }
+                            catch (_: Exception) { status = "Last video unavailable. Browse and select it again." }
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Resume recent • $lastTitle", color = Lavender, maxLines = 1) }
                     }
                 }
             }
 
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Panel),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(Modifier.padding(18.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
+                Column(Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Link, contentDescription = null, tint = Lavender)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Stream from URL", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        Icon(Icons.Default.Link, null, tint = Lavender); Spacer(Modifier.width(8.dp)); Text("Secure streaming", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                     }
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = streamUrl,
-                        onValueChange = { streamUrl = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text("HTTPS video / HLS / DASH URL") },
-                        placeholder = { Text("https://example.com/video.m3u8") }
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Button(
-                        onClick = {
-                            val parsed = Uri.parse(streamUrl.trim())
-                            if (parsed.scheme in listOf("https", "http") && !parsed.host.isNullOrBlank()) {
-                                selectedUri = parsed
-                                player.setMediaItem(MediaItem.fromUri(parsed))
-                                player.prepare()
-                                player.play()
-                                status = "Stream opened. Playback depends on URL and format compatibility."
-                            } else {
-                                status = "Enter a valid HTTP or HTTPS media URL."
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Play stream")
-                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(value = streamUrl, onValueChange = { streamUrl = it }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                        label = { Text("HTTPS video / HLS / DASH URL") }, placeholder = { Text("https://example.com/video.m3u8") })
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = {
+                        val parsed = Uri.parse(streamUrl.trim())
+                        if (parsed.scheme == "https" && !parsed.host.isNullOrBlank()) {
+                            playMedia(parsed, parsed.lastPathSegment?.substringAfterLast('/')?.ifBlank { "Online stream" } ?: "Online stream")
+                        } else status = "Use a valid HTTPS media URL. Plain HTTP is disabled for network security."
+                    }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text("Play stream") }
                 }
             }
 
             if (selectedUri != null) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.Black),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AndroidView(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(230.dp),
-                        factory = { viewContext ->
-                            PlayerView(viewContext).apply {
-                                this.player = player
-                                useController = true
+                Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(20.dp)) {
+                    Column {
+                        AndroidView(
+                            modifier = Modifier.fillMaxWidth().height(220.dp).pointerInput(selectedUri) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { dragTotal = 0f; isSeekingGesture = true },
+                                    onHorizontalDrag = { change, amount -> dragTotal += amount; change.consume() },
+                                    onDragEnd = {
+                                        val delta = (dragTotal / 8f).toLong() * 1_000L
+                                        if (abs(delta) >= 1_000L) {
+                                            player.seekTo((player.currentPosition + delta).coerceAtLeast(0L))
+                                            status = if (delta > 0) "Skipped forward " + (delta / 1000) + "s" else "Skipped back " + (abs(delta) / 1000) + "s"
+                                        }
+                                        isSeekingGesture = false
+                                    },
+                                    onDragCancel = { isSeekingGesture = false }
+                                )
+                            },
+                            factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true) } },
+                            update = { it.player = player }
+                        )
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            TextButton(onClick = { player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L)) }) { Text("−10 sec") }
+                            TextButton(onClick = { player.seekTo(player.currentPosition + 10_000L) }) { Text("+10 sec") }
+                            TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
+                                Icon(Icons.Default.Subtitles, null, tint = Lavender); Spacer(Modifier.width(4.dp)); Text("Subtitles")
                             }
-                        },
-                        update = { it.player = player }
-                    )
+                        }
+                    }
                 }
+                Text(if (isSeekingGesture) "Swipe horizontally to seek" else selectedTitle, color = Lavender, fontSize = 12.sp, maxLines = 1)
             }
 
-            Text(
-                status,
-                color = if (status.startsWith("Enter")) Color(0xFFFFB4AB) else Color(0xFFB6C1D8),
-                fontSize = 13.sp
-            )
+            Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFB6C1D8), fontSize = 12.sp)
             Spacer(Modifier.weight(1f))
-            Text(
-                if (isPlaying) "PLAYING NOW" else "NOVA • MILESTONE 1",
-                color = Mint,
-                fontSize = 11.sp,
-                letterSpacing = 1.5.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text("PRIVATE BY DESIGN  •  NOVA PLAYER", color = Mint, fontSize = 10.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold)
         }
     }
+}
+
+private fun formatTime(milliseconds: Long): String {
+    val seconds = milliseconds / 1_000L
+    return "%02d:%02d".format(seconds / 60L, seconds % 60L)
 }
