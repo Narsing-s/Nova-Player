@@ -865,6 +865,17 @@ private fun NovaHome(player: Player) {
                                     Text(video.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2)
                                     Spacer(Modifier.height(4.dp))
                                     Text(formatBytes(video.size) + "  •  " + video.folder.substringAfterLast('/').ifBlank { "Device storage" }, color = Color(0xFF9E9E9E), fontSize = 11.sp, maxLines = 1)
+                                    val isLastPlayedVideo = prefs.getString(KEY_LAST_URI, null) == video.uri.toString()
+                                    if (isLastPlayedVideo && video.duration > 0L && lastSavedPosition > 0L) {
+                                        Spacer(Modifier.height(6.dp))
+                                        LinearProgressIndicator(
+                                            progress = { (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) },
+                                            modifier = Modifier.fillMaxWidth().height(3.dp),
+                                            color = Mint,
+                                            trackColor = Color(0xFF29344A)
+                                        )
+                                        Text("Continue · " + formatTime(lastSavedPosition) + " left in progress", color = Mint, fontSize = 10.sp, maxLines = 1)
+                                    }
                                 }
                                 IconButton(onClick = {
                                     val uri = video.uri.toString()
