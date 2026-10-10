@@ -314,7 +314,15 @@ private fun NovaHome(player: Player) {
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
+                if (playbackState == Player.STATE_ENDED) {
+                    prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
+                    // Reaching the end marks the current video watched; the library still lets users undo it.
+                    player.currentMediaItem?.localConfiguration?.uri?.toString()?.let { completedUri ->
+                        val updatedWatched = watchedUris + completedUri
+                        watchedUris = updatedWatched
+                        prefs.edit().putStringSet("watched_video_uris", updatedWatched).apply()
+                    }
+                }
             }
 
             override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
@@ -388,7 +396,7 @@ private fun NovaHome(player: Player) {
 
     fun playMedia(uri: Uri, title: String, subtitle: Uri? = null) {
         fullScreen = false
-        queueItems = emptyList()
+        // Keep the user's saved Up Next list when opening a standalone file or reloading subtitles.
         selectedUri = uri
         selectedTitle = title
         val builder = MediaItem.Builder().setUri(uri).setMediaId(uri.toString())
