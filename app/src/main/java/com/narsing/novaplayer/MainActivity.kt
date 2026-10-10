@@ -495,6 +495,29 @@ private fun NovaHome(player: Player) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    listOf("All videos", "Unwatched", "Watched").forEach { filter ->
+                        FilterChip(
+                            selected = watchFilter == filter,
+                            onClick = {
+                                watchFilter = filter
+                                prefs.edit().putString("library_watch_filter", filter).apply()
+                            },
+                            label = { Text(filter, fontSize = 11.sp) },
+                            leadingIcon = if (watchFilter == filter) ({ Icon(Icons.Default.Check, null, modifier = Modifier.size(15.dp)) }) else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Lavender.copy(alpha = 0.18f),
+                                selectedLabelColor = Color.White,
+                                selectedLeadingIconColor = Mint,
+                                labelColor = Color(0xFFBAC6DF)
+                            )
+                        )
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     listOf("All", "Under 10 min", "10–60 min", "1 hour+").forEach { filter ->
                         FilterChip(
                             selected = durationFilter == filter,
