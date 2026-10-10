@@ -915,8 +915,30 @@ private fun NovaHome(player: Player) {
                                         Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(5.dp)); Text("Play playlist")
                                     }
                                     OutlinedButton(onClick = {
-                                        queueItems = (queueItems + playlist.items).distinctBy { it.uri }
-                                        status = "Added ${playlist.items.size} playlist videos to queue"
+                                        val existingUris = queueItems.map { it.uri }.toSet()
+                                        val additions = playlist.items.filterNot { it.uri in existingUris }
+                                        val wasMirrored = playerMatchesQueue(player, queueItems)
+                                        val currentUri = player.currentMediaItem?.localConfiguration?.uri?.toString()
+                                        val currentTitle = selectedTitle.ifBlank { player.currentMediaItem?.mediaMetadata?.title?.toString().orEmpty() }
+                                        val seedCurrent = queueItems.isEmpty() && currentUri != null
+                                        val updated = if (seedCurrent) {
+                                            listOf(HistoryEntry(currentUri!!, currentTitle.ifBlank { Uri.parse(currentUri).lastPathSegment ?: "Now playing" })) +
+                                                additions.filterNot { it.uri == currentUri }
+                                        } else queueItems + additions
+                                        queueItems = updated
+                                        if (player.mediaItemCount == 0 && updated.isNotEmpty()) {
+                                            playQueue(0)
+                                        } else if (wasMirrored || seedCurrent) {
+                                            additions.filterNot { it.uri == currentUri }.forEach { entry ->
+                                                player.addMediaItem(
+                                                    MediaItem.Builder().setUri(Uri.parse(entry.uri)).setMediaId(entry.uri)
+                                                        .setMediaMetadata(MediaMetadata.Builder().setTitle(entry.title).build()).build()
+                                                )
+                                            }
+                                            status = "Added ${additions.size} new playlist videos to the active queue"
+                                        } else {
+                                            status = "Saved ${additions.size} new playlist videos for the next queue playback"
+                                        }
                                     }, modifier = Modifier.weight(1f)) {
                                         Icon(Icons.Default.PlaylistAdd, null); Spacer(Modifier.width(5.dp)); Text("Add to queue")
                                     }
