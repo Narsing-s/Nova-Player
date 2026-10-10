@@ -20,6 +20,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
+- **Touch lock for distraction-free viewing**: lock the on-screen player controls and seek/brightness/volume gestures to prevent accidental touches; a visible unlock action restores controls immediately.
 - **Custom gesture controls**: independently enable or disable horizontal seek, left-side brightness and right-side volume swipes; choices are saved locally.
 - **Subtitle timing sync**: shift external `.srt` and `.vtt` cues up to 5 seconds earlier or later in 250 ms steps; adjusted subtitle copies are generated in the app cache, keeping the original file untouched.
 - **Background playback and media notification**: a dedicated Media3 session service owns the player beyond the Activity lifecycle, allowing playback to continue when the app is minimized, with Android media-session notification/lock-screen controls where supported by the device.
