@@ -1328,6 +1328,26 @@ private fun NovaHome(player: Player) {
                                         Text("Audio", color = Color.White)
                                     }
                                     TextButton(onClick = {
+                                        val uri = selectedUri?.toString()
+                                        if (uri == null) {
+                                            status = "Play a video before changing favorites."
+                                        } else {
+                                            val alreadyFavorite = favoriteItems.any { it.uri == uri }
+                                            favoriteItems = if (alreadyFavorite) favoriteItems.filterNot { it.uri == uri }
+                                                else listOf(HistoryEntry(uri, selectedTitle.ifBlank { "Local video" })) + favoriteItems
+                                            saveFavorites(prefs, favoriteItems)
+                                            status = if (alreadyFavorite) "Removed from favorites" else "Added to favorites"
+                                        }
+                                    }) {
+                                        Icon(
+                                            if (favoriteItems.any { it.uri == selectedUri?.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            contentDescription = "Toggle favorite",
+                                            tint = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Favorite", color = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White)
+                                    }
+                                    TextButton(onClick = {
                                         shuffleEnabled = !shuffleEnabled
                                         player.shuffleModeEnabled = shuffleEnabled
                                         prefs.edit().putBoolean("shuffle_enabled", shuffleEnabled).apply()
