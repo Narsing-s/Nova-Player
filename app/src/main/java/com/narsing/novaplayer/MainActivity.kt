@@ -679,33 +679,35 @@ private fun NovaHome(player: Player) {
                     Spacer(Modifier.weight(1f))
                     Text(librarySort, color = Color(0xFF9BA8C7), fontSize = 11.sp)
                 }
-                val visibleVideos = localVideos.filter { video ->
-                    val matchesDuration = when (durationFilter) {
-                        "Under 10 min" -> video.duration in 1L..599_999L
-                        "10–60 min" -> video.duration in 600_000L..3_599_999L
-                        "1 hour+" -> video.duration >= 3_600_000L
-                        else -> true
-                    }
-                    val isWatched = watchedUris.contains(video.uri.toString())
-                    val matchesWatch = when (watchFilter) {
-                        "Watched" -> isWatched
-                        "Unwatched" -> !isWatched
-                        else -> true
-                    }
-                    (video.title.contains(librarySearch, ignoreCase = true) || video.folder.contains(librarySearch, ignoreCase = true)) &&
-                        (selectedFolder == null || video.folder == selectedFolder) &&
-                        matchesDuration && matchesWatch
-                }.let { list ->
-                    // Build the history lookup once instead of rescanning all history
-                    // entries for every comparison while sorting a large video library.
-                    val recentRank = recentItems.mapIndexed { index, entry -> entry.uri to index }.toMap()
-                    when (librarySort) {
-                        "Name A–Z" -> list.sortedBy { it.title.lowercase() }
-                        "Name Z–A" -> list.sortedByDescending { it.title.lowercase() }
-                        "Longest first" -> list.sortedByDescending { it.duration }
-                        "Largest first" -> list.sortedByDescending { it.size }
-                        "Recently played" -> list.sortedWith(compareBy<LocalVideo> { recentRank[it.uri.toString()] ?: Int.MAX_VALUE }.thenByDescending { it.dateAdded })
-                        else -> list.sortedByDescending { it.dateAdded }
+                val visibleVideos = remember(localVideos, librarySearch, selectedFolder, durationFilter, watchFilter, librarySort, recentItems, watchedUris) {
+                    localVideos.filter { video ->
+                        val matchesDuration = when (durationFilter) {
+                            "Under 10 min" -> video.duration in 1L..599_999L
+                            "10–60 min" -> video.duration in 600_000L..3_599_999L
+                            "1 hour+" -> video.duration >= 3_600_000L
+                            else -> true
+                        }
+                        val isWatched = watchedUris.contains(video.uri.toString())
+                        val matchesWatch = when (watchFilter) {
+                            "Watched" -> isWatched
+                            "Unwatched" -> !isWatched
+                            else -> true
+                        }
+                        (video.title.contains(librarySearch, ignoreCase = true) || video.folder.contains(librarySearch, ignoreCase = true)) &&
+                            (selectedFolder == null || video.folder == selectedFolder) &&
+                            matchesDuration && matchesWatch
+                    }.let { list ->
+                        // Index playback history once; Compose remembers this result until
+                        // a library/filter/history input actually changes.
+                        val recentRank = recentItems.mapIndexed { index, entry -> entry.uri to index }.toMap()
+                        when (librarySort) {
+                            "Name A–Z" -> list.sortedBy { it.title.lowercase() }
+                            "Name Z–A" -> list.sortedByDescending { it.title.lowercase() }
+                            "Longest first" -> list.sortedByDescending { it.duration }
+                            "Largest first" -> list.sortedByDescending { it.size }
+                            "Recently played" -> list.sortedWith(compareBy<LocalVideo> { recentRank[it.uri.toString()] ?: Int.MAX_VALUE }.thenByDescending { it.dateAdded })
+                            else -> list.sortedByDescending { it.dateAdded }
+                        }
                     }
                 }
                 Row(
