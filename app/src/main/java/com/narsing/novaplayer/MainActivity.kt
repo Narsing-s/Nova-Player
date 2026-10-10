@@ -696,12 +696,15 @@ private fun NovaHome(player: Player) {
                         (selectedFolder == null || video.folder == selectedFolder) &&
                         matchesDuration && matchesWatch
                 }.let { list ->
+                    // Build the history lookup once instead of rescanning all history
+                    // entries for every comparison while sorting a large video library.
+                    val recentRank = recentItems.mapIndexed { index, entry -> entry.uri to index }.toMap()
                     when (librarySort) {
                         "Name A–Z" -> list.sortedBy { it.title.lowercase() }
                         "Name Z–A" -> list.sortedByDescending { it.title.lowercase() }
                         "Longest first" -> list.sortedByDescending { it.duration }
                         "Largest first" -> list.sortedByDescending { it.size }
-                        "Recently played" -> list.sortedWith(compareBy<LocalVideo> { recentItems.indexOfFirst { entry -> entry.uri == it.uri.toString() }.let { historyIndex -> if (historyIndex < 0) Int.MAX_VALUE else historyIndex } }.thenByDescending { it.dateAdded })
+                        "Recently played" -> list.sortedWith(compareBy<LocalVideo> { recentRank[it.uri.toString()] ?: Int.MAX_VALUE }.thenByDescending { it.dateAdded })
                         else -> list.sortedByDescending { it.dateAdded }
                     }
                 }
