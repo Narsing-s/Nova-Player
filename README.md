@@ -19,6 +19,9 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
+- **Play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue.
+- **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
+- **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability.
 - **Playback speed** cycling from 0.5× to 2×.
 - **Shuffle playback** toggle and repeat modes for off, repeat-all and repeat-one.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
@@ -39,11 +42,15 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Original Nova Player launcher icon with adaptive and legacy Android resources
 - [x] Basic recent playback history (up to eight entries)
 - [x] Local favourites
-- [ ] Playlists
+- [x] Session play queue with add, play-from-item, remove and clear actions
+- [ ] Saved playlists with names and persistent queue restoration
 - [x] Basic brightness/volume/seek swipe gestures
-- [ ] Orientation-aware immersive full-screen playback
+- [x] Immersive system-bar toggle for playback
+- [x] Subtitle text-size and background styling controls
+- [ ] Orientation-aware layout polish for immersive playback
 - [x] Basic audio-track selection
-- [ ] Subtitle styling / timing controls
+- [x] Basic subtitle appearance controls (text size and background)
+- [ ] Subtitle timing offset controls
 - [ ] Background playback via MediaSession service
 - [x] Basic playback error reporting for Media3 playback failures
 - [ ] More recovery guidance for unsupported or damaged local files
