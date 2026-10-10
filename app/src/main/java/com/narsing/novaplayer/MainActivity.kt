@@ -218,6 +218,23 @@ private fun NovaHome(player: Player) {
     var playerZoomScale by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(selectedUri) { playerZoomScale = 1f }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
+    var isScanningLibrary by remember { mutableStateOf(false) }
+    fun refreshLibrary() {
+        if (isScanningLibrary) return
+        isScanningLibrary = true
+        status = "Scanning videos on this device…"
+        uiScope.launch {
+            try {
+                val videos = withContext(Dispatchers.IO) { loadLocalVideos(context) }
+                localVideos = videos
+                status = "Library refreshed · " + videos.size + " videos found"
+            } catch (_: Exception) {
+                status = "Could not refresh the video library. Check storage permission and try again."
+            } finally {
+                isScanningLibrary = false
+            }
+        }
+    }
     var librarySearch by remember { mutableStateOf("") }
     var librarySort by remember { mutableStateOf(prefs.getString("library_sort", "Recently added") ?: "Recently added") }
     var sortMenuExpanded by remember { mutableStateOf(false) }
@@ -459,15 +476,13 @@ private fun NovaHome(player: Player) {
     val libraryPermission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO else Manifest.permission.READ_EXTERNAL_STORAGE
     val libraryPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
-            localVideos = loadLocalVideos(context)
-            status = "Found " + localVideos.size + " videos on this device."
+            refreshLibrary()
         } else status = "Video access is needed to show all device videos. You can still browse and open a video."
     }
 
     LaunchedEffect(Unit) {
         if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-            localVideos = loadLocalVideos(context)
-            status = "Found " + localVideos.size + " videos on this device."
+            refreshLibrary()
         } else {
             libraryPermissionLauncher.launch(libraryPermission)
         }
@@ -490,12 +505,20 @@ private fun NovaHome(player: Player) {
                 if (selectedUri != null) {
                     IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
                 } else {
-                    IconButton(onClick = {
-                        if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-                            localVideos = loadLocalVideos(context)
-                            status = "Found " + localVideos.size + " videos on this device."
-                        } else libraryPermissionLauncher.launch(libraryPermission)
-                    }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
+                    IconButton(
+                        enabled = !isScanningLibrary,
+                        onClick = {
+                            if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                                refreshLibrary()
+                            } else libraryPermissionLauncher.launch(libraryPermission)
+                        }
+                    ) {
+                        if (isScanningLibrary) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Mint, strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White)
+                        }
+                    }
                     if (activeTab == "Videos") {
                         Box {
                             IconButton(onClick = { sortMenuExpanded = true }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
@@ -658,8 +681,10 @@ private fun NovaHome(player: Player) {
                                 localVideos = loadLocalVideos(context)
                                 status = "Found " + localVideos.size + " videos on this device."
                             } else libraryPermissionLauncher.launch(libraryPermission)
-                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
-                            Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
+                        }, enabled = !isScanningLibrary, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
+                            if (isScanningLibrary) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Midnight, strokeWidth = 2.dp)
+                            else Icon(Icons.Default.FolderOpen, null)
+                            Spacer(Modifier.width(8.dp)); Text(if (isScanningLibrary) "Scanning…" else "Scan device videos")
                         }
                         TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFF8A70FF)) }
                     }
