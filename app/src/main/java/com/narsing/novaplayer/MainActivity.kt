@@ -216,6 +216,11 @@ private fun NovaHome(player: Player) {
         saveQueue(prefs, queueItems)
     }
 
+    LaunchedEffect(selectedUri) {
+        abLoopStartMs = null
+        abLoopEndMs = null
+    }
+
     LaunchedEffect(selectedUri, abLoopStartMs, abLoopEndMs) {
         while (true) {
             val start = abLoopStartMs
