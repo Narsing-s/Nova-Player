@@ -706,23 +706,52 @@ private fun NovaHome(player: Player) {
                     }
                 }
                 if (visibleVideos.isEmpty()) {
+                    val hasActiveLibraryFilters = librarySearch.isNotBlank() || selectedFolder != null || durationFilter != "All" || watchFilter != "All videos"
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                        Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
+                        Icon(if (hasActiveLibraryFilters) Icons.Default.SearchOff else Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
                         Spacer(Modifier.height(12.dp))
-                        Text("Your videos appear here", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            when {
+                                hasActiveLibraryFilters -> "No videos match"
+                                localVideos.isEmpty() -> "Your videos appear here"
+                                else -> "No videos to show"
+                            },
+                            color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold
+                        )
                         Spacer(Modifier.height(6.dp))
-                        Text("Scan your device to build your local library, or browse and open a single video.", color = Color(0xFF9BA8C7), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Text(
+                            when {
+                                hasActiveLibraryFilters -> "Try another title or folder, or clear your filters to see more videos."
+                                localVideos.isEmpty() -> "Scan your device to build your local library, or browse and open a single video."
+                                else -> "Try changing the duration or watched filter."
+                            },
+                            color = Color(0xFF9BA8C7), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                         Spacer(Modifier.height(18.dp))
-                        Button(onClick = {
-                            if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-                                refreshLibrary()
-                            } else libraryPermissionLauncher.launch(libraryPermission)
-                        }, enabled = !isScanningLibrary, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
-                            if (isScanningLibrary) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Midnight, strokeWidth = 2.dp)
-                            else Icon(Icons.Default.FolderOpen, null)
-                            Spacer(Modifier.width(8.dp)); Text(if (isScanningLibrary) "Scanning…" else "Scan device videos")
+                        if (hasActiveLibraryFilters) {
+                            Button(onClick = {
+                                librarySearch = ""
+                                selectedFolder = null
+                                durationFilter = "All"
+                                watchFilter = "All videos"
+                                prefs.edit().putString("library_duration_filter", "All").putString("library_watch_filter", "All videos").apply()
+                            }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
+                                Icon(Icons.Default.FilterAltOff, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Clear search & filters")
+                            }
+                        } else {
+                            Button(onClick = {
+                                if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                                    refreshLibrary()
+                                } else libraryPermissionLauncher.launch(libraryPermission)
+                            }, enabled = !isScanningLibrary, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
+                                if (isScanningLibrary) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Midnight, strokeWidth = 2.dp)
+                                else Icon(Icons.Default.FolderOpen, null)
+                                Spacer(Modifier.width(8.dp)); Text(if (isScanningLibrary) "Scanning…" else "Scan device videos")
+                            }
+                            TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFF8A70FF)) }
                         }
-                        TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFF8A70FF)) }
                     }
                 } else if (gridView) {
                     LazyVerticalGrid(
