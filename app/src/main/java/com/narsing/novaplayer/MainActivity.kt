@@ -678,8 +678,7 @@ private fun NovaHome(player: Player) {
                         Spacer(Modifier.height(18.dp))
                         Button(onClick = {
                             if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-                                localVideos = loadLocalVideos(context)
-                                status = "Found " + localVideos.size + " videos on this device."
+                                refreshLibrary()
                             } else libraryPermissionLauncher.launch(libraryPermission)
                         }, enabled = !isScanningLibrary, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
                             if (isScanningLibrary) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Midnight, strokeWidth = 2.dp)
