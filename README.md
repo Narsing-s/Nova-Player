@@ -63,7 +63,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Browse the full matching library in a responsive thumbnail grid (adapts to phone/tablet width) or compact list, with consistent 16:9 previews; neither view artificially caps results at 200 videos.
 - Search by video title/filename or containing folder; clear the search with one tap, and sort by newest, recently played, title, duration or file size.
 - Helpful empty states distinguish an empty device library from filters with no matches, with a one-tap clear-search-and-filters action.
-- **Continue Watching progress:** the last-played video shows a resume timestamp, progress bar and watched percentage in both grid and list views.
+- **Per-video Continue Watching:** each partially watched video keeps its own saved resume position, progress bar and watched percentage in both grid and list views—not just the most recently played video. Opening a video resumes from its own saved checkpoint; finishing it clears only that video’s checkpoint.
 - **Long-video timecodes:** durations and playback timestamps use `HH:MM:SS` for videos of an hour or longer, while shorter clips keep the compact `MM:SS` format.
 - Live library result counts show how many videos match the current search and filters, with a subtle indicator for the active filter state.
 - Filter by clip length and watched status.
@@ -131,7 +131,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Modern Compose / Material 3 interface and original launcher identity
 - [x] MediaStore library, thumbnails, search, sort and folder navigation
 - [x] Grid/list layouts, favorites, recent history and watched filters
-- [x] Resume checkpoints and Continue Watching
+- [x] Per-video resume checkpoints and Continue Watching progress in grid and list
 - [x] Persistent queue and named local playlists
 - [x] Swipe gestures, touch lock, seek presets and pinch-to-zoom
 - [x] Landscape immersive mode and adaptive screen fitting

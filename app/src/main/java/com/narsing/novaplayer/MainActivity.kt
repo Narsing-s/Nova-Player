@@ -93,6 +93,11 @@ private const val KEY_HISTORY = "playback_history"
 private const val KEY_FAVORITES = "favorite_videos"
 private const val KEY_PLAYLISTS = "saved_playlists"
 private const val KEY_QUEUE = "play_queue"
+private const val KEY_RESUME_PREFIX = "resume_position_"
+
+private fun resumePositionKey(uri: String): String = KEY_RESUME_PREFIX + android.util.Base64.encodeToString(
+    uri.toByteArray(Charsets.UTF_8), android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+)
 
 private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): Uri? {
     if (offsetMs == 0L) return source
@@ -181,6 +186,7 @@ private fun NovaHome(player: Player) {
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedTitle by remember { mutableStateOf("") }
     var lastSavedPosition by remember { mutableLongStateOf(prefs.getLong(KEY_LAST_POSITION, 0L)) }
+    var resumePositions by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     var status by remember { mutableStateOf("Loading videos on this device…") }
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
@@ -233,6 +239,11 @@ private fun NovaHome(player: Player) {
             try {
                 val videos = withContext(Dispatchers.IO) { loadLocalVideos(context) }
                 localVideos = videos
+                resumePositions = videos.mapNotNull { video ->
+                    val uri = video.uri.toString()
+                    val saved = prefs.getLong(resumePositionKey(uri), if (prefs.getString(KEY_LAST_URI, null) == uri) prefs.getLong(KEY_LAST_POSITION, 0L) else 0L)
+                    if (saved > 0L) uri to saved else null
+                }.toMap()
                 status = "Library refreshed · " + videos.size + " videos found"
             } catch (_: Exception) {
                 status = "Could not refresh the video library. Check storage permission and try again."
@@ -267,12 +278,16 @@ private fun NovaHome(player: Player) {
             delay(5_000L)
             val currentUri = player.currentMediaItem?.localConfiguration?.uri
             if (currentUri != null && currentUri == selectedUri) {
+                val position = player.currentPosition.coerceAtLeast(0L)
+                val uri = currentUri.toString()
                 prefs.edit()
-                    .putString(KEY_LAST_URI, currentUri.toString())
+                    .putString(KEY_LAST_URI, uri)
                     .putString(KEY_LAST_TITLE, selectedTitle)
-                    .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L))
+                    .putLong(KEY_LAST_POSITION, position)
+                    .putLong(resumePositionKey(uri), position)
                     .apply()
-                lastSavedPosition = player.currentPosition.coerceAtLeast(0L)
+                lastSavedPosition = position
+                resumePositions = if (position > 0L) resumePositions + (uri to position) else resumePositions - uri
             }
         }
     }
@@ -311,9 +326,13 @@ private fun NovaHome(player: Player) {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
                 if (!playing) player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
-                    prefs.edit().putString(KEY_LAST_URI, uri.toString())
-                        .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
-                    lastSavedPosition = player.currentPosition.coerceAtLeast(0L)
+                    val position = player.currentPosition.coerceAtLeast(0L)
+                    val uriString = uri.toString()
+                    prefs.edit().putString(KEY_LAST_URI, uriString)
+                        .putLong(KEY_LAST_POSITION, position)
+                        .putLong(resumePositionKey(uriString), position).apply()
+                    lastSavedPosition = position
+                    resumePositions = if (position > 0L) resumePositions + (uriString to position) else resumePositions - uriString
                 }
             }
 
@@ -321,8 +340,10 @@ private fun NovaHome(player: Player) {
                 if (playbackState == Player.STATE_ENDED) {
                     prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
                     lastSavedPosition = 0L
-                    // Reaching the end marks the current video watched; the library still lets users undo it.
+                    // Clear only this video's resume checkpoint; other videos keep their own progress.
                     player.currentMediaItem?.localConfiguration?.uri?.toString()?.let { completedUri ->
+                        prefs.edit().putLong(resumePositionKey(completedUri), 0L).apply()
+                        resumePositions = resumePositions - completedUri
                         val updatedWatched = watchedUris + completedUri
                         watchedUris = updatedWatched
                         prefs.edit().putStringSet("watched_video_uris", updatedWatched).apply()
@@ -358,8 +379,10 @@ private fun NovaHome(player: Player) {
                 WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
             }
             player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
+                val position = player.currentPosition.coerceAtLeast(0L)
                 prefs.edit().putString(KEY_LAST_URI, uri.toString())
-                    .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
+                    .putLong(KEY_LAST_POSITION, position)
+                    .putLong(resumePositionKey(uri.toString()), position).apply()
             }
             activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             player.removeListener(listener)
@@ -410,7 +433,12 @@ private fun NovaHome(player: Player) {
             val mime = if (name.endsWith(".vtt")) MimeTypes.TEXT_VTT else MimeTypes.APPLICATION_SUBRIP
             builder.setSubtitleConfigurations(listOf(MediaItem.SubtitleConfiguration.Builder(subtitle).setMimeType(mime).setLanguage("und").setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build()))
         }
-        val resume = if (prefs.getString(KEY_LAST_URI, null) == uri.toString()) prefs.getLong(KEY_LAST_POSITION, 0L) else 0L
+        val resume = prefs.getLong(
+            resumePositionKey(uri.toString()),
+            if (prefs.getString(KEY_LAST_URI, null) == uri.toString()) prefs.getLong(KEY_LAST_POSITION, 0L) else 0L
+        ).coerceAtLeast(0L)
+        lastSavedPosition = resume
+        resumePositions = if (resume > 0L) resumePositions + (uri.toString() to resume) else resumePositions - uri.toString()
         player.setMediaItem(builder.build(), resume)
         player.prepare()
         player.play()
@@ -814,9 +842,10 @@ private fun NovaHome(player: Player) {
                                             Icon(Icons.Default.PlayArrow, "Play video", tint = Mint, modifier = Modifier.size(30.dp))
                                         }
                                     }
-                                    val isLastPlayedVideo = prefs.getString(KEY_LAST_URI, null) == video.uri.toString()
-                                    if (isLastPlayedVideo && video.duration > 0L && lastSavedPosition > 0L) {
-                                        val resumeProgress = (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f)
+                                    val videoResumePosition = resumePositions[video.uri.toString()]
+                                        ?: if (prefs.getString(KEY_LAST_URI, null) == video.uri.toString()) lastSavedPosition else 0L
+                                    if (video.duration > 0L && videoResumePosition > 0L) {
+                                        val resumeProgress = (videoResumePosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f)
                                         LinearProgressIndicator(
                                             progress = { resumeProgress },
                                             modifier = Modifier.fillMaxWidth().height(3.dp),
@@ -827,7 +856,7 @@ private fun NovaHome(player: Player) {
                                             modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 5.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("RESUME ${formatTime(lastSavedPosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                            Text("RESUME ${formatTime(videoResumePosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                             Spacer(Modifier.weight(1f))
                                             Text("${(resumeProgress * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
                                         }
@@ -874,11 +903,12 @@ private fun NovaHome(player: Player) {
                                     Text(video.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2)
                                     Spacer(Modifier.height(4.dp))
                                     Text(formatBytes(video.size) + "  •  " + video.folder.substringAfterLast('/').ifBlank { "Device storage" }, color = Color(0xFF9E9E9E), fontSize = 11.sp, maxLines = 1)
-                                    val isLastPlayedVideo = prefs.getString(KEY_LAST_URI, null) == video.uri.toString()
-                                    if (isLastPlayedVideo && video.duration > 0L && lastSavedPosition > 0L) {
+                                    val videoResumePosition = resumePositions[video.uri.toString()]
+                                        ?: if (prefs.getString(KEY_LAST_URI, null) == video.uri.toString()) lastSavedPosition else 0L
+                                    if (video.duration > 0L && videoResumePosition > 0L) {
                                         Spacer(Modifier.height(6.dp))
                                         LinearProgressIndicator(
-                                            progress = { (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) },
+                                            progress = { (videoResumePosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) },
                                             modifier = Modifier.fillMaxWidth().height(3.dp),
                                             color = Mint,
                                             trackColor = Color(0xFF29344A)
@@ -887,7 +917,7 @@ private fun NovaHome(player: Player) {
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("RESUME ${formatTime(lastSavedPosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                            Text("RESUME ${formatTime(videoResumePosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                             Spacer(Modifier.weight(1f))
                                             Text("${((lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
                                         }
