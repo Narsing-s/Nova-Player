@@ -55,6 +55,7 @@ import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.ui.TrackSelectionDialogBuilder
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
@@ -213,7 +214,14 @@ private fun NovaHome() {
             status = "Already in queue: ${video.title}"
             return
         }
-        val updated = queueItems + entry
+        val updated = if (queueItems.isEmpty() && player.mediaItemCount > 0) {
+            val current = player.currentMediaItem
+            val currentUri = current?.localConfiguration?.uri
+            val currentTitle = current?.mediaMetadata?.title?.toString().orEmpty()
+            if (currentUri != null && currentUri.toString() != entry.uri) {
+                listOf(HistoryEntry(currentUri.toString(), currentTitle.ifBlank { currentUri.lastPathSegment ?: "Now playing" })) + entry
+            } else listOf(entry)
+        } else queueItems + entry
         queueItems = updated
         if (player.mediaItemCount == 0) {
             playQueue(updated.lastIndex)
@@ -729,6 +737,37 @@ private fun NovaHome() {
                     }
                 }
             }
+        }
+        if (showSubtitleSettings) {
+            AlertDialog(
+                onDismissRequest = { showSubtitleSettings = false },
+                title = { Text("Subtitle appearance") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Text size", color = Color.White)
+                        Slider(
+                            value = subtitleScale,
+                            onValueChange = { subtitleScale = it },
+                            valueRange = 0.035f..0.11f,
+                            steps = 14
+                        )
+                        Text("Preview size: ${(subtitleScale * 100).toInt()}%", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Dark subtitle background", color = Color.White)
+                                Text("Improves readability on bright scenes", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                            }
+                            Switch(checked = subtitleBackgroundEnabled, onCheckedChange = { subtitleBackgroundEnabled = it })
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showSubtitleSettings = false }) { Text("Done", color = Mint) }
+                },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
+            )
         }
     }
 }
