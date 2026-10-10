@@ -4,7 +4,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 [**Repository**](https://github.com/Narsing-s/Nova-Player) · [**Builds & APK artifacts**](https://github.com/Narsing-s/Nova-Player/actions) · [**Releases**](https://github.com/Narsing-s/Nova-Player/releases)
 
-> **Development status:** early preview. The current code provides basic local-file and HTTPS playback, resume-last playback, external SRT/VTT subtitle loading and seek controls. It is not yet a complete indexed video-library app, and the first CI build still needs to be verified before treating an APK as tested.
+> **Development status:** early preview. The latest Android CI build passed and produced a debug APK artifact. The app still needs installation and playback testing on physical Android devices; it is not yet a complete indexed video-library app.
 
 ## Features implemented
 
@@ -14,16 +14,16 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **HLS and DASH playback support** through Media3 modules (subject to URL, codec, server and device compatibility).
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
-- **Picture-in-Picture action** is available on Android 8.0+ while a video is selected.
 - **External subtitles** for .srt and .vtt files.
 - **Seeking** with 10-second buttons and a horizontal swipe gesture over the video surface.
-- **Picture-in-Picture action** on Android 8.0+ devices, with manifest support enabled.
+- **Picture-in-Picture (PiP)** action on Android 8.0+ devices, with manifest support enabled.
 - **Subtitle track controls** in the Media3 player UI where supported by the media.
 - **GitHub Actions** workflow to build a debug APK and upload it as an artifact.
 
 ## Roadmap
 
-- [ ] Verify CI build and install on physical Android devices
+- [x] Verify Android CI debug build and APK artifact upload
+- [ ] Install and test playback on physical Android devices
 - [ ] Indexed library using MediaStore, folders, thumbnails and search
 - [x] Basic recent playback history (up to eight entries)
 - [ ] Favourites and playlists
@@ -59,7 +59,7 @@ The debug APK should be generated at:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The GitHub Actions workflow uploads a debug APK artifact when the build succeeds. Open [Actions](https://github.com/Narsing-s/Nova-Player/actions), select the latest successful run and download the nova-player-debug artifact. Debug APKs are for testing, not public release distribution.
+The latest verified CI run passed and uploaded `nova-player-debug`. [Open that successful run](https://github.com/Narsing-s/Nova-Player/actions/runs/38059246170) and download the `nova-player-debug` artifact. GitHub stores this artifact for 14 days; if it expires, use the latest successful run on the [Actions page](https://github.com/Narsing-s/Nova-Player/actions). Debug APKs are for testing, not public release distribution.
 
 ## Streaming and compatibility
 
