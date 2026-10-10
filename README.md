@@ -47,6 +47,8 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Left-side brightness and right-side volume gestures, each independently configurable.
 - Touch lock with a visible unlock action, now also reachable directly from the landscape quick-control dock.
 - Shuffle, repeat-all, repeat-one, and A–B scene looping.
+- **Landscape quick Favorite:** add or remove the current video from Favorites while staying in playback; the heart state reflects the saved favorite.
+- **Landscape A–B loop shortcut:** tap **Set A** at the section start, **Set B** after that point to define the loop, then **Clear A–B** to reset both markers. Point B must be later than point A; invalid taps show a status message.
 - Sleep timer for 15, 30, 45, 60 or 90 minutes, with cancel/replace support.
 
 ### 💬 Subtitles and tracks
@@ -185,7 +187,7 @@ A successful CI build confirms that the Android project compiles; it does **not*
 
 ### Landscape playback quick controls
 
-When a video is playing in landscape, an on-video quick-action dock keeps playback speed, Auto/Fit/Fill/Zoom, external subtitle loading, audio-track selection, shuffle, repeat off/all/one, sleep timer, Picture-in-Picture and immersive mode available without returning to portrait. Shuffle and repeat settings are saved locally. Use the dock's close button to hide it for distraction-free viewing, then tap the floating controls icon to restore it. The dock is hidden when playback controls are locked.
+When a video is playing in landscape, an on-video quick-action dock keeps playback speed, Auto/Fit/Fill/Zoom, external subtitle loading, audio-track selection, quick Favorite, A–B loop, shuffle, repeat off/all/one, sleep timer, Picture-in-Picture and immersive mode available without returning to portrait. Favorite toggles the current video's saved favorite state. For A–B looping, tap **Set A** at the start, **Set B** after A to activate the range, then **Clear A–B** to reset both points; B must be later than A. Shuffle and repeat settings are saved locally. Use the dock's close button to hide it for distraction-free viewing, then tap the floating controls icon to restore it. The dock is hidden when playback controls are locked.
 
 ### Core playback
 - [ ] Open a video from the library and from Android's document picker.
