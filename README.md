@@ -23,7 +23,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
-- **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, double-tap the left/right half of the video to rewind/forward 10 seconds, horizontal swipe seeking with a live seek-preview overlay showing the offset and target time, and vertical brightness/volume gestures. Double-tap seeking respects touch lock. Swipe seeking clamps to the media's valid duration and reports the final target time.
+- **MX Player-inspired controls**: configurable 5, 10, 15 or 30-second rewind/forward intervals shared by the dedicated buttons and double-tap seeking; horizontal swipe seeking with a live preview showing the offset and target time; and vertical brightness/volume gestures. The chosen seek interval persists locally. Double-tap seeking respects touch lock, and swipe seeking clamps to the media's valid duration and reports the final target time.
 - **Touch lock for distraction-free viewing**: lock the on-screen player controls and seek/brightness/volume gestures to prevent accidental touches; a visible unlock action restores controls immediately.
 - **Custom gesture controls**: independently enable or disable horizontal seek, left-side brightness and right-side volume swipes; choices are saved locally.
 - **Subtitle timing sync**: shift external `.srt` and `.vtt` cues up to 5 seconds earlier or later in 250 ms steps; adjusted subtitle copies are generated in the app cache, keeping the original file untouched.
@@ -47,7 +47,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 ## Roadmap
 
-- [ ] Verify the latest Android CI debug build and APK artifact upload
+- [x] Verify Android CI debug build and APK artifact upload
 - [ ] Install and test playback on physical Android devices
 - [ ] Verify background playback, notification actions and lock-screen controls on Android 13–15 devices
 - [x] Indexed MediaStore video library with search and recent/name sorting
