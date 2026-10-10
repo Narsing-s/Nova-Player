@@ -75,10 +75,9 @@ class MainActivity : ComponentActivity() {
 private fun NovaHome() {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
-    var streamUrl by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedTitle by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("Choose a video or enter a secure HTTPS stream URL.") }
+    var status by remember { mutableStateOf("Loading videos on this device…") }
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
     var dragTotal by remember { mutableStateOf(0f) }
@@ -157,7 +156,16 @@ private fun NovaHome() {
         if (granted) {
             localVideos = loadLocalVideos(context)
             status = "Found " + localVideos.size + " videos on this device."
-        } else status = "Allow video access to show your device library. You can still use Browse videos."
+        } else status = "Video access is needed to show all device videos. You can still browse and open a video."
+    }
+
+    LaunchedEffect(Unit) {
+        if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+            localVideos = loadLocalVideos(context)
+            status = "Found " + localVideos.size + " videos on this device."
+        } else {
+            libraryPermissionLauncher.launch(libraryPermission)
+        }
     }
 
     Surface(Modifier.fillMaxSize(), color = Color(0xFF101010)) {
@@ -189,7 +197,7 @@ private fun NovaHome() {
 
             if (selectedUri == null) {
                 Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    listOf("Videos", "Recent", "Online").forEach { tab ->
+                    listOf("Videos", "Recent").forEach { tab ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
                                 Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
@@ -290,24 +298,7 @@ private fun NovaHome() {
                         Divider(color = Color(0xFF292929))
                     }
                 }
-            } else if (selectedUri == null) {
-                Column(Modifier.weight(1f).padding(16.dp)) {
-                    Text("Play a network video", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("Paste a direct HTTPS video, HLS or DASH URL.", color = Color(0xFFAAAAAA), fontSize = 13.sp)
-                    Spacer(Modifier.height(14.dp))
-                    OutlinedTextField(value = streamUrl, onValueChange = { streamUrl = it }, modifier = Modifier.fillMaxWidth(), singleLine = true,
-                        label = { Text("HTTPS video / HLS / DASH URL") }, placeholder = { Text("https://example.com/video.m3u8") })
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = {
-                        val parsed = Uri.parse(streamUrl.trim())
-                        if (parsed.scheme == "https" && !parsed.host.isNullOrBlank()) {
-                            playMedia(parsed, parsed.lastPathSegment?.substringAfterLast('/')?.ifBlank { "Online stream" } ?: "Online stream")
-                        } else status = "Use a valid HTTPS media URL. Plain HTTP is disabled for network security."
-                    }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))) {
-                        Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text("Play stream")
-                    }
-                }
-            }
+
 
             if (selectedUri != null) {
                 Card(
@@ -418,10 +409,10 @@ private fun NovaHome() {
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Recent", "Online").forEach { tab ->
+                listOf("Videos", "Recent").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Recent" -> Icons.Default.History; else -> Icons.Default.Link }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
+                            Icon(if (tab == "Videos") Icons.Default.VideoLibrary else Icons.Default.History, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFAAAAAA))
                         }
                     }
