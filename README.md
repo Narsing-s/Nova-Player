@@ -18,8 +18,11 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
+- **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
 - **Playback speed** cycling from 0.5× to 2×.
+- **Shuffle playback** toggle and repeat modes for off, repeat-all and repeat-one.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
+- **Playback failure feedback** surfaces Media3 playback errors in the player view instead of leaving the user guessing.
 - **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
 - **Audio-track selection** using Media3's track selection dialog when the media exposes selectable tracks.
 - **Picture-in-Picture (PiP)** action on Android 8.0+ devices, with manifest support enabled.
@@ -42,7 +45,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Basic audio-track selection
 - [ ] Subtitle styling / timing controls
 - [ ] Background playback via MediaSession service
-- [ ] Better playback error reporting and network retry handling
+- [x] Basic playback error reporting for Media3 playback failures
+- [ ] More recovery guidance for unsupported or damaged local files
 - [ ] Automated tests and accessibility checks
 - [x] Signed release APK workflow and public GitHub Releases (requires owner-configured signing secrets)
 - [ ] Verify signed release on physical devices
@@ -75,7 +79,7 @@ The debug APK should be generated at:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The latest CI run for folder browsing is in progress. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open the newest successful run, and download its `nova-player-debug` artifact. The debug APK is for testing, not public release distribution.
+Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions) for the newest workflow result. After a successful run, open it and download the `nova-player-debug` artifact. The debug APK is for testing, not public release distribution.
 
 ## Offline-only library
 
