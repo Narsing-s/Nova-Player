@@ -236,6 +236,21 @@ private fun NovaHome(player: Player) {
         abLoopEndMs = null
     }
 
+    // Periodically checkpoint playback so a force-close or process death loses less progress.
+    LaunchedEffect(selectedUri, selectedTitle) {
+        while (selectedUri != null) {
+            delay(5_000L)
+            val currentUri = player.currentMediaItem?.localConfiguration?.uri
+            if (currentUri != null && currentUri == selectedUri) {
+                prefs.edit()
+                    .putString(KEY_LAST_URI, currentUri.toString())
+                    .putString(KEY_LAST_TITLE, selectedTitle)
+                    .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L))
+                    .apply()
+            }
+        }
+    }
+
     LaunchedEffect(selectedUri, abLoopStartMs, abLoopEndMs) {
         while (true) {
             val start = abLoopStartMs
