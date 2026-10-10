@@ -204,6 +204,7 @@ private fun NovaHome(player: Player) {
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
     var sortByName by remember { mutableStateOf(false) }
+    var durationFilter by remember { mutableStateOf(prefs.getString("library_duration_filter", "All") ?: "All") }
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
@@ -422,11 +423,13 @@ private fun NovaHome(player: Player) {
                             status = "Found " + localVideos.size + " videos on this device."
                         } else libraryPermissionLauncher.launch(libraryPermission)
                     }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
-                    IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
-                    IconButton(onClick = {
-                        gridView = !gridView
-                        prefs.edit().putBoolean("library_grid_view", gridView).apply()
-                    }) { Icon(if (gridView) Icons.Default.ViewList else Icons.Default.GridView, if (gridView) "Switch to list view" else "Switch to grid view", tint = Mint) }
+                    if (activeTab == "Videos") {
+                        IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                        IconButton(onClick = {
+                            gridView = !gridView
+                            prefs.edit().putBoolean("library_grid_view", gridView).apply()
+                        }) { Icon(if (gridView) Icons.Default.ViewList else Icons.Default.GridView, if (gridView) "Switch to list view" else "Switch to grid view", tint = Mint) }
+                    }
                 }
             }
 
@@ -447,6 +450,29 @@ private fun NovaHome(player: Player) {
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) {
                         Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFF39E7D5))
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf("All", "Under 10 min", "10–60 min", "1 hour+").forEach { filter ->
+                        FilterChip(
+                            selected = durationFilter == filter,
+                            onClick = {
+                                durationFilter = filter
+                                prefs.edit().putString("library_duration_filter", filter).apply()
+                            },
+                            label = { Text(filter, fontSize = 11.sp) },
+                            leadingIcon = if (durationFilter == filter) ({ Icon(Icons.Default.Check, null, modifier = Modifier.size(15.dp)) }) else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Mint.copy(alpha = 0.16f),
+                                selectedLabelColor = Mint,
+                                selectedLeadingIconColor = Mint,
+                                labelColor = Color(0xFFBAC6DF)
+                            )
+                        )
                     }
                 }
                 recentItems.firstOrNull()?.let { recent ->
@@ -483,8 +509,17 @@ private fun NovaHome(player: Player) {
                     Spacer(Modifier.weight(1f))
                     Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                 }
-                val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) && (selectedFolder == null || it.folder == selectedFolder) }
-                    .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
+                val visibleVideos = localVideos.filter { video ->
+                    val matchesDuration = when (durationFilter) {
+                        "Under 10 min" -> video.duration in 1L..599_999L
+                        "10–60 min" -> video.duration in 600_000L..3_599_999L
+                        "1 hour+" -> video.duration >= 3_600_000L
+                        else -> true
+                    }
+                    video.title.contains(librarySearch, ignoreCase = true) &&
+                        (selectedFolder == null || video.folder == selectedFolder) &&
+                        matchesDuration
+                }.let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
                 if (visibleVideos.isEmpty()) {
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                         Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
