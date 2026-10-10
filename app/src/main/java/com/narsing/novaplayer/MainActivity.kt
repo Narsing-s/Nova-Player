@@ -1382,6 +1382,12 @@ private fun NovaHome(player: Player) {
                                         Text("PiP", color = Color.White)
                                     }
                                     IconButton(onClick = {
+                                        controlsLocked = true
+                                        status = "Player controls locked · Tap Unlock controls to restore"
+                                    }) {
+                                        Icon(Icons.Default.Lock, contentDescription = "Lock player controls", tint = Mint)
+                                    }
+                                    IconButton(onClick = {
                                         fullScreen = !fullScreen
                                         status = if (fullScreen) "Immersive full-screen enabled" else "Immersive full-screen disabled"
                                     }) {
