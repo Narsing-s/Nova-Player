@@ -576,8 +576,17 @@ private fun NovaHome(player: Player) {
                     OutlinedTextField(
                         value = librarySearch, onValueChange = { librarySearch = it },
                         modifier = Modifier.weight(1f), singleLine = true,
-                        label = { Text("Search videos") },
-                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        shape = RoundedCornerShape(18.dp),
+                        label = { Text("Search your videos") },
+                        placeholder = { Text("Title or filename", color = Color(0xFF6F7D9C)) },
+                        leadingIcon = { Icon(Icons.Default.Search, null, tint = Mint) },
+                        trailingIcon = {
+                            if (librarySearch.isNotEmpty()) {
+                                IconButton(onClick = { librarySearch = "" }) {
+                                    Icon(Icons.Default.Close, "Clear search", tint = Color(0xFF9BA8C7))
+                                }
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF39E7D5),
                             unfocusedBorderColor = Color(0xFF35415B),
@@ -716,7 +725,7 @@ private fun NovaHome(player: Player) {
                     }
                 } else if (gridView) {
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                        columns = GridCells.Adaptive(minSize = 156.dp),
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -730,7 +739,7 @@ private fun NovaHome(player: Player) {
                                 onClick = { playMedia(video.uri, video.title) }
                             ) {
                                 Column {
-                                    Box(Modifier.fillMaxWidth().height(116.dp).background(Color(0xFF202A40)), contentAlignment = Alignment.Center) {
+                                    Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color(0xFF202A40)), contentAlignment = Alignment.Center) {
                                         VideoThumbnail(video)
                                         Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 8.dp)).padding(horizontal = 7.dp, vertical = 4.dp)) {
                                             Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
