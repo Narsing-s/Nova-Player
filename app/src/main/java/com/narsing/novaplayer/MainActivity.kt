@@ -45,12 +45,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.media3.ui.TrackSelectionDialogBuilder
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
@@ -96,6 +100,11 @@ private fun NovaHome() {
     var playbackSpeed by remember { mutableStateOf(1.0f) }
     var shuffleEnabled by remember { mutableStateOf(false) }
     var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
+    var queueItems by remember { mutableStateOf(emptyList<HistoryEntry>()) }
+    var fullScreen by remember { mutableStateOf(false) }
+    var showSubtitleSettings by remember { mutableStateOf(false) }
+    var subtitleScale by remember { mutableFloatStateOf(0.065f) }
+    var subtitleBackgroundEnabled by remember { mutableStateOf(true) }
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
@@ -118,6 +127,12 @@ private fun NovaHome() {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
                 }
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    val uri = mediaItem?.localConfiguration?.uri ?: return
+                    selectedUri = uri
+                    selectedTitle = mediaItem.mediaMetadata.title?.toString() ?: uri.lastPathSegment ?: "Local video"
+                    prefs.edit().putString(KEY_LAST_URI, uri.toString()).putString(KEY_LAST_TITLE, selectedTitle).apply()
+                }
                 override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                     status = "Playback failed (${error.errorCodeName}). Try reopening the file or choosing another video."
                 }
@@ -127,6 +142,10 @@ private fun NovaHome() {
 
     DisposableEffect(player) {
         onDispose {
+            val activity = context.findActivity()
+            activity?.window?.let { window ->
+                WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
             player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
                 prefs.edit().putString(KEY_LAST_URI, uri.toString()).putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
             }
@@ -134,7 +153,20 @@ private fun NovaHome() {
         }
     }
 
+    LaunchedEffect(fullScreen) {
+        val activity = context.findActivity() ?: return@LaunchedEffect
+        val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+        if (fullScreen) {
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        } else {
+            controller.show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
     fun playMedia(uri: Uri, title: String, subtitle: Uri? = null) {
+        fullScreen = false
+        queueItems = emptyList()
         selectedUri = uri
         selectedTitle = title
         val builder = MediaItem.Builder().setUri(uri).setMediaId(uri.toString())
@@ -151,6 +183,45 @@ private fun NovaHome() {
         recentItems = (listOf(HistoryEntry(uri.toString(), title)) + recentItems.filterNot { it.uri == uri.toString() }).take(8)
         saveHistory(prefs, recentItems)
         status = if (resume > 5_000L) "Resuming from " + formatTime(resume) else "Now playing: $title"
+    }
+
+    fun playQueue(startIndex: Int = 0) {
+        if (queueItems.isEmpty()) {
+            status = "Your play queue is empty. Add videos using the queue icon."
+            return
+        }
+        val safeIndex = startIndex.coerceIn(queueItems.indices)
+        val mediaItems = queueItems.map { entry ->
+            MediaItem.Builder()
+                .setUri(Uri.parse(entry.uri))
+                .setMediaId(entry.uri)
+                .setMediaMetadata(MediaMetadata.Builder().setTitle(entry.title).build())
+                .build()
+        }
+        fullScreen = false
+        player.setMediaItems(mediaItems, safeIndex, 0L)
+        player.prepare()
+        player.play()
+        selectedUri = Uri.parse(queueItems[safeIndex].uri)
+        selectedTitle = queueItems[safeIndex].title
+        status = "Playing queue: ${selectedTitle}"
+    }
+
+    fun enqueueMedia(video: LocalVideo) {
+        val entry = HistoryEntry(video.uri.toString(), video.title)
+        if (queueItems.any { it.uri == entry.uri }) {
+            status = "Already in queue: ${video.title}"
+            return
+        }
+        val updated = queueItems + entry
+        queueItems = updated
+        if (player.mediaItemCount == 0) {
+            playQueue(updated.lastIndex)
+        } else {
+            player.addMediaItem(MediaItem.Builder().setUri(video.uri).setMediaId(entry.uri)
+                .setMediaMetadata(MediaMetadata.Builder().setTitle(video.title).build()).build())
+            status = "Added to queue: ${video.title}"
+        }
     }
 
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -189,7 +260,7 @@ private fun NovaHome() {
 
     Surface(Modifier.fillMaxSize(), color = Color(0xFF0A0E1A)) {
         Column(Modifier.fillMaxSize().background(Color(0xFF0A0E1A))) {
-            Row(
+            if (!fullScreen) Row(
                 Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -294,7 +365,10 @@ private fun NovaHome() {
                                         tint = Color(0xFF39E7D5)
                                     )
                                 }
-                                IconButton(onClick = { playMedia(video.uri, video.title) }) {
+                                IconButton(onClick = { enqueueMedia(video) }) {
+                                Icon(Icons.Default.PlaylistAdd, "Add ${video.title} to queue", tint = Color(0xFF8A70FF), modifier = Modifier.size(26.dp))
+                            }
+                            IconButton(onClick = { playMedia(video.uri, video.title) }) {
                                     Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFF39E7D5), modifier = Modifier.size(30.dp))
                                 }
                             }
@@ -344,6 +418,66 @@ private fun NovaHome() {
                                 try { playMedia(Uri.parse(item.uri), item.title) }
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
                             }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFF39E7D5)) }
+                        }
+                        Divider(color = Color(0xFF202A40))
+                    }
+                }
+            }
+
+            if (selectedUri == null && activeTab == "Queue") {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.QueueMusic, null, tint = Mint)
+                        Spacer(Modifier.width(8.dp))
+                        Text("PLAY QUEUE", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Spacer(Modifier.weight(1f))
+                        Text("${queueItems.size} items", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { playQueue(0) }, enabled = queueItems.isNotEmpty(), modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
+                            Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play all")
+                        }
+                        OutlinedButton(onClick = {
+                            queueItems = emptyList()
+                            player.clearMediaItems()
+                            selectedUri = null
+                            selectedTitle = ""
+                            status = "Play queue cleared"
+                        }, enabled = queueItems.isNotEmpty(), modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.DeleteSweep, null); Spacer(Modifier.width(6.dp)); Text("Clear queue")
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    if (queueItems.isEmpty()) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.QueueMusic, null, tint = Lavender, modifier = Modifier.size(46.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text("Your queue is empty", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Tap the playlist-plus icon beside any video to add it.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        }
+                    } else queueItems.forEachIndexed { index, item ->
+                        Row(Modifier.fillMaxWidth().background(if (selectedUri?.toString() == item.uri) Color(0xFF172A39) else Color.Transparent, RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("${index + 1}", color = Mint, modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold)
+                            Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
+                                Text(item.title, color = Color.White, maxLines = 2, fontSize = 13.sp)
+                                Text(if (selectedUri?.toString() == item.uri) "Now playing" else "Queued locally", color = Color(0xFF9BA8C7), fontSize = 10.sp)
+                            }
+                            IconButton(onClick = { playQueue(index) }) { Icon(Icons.Default.PlayArrow, "Play ${item.title}", tint = Mint) }
+                            IconButton(onClick = {
+                                val wasCurrent = selectedUri?.toString() == item.uri
+                                queueItems = queueItems.filterIndexed { i, _ -> i != index }
+                                if (player.mediaItemCount > 0) {
+                                    val playerIndex = player.currentMediaItemIndex
+                                    player.removeMediaItem(index.coerceAtMost(player.mediaItemCount - 1))
+                                    if (wasCurrent && queueItems.isEmpty()) {
+                                        selectedUri = null
+                                        selectedTitle = ""
+                                    }
+                                }
+                                status = "Removed from queue"
+                            }) { Icon(Icons.Default.Close, "Remove ${item.title} from queue", tint = Color(0xFF9BA8C7)) }
                         }
                         Divider(color = Color(0xFF202A40))
                     }
@@ -461,7 +595,19 @@ private fun NovaHome() {
                                 )
                             },
                             factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
-                            update = { view -> view.player = player; view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT } }
+                            update = { view ->
+                                view.player = player
+                                view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT }
+                                view.subtitleView?.setFractionalTextSize(subtitleScale)
+                                view.subtitleView?.setStyle(CaptionStyleCompat(
+                                    android.graphics.Color.WHITE,
+                                    if (subtitleBackgroundEnabled) android.graphics.Color.argb(190, 0, 0, 0) else android.graphics.Color.TRANSPARENT,
+                                    android.graphics.Color.TRANSPARENT,
+                                    CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+                                    android.graphics.Color.BLACK,
+                                    null
+                                ))
+                            }
                         )
                         Row(
                             Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
@@ -544,6 +690,16 @@ private fun NovaHome() {
                             TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
                                 Icon(Icons.Default.Subtitles, null, tint = Lavender); Text("Subtitles")
                             }
+                            TextButton(onClick = { showSubtitleSettings = true }) {
+                                Icon(Icons.Default.TextFields, null, tint = Lavender); Text("Text")
+                            }
+                            TextButton(onClick = {
+                                fullScreen = !fullScreen
+                                status = if (fullScreen) "Immersive full-screen enabled. Swipe from an edge to reveal system bars." else "Immersive full-screen disabled"
+                            }) {
+                                Icon(if (fullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen, null, tint = Mint)
+                                Text(if (fullScreen) "Exit full" else "Full screen")
+                            }
                             TextButton(onClick = {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     val activity = context.findActivity()
@@ -563,11 +719,11 @@ private fun NovaHome() {
             }
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
-            if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
+            if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                listOf("Videos", "Folders", "Recent", "Favorites", "Queue").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.Default.QueueMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
