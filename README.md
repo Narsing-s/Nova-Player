@@ -181,6 +181,10 @@ Original project code is intended to use Apache-2.0. Third-party dependencies re
 
 A successful CI build confirms that the Android project compiles; it does **not** replace testing on a physical Android device. Use this checklist before calling a build production-ready.
 
+### Landscape playback quick controls
+
+When a video is playing in landscape, an on-video quick-action dock keeps playback speed, aspect mode, subtitle loading, audio-track selection, Picture-in-Picture and immersive mode available without returning to portrait. The dock is hidden when playback controls are locked.
+
 ### Core playback
 - [ ] Open a video from the library and from Android's document picker.
 - [ ] Confirm play, pause, seek bar, previous/next, queue order, shuffle and all repeat modes.
