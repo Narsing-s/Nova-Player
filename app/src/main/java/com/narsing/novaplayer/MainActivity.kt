@@ -25,6 +25,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -969,7 +970,24 @@ private fun NovaHome(player: Player) {
                     Column(Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxWidth().weight(1f)) {
                         AndroidView(
-                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri, controlsLocked, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(selectedUri, controlsLocked) {
+                                    detectTapGestures(
+                                        onDoubleTap = { offset ->
+                                            if (!controlsLocked && selectedUri != null) {
+                                                val forward = offset.x >= size.width / 2f
+                                                val duration = player.duration
+                                                val target = (player.currentPosition + if (forward) 10_000L else -10_000L)
+                                                    .coerceAtLeast(0L)
+                                                    .let { if (duration > 0L) it.coerceAtMost(duration) else it }
+                                                player.seekTo(target)
+                                                status = (if (forward) "Forward" else "Rewind") + " 10 seconds"
+                                            }
+                                        }
+                                    )
+                                }
+                                .pointerInput(selectedUri, controlsLocked, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
                                 var totalX = 0f
                                 var totalY = 0f
                                 var startX = 0f
