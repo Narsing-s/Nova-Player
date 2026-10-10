@@ -99,6 +99,7 @@ private fun NovaHome() {
     var librarySearch by remember { mutableStateOf("") }
     var sortByName by remember { mutableStateOf(false) }
     var activeTab by remember { mutableStateOf("Videos") }
+    var selectedFolder by remember { mutableStateOf<String?>(null) }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -208,7 +209,7 @@ private fun NovaHome() {
 
             if (selectedUri == null) {
                 Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    listOf("Videos", "Recent", "Favorites").forEach { tab ->
+                    listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
                                 Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
@@ -239,11 +240,12 @@ private fun NovaHome() {
                     }
                 }
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(if (selectedFolder != null) "FOLDER: $selectedFolder" else if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    if (selectedFolder != null) TextButton(onClick = { selectedFolder = null }) { Text("Clear", color = Color(0xFFFF8A33), fontSize = 11.sp) }
                     Spacer(Modifier.weight(1f))
                     Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFFAAAAAA), fontSize = 11.sp)
                 }
-                val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) }
+                val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) && (selectedFolder == null || it.folder == selectedFolder) }
                     .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
                 if (visibleVideos.isEmpty()) {
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -280,7 +282,7 @@ private fun NovaHome() {
                                 Column(Modifier.weight(1f)) {
                                     Text(video.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2)
                                     Spacer(Modifier.height(4.dp))
-                                    Text(formatBytes(video.size) + "  •  Local video", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                                    Text(formatBytes(video.size) + "  •  " + video.folder.substringAfterLast('/').ifBlank { "Device storage" }, color = Color(0xFF9E9E9E), fontSize = 11.sp, maxLines = 1)
                                 }
                                 IconButton(onClick = {
                                     val uri = video.uri.toString()
@@ -304,6 +306,33 @@ private fun NovaHome() {
                             }
                             Divider(color = Color(0xFF292929), thickness = 1.dp)
                         }
+                    }
+                }
+            } else if (selectedUri == null && activeTab == "Folders") {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Text("BROWSE BY FOLDER", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Spacer(Modifier.height(10.dp))
+                    val folders = localVideos.groupBy { it.folder }.toList().sortedBy { it.first.lowercase() }
+                    if (folders.isEmpty()) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.FolderOpen, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text("No indexed video folders yet", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Scan device videos or use Browse files.", color = Color(0xFFAAAAAA), fontSize = 12.sp)
+                            TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files", color = Color(0xFFFF8A33)) }
+                        }
+                    } else folders.forEach { (folder, videos) ->
+                        Row(Modifier.fillMaxWidth().background(Color(0xFF171717), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Folder, null, tint = Color(0xFFFF8A33), modifier = Modifier.size(32.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(folder.substringAfterLast('/').ifBlank { "Device storage" }, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                Text("${videos.size} video${if (videos.size == 1) "" else "s"}  •  ${formatBytes(videos.sumOf { it.size })}", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                                Text(folder, color = Color(0xFF777777), fontSize = 10.sp, maxLines = 1)
+                            }
+                            IconButton(onClick = { selectedFolder = folder; activeTab = "Videos" }) { Icon(Icons.Default.ChevronRight, "Open folder", tint = Color(0xFFFF6D00)) }
+                        }
+                        Spacer(Modifier.height(8.dp))
                     }
                 }
             } else if (selectedUri == null && activeTab == "Recent") {
@@ -507,10 +536,10 @@ private fun NovaHome() {
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Recent", "Favorites").forEach { tab ->
+                listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFAAAAAA))
                         }
                     }
@@ -565,22 +594,28 @@ private fun Context.findActivity(): Activity? {
 }
 
 
-private data class LocalVideo(val uri: Uri, val title: String, val duration: Long, val size: Long, val dateAdded: Long)
+private data class LocalVideo(val uri: Uri, val title: String, val duration: Long, val size: Long, val dateAdded: Long, val folder: String)
 
 private fun loadLocalVideos(context: Context): List<LocalVideo> {
     val videos = mutableListOf<LocalVideo>()
-    val projection = arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DURATION, MediaStore.Video.Media.SIZE, MediaStore.Video.Media.DATE_ADDED)
+    val projection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DURATION, MediaStore.Video.Media.SIZE, MediaStore.Video.Media.DATE_ADDED, MediaStore.Video.Media.RELATIVE_PATH)
+    } else {
+        arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DURATION, MediaStore.Video.Media.SIZE, MediaStore.Video.Media.DATE_ADDED)
+    }
     context.contentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, null, null, MediaStore.Video.Media.DATE_ADDED + " DESC")?.use { cursor ->
         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
         val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
         val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
         val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+        val pathColumn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) cursor.getColumnIndex(MediaStore.Video.Media.RELATIVE_PATH) else -1
         while (cursor.moveToNext()) {
             val id = cursor.getLong(idColumn)
             val name = cursor.getString(nameColumn) ?: "Video"
             val uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
-            videos.add(LocalVideo(uri, name, cursor.getLong(durationColumn), cursor.getLong(sizeColumn), cursor.getLong(dateColumn)))
+            val folder = if (pathColumn >= 0) cursor.getString(pathColumn)?.trimEnd('/').orEmpty().ifBlank { "Device storage" } else "Device storage"
+            videos.add(LocalVideo(uri, name, cursor.getLong(durationColumn), cursor.getLong(sizeColumn), cursor.getLong(dateColumn), folder))
         }
     }
     return videos
