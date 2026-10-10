@@ -67,6 +67,7 @@ private const val KEY_LAST_URI = "last_uri"
 private const val KEY_LAST_TITLE = "last_title"
 private const val KEY_LAST_POSITION = "last_position"
 private const val KEY_HISTORY = "playback_history"
+private const val KEY_FAVORITES = "favorite_videos"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,6 +92,7 @@ private fun NovaHome() {
     var isSeekingGesture by remember { mutableStateOf(false) }
     var dragTotal by remember { mutableStateOf(0f) }
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
+    var favoriteItems by remember { mutableStateOf(readFavorites(prefs)) }
     var playbackSpeed by remember { mutableStateOf(1.0f) }
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
@@ -206,7 +208,7 @@ private fun NovaHome() {
 
             if (selectedUri == null) {
                 Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    listOf("Videos", "Recent").forEach { tab ->
+                    listOf("Videos", "Recent", "Favorites").forEach { tab ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
                                 Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
@@ -280,6 +282,22 @@ private fun NovaHome() {
                                     Spacer(Modifier.height(4.dp))
                                     Text(formatBytes(video.size) + "  •  Local video", color = Color(0xFF9E9E9E), fontSize = 11.sp)
                                 }
+                                IconButton(onClick = {
+                                    val uri = video.uri.toString()
+                                    favoriteItems = if (favoriteItems.any { it.uri == uri }) {
+                                        favoriteItems.filterNot { it.uri == uri }
+                                    } else {
+                                        listOf(HistoryEntry(uri, video.title)) + favoriteItems
+                                    }
+                                    saveFavorites(prefs, favoriteItems)
+                                    status = if (favoriteItems.any { it.uri == uri }) "Added to favorites" else "Removed from favorites"
+                                }) {
+                                    Icon(
+                                        if (favoriteItems.any { it.uri == video.uri.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        "Toggle favorite",
+                                        tint = Color(0xFFFF6D00)
+                                    )
+                                }
                                 IconButton(onClick = { playMedia(video.uri, video.title) }) {
                                     Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
                                 }
@@ -303,6 +321,46 @@ private fun NovaHome() {
                                 try { playMedia(Uri.parse(item.uri), item.title) }
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
                             }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFFFF6D00)) }
+                        }
+                        Divider(color = Color(0xFF292929))
+                    }
+                }
+            }
+
+            if (selectedUri == null && activeTab == "Favorites") {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Favorite, null, tint = Color(0xFFFF6D00))
+                        Spacer(Modifier.width(8.dp))
+                        Text("YOUR FAVORITES", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Spacer(Modifier.weight(1f))
+                        Text("${favoriteItems.size} saved", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    if (favoriteItems.isEmpty()) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 42.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.FavoriteBorder, null, tint = Color(0xFF777777), modifier = Modifier.size(44.dp))
+                            Spacer(Modifier.height(10.dp))
+                            Text("No favorites yet", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Tap the heart beside a video to save it here.", color = Color(0xFFAAAAAA), fontSize = 12.sp)
+                        }
+                    } else favoriteItems.forEach { item ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Movie, null, tint = Color(0xFFFF8A33), modifier = Modifier.size(30.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(item.title, color = Color.White, maxLines = 2, fontSize = 14.sp)
+                                Text("Saved on this device", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                            }
+                            IconButton(onClick = {
+                                try { playMedia(Uri.parse(item.uri), item.title) }
+                                catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
+                            }) { Icon(Icons.Default.PlayCircle, "Play favorite", tint = Color(0xFFFF6D00)) }
+                            IconButton(onClick = {
+                                favoriteItems = favoriteItems.filterNot { it.uri == item.uri }
+                                saveFavorites(prefs, favoriteItems)
+                                status = "Removed from favorites"
+                            }) { Icon(Icons.Default.DeleteOutline, "Remove favorite", tint = Color(0xFFAAAAAA)) }
                         }
                         Divider(color = Color(0xFF292929))
                     }
@@ -549,6 +607,28 @@ private fun readHistory(prefs: android.content.SharedPreferences): List<HistoryE
     } catch (_: Exception) {
         emptyList()
     }
+}
+
+private fun readFavorites(prefs: android.content.SharedPreferences): List<HistoryEntry> {
+    return try {
+        val array = JSONArray(prefs.getString(KEY_FAVORITES, "[]"))
+        (0 until array.length()).mapNotNull { index ->
+            val item = array.optJSONObject(index) ?: return@mapNotNull null
+            val uri = item.optString("uri")
+            val title = item.optString("title")
+            if (uri.isBlank() || title.isBlank()) null else HistoryEntry(uri, title)
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+private fun saveFavorites(prefs: android.content.SharedPreferences, items: List<HistoryEntry>) {
+    val array = JSONArray()
+    items.forEach { item ->
+        array.put(JSONObject().put("uri", item.uri).put("title", item.title))
+    }
+    prefs.edit().putString(KEY_FAVORITES, array.toString()).apply()
 }
 
 private fun saveHistory(prefs: android.content.SharedPreferences, items: List<HistoryEntry>) {
