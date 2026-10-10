@@ -3,6 +3,10 @@ package com.narsing.novaplayer
 import android.net.Uri
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.content.Intent
+import android.os.IBinder
 import android.provider.MediaStore
 import android.content.ContentUris
 import android.os.Bundle
@@ -80,19 +84,56 @@ private const val KEY_PLAYLISTS = "saved_playlists"
 private const val KEY_QUEUE = "play_queue"
 
 class MainActivity : ComponentActivity() {
+    private val playbackPlayer = mutableStateOf<ExoPlayer?>(null)
+    private var playbackBound = false
+
+    private val playbackConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as? NovaPlaybackService.PlaybackBinder ?: return
+            playbackPlayer.value = binder.playbackPlayer()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            playbackPlayer.value = null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        startService(Intent(this, NovaPlaybackService::class.java))
+        playbackBound = bindService(
+            Intent(this, NovaPlaybackService::class.java).setAction(NovaPlaybackService.ACTION_LOCAL_BIND),
+            playbackConnection,
+            Context.BIND_AUTO_CREATE
+        )
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(primary = Mint, secondary = Lavender, background = Midnight, surface = Panel)) {
-                NovaHome()
+                val player = playbackPlayer.value
+                if (player == null) {
+                    Surface(Modifier.fillMaxSize(), color = Midnight) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Mint)
+                        }
+                    }
+                } else {
+                    NovaHome(player)
+                }
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (playbackBound) {
+            unbindService(playbackConnection)
+            playbackBound = false
+        }
+        super.onDestroy()
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun NovaHome() {
+private fun NovaHome(player: ExoPlayer) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
@@ -125,34 +166,6 @@ private fun NovaHome() {
     var activeTab by remember { mutableStateOf("Videos") }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
 
-    val player = remember {
-        ExoPlayer.Builder(context.applicationContext).build().apply {
-            playWhenReady = false
-            shuffleModeEnabled = false
-            repeatMode = Player.REPEAT_MODE_OFF
-            addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(playing: Boolean) {
-                    isPlaying = playing
-                    if (!playing) currentMediaItem?.localConfiguration?.uri?.let { uri ->
-                        prefs.edit().putString(KEY_LAST_URI, uri.toString()).putLong(KEY_LAST_POSITION, currentPosition.coerceAtLeast(0L)).apply()
-                    }
-                }
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
-                }
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    val uri = mediaItem?.localConfiguration?.uri ?: return
-                    selectedUri = uri
-                    selectedTitle = mediaItem.mediaMetadata.title?.toString() ?: uri.lastPathSegment ?: "Local video"
-                    prefs.edit().putString(KEY_LAST_URI, uri.toString()).putString(KEY_LAST_TITLE, selectedTitle).apply()
-                }
-                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                    status = "Playback failed (${error.errorCodeName}). Try reopening the file or choosing another video."
-                }
-            })
-        }
-    }
-
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
     }
@@ -170,15 +183,47 @@ private fun NovaHome() {
     }
 
     DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+                if (!playing) player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
+                    prefs.edit().putString(KEY_LAST_URI, uri.toString())
+                        .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val uri = mediaItem?.localConfiguration?.uri ?: return
+                selectedUri = uri
+                selectedTitle = mediaItem.mediaMetadata.title?.toString() ?: uri.lastPathSegment ?: "Local video"
+                prefs.edit().putString(KEY_LAST_URI, uri.toString()).putString(KEY_LAST_TITLE, selectedTitle).apply()
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                status = "Playback failed (${error.errorCodeName}). Try reopening the file or choosing another video."
+            }
+        }
+        player.addListener(listener)
+        isPlaying = player.isPlaying
+        player.currentMediaItem?.let { item ->
+            selectedUri = item.localConfiguration?.uri
+            selectedTitle = item.mediaMetadata.title?.toString() ?: item.localConfiguration?.uri?.lastPathSegment.orEmpty()
+        }
         onDispose {
             val activity = context.findActivity()
             activity?.window?.let { window ->
                 WindowCompat.getInsetsController(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
             }
             player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
-                prefs.edit().putString(KEY_LAST_URI, uri.toString()).putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
+                prefs.edit().putString(KEY_LAST_URI, uri.toString())
+                    .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
             }
-            player.release()
+            player.removeListener(listener)
+            // The service owns the player; releasing it here would stop background playback.
         }
     }
 
