@@ -19,7 +19,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
-- **Play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue.
+- **Persistent play queue**: add videos from the library, play the queue from any item, remove individual items or clear the queue. The queue is saved locally and restored when the app is reopened.
 - **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
 - **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability.
@@ -44,7 +44,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Local favourites
 - [x] Session play queue with add, play-from-item, remove and clear actions
 - [x] Named playlists persisted locally with play, add-to-queue and delete actions
-- [ ] Restore the last session queue automatically after app restart
+- [x] Restore the last session queue automatically after app restart
 - [x] Basic brightness/volume/seek swipe gestures
 - [x] Immersive system-bar toggle for playback
 - [x] Subtitle text-size and background styling controls
