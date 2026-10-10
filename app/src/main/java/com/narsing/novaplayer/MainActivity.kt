@@ -732,7 +732,7 @@ private fun NovaHome(player: Player) {
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(visibleVideos.take(200), key = { it.uri.toString() }) { video ->
+                        items(visibleVideos, key = { it.uri.toString() }) { video ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
@@ -782,7 +782,7 @@ private fun NovaHome(player: Player) {
                     }
                 } else {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        visibleVideos.take(200).forEach { video ->
+                        visibleVideos.forEach { video ->
                             Row(
                                 Modifier.fillMaxWidth().background(Color(0xFF0A0E1A)).padding(horizontal = 14.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
