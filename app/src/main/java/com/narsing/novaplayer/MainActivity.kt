@@ -381,21 +381,52 @@ private fun NovaHome() {
                             factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
                             update = { view -> view.player = player; view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT } }
                         )
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                            TextButton(onClick = { player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L)) }) { Text("−10 sec") }
-                            TextButton(onClick = { player.seekTo(player.currentPosition + 10_000L) }) { Text("+10 sec") }
-                            TextButton(onClick = {
-                                val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }
-                                playbackSpeed = nextSpeed
-                                player.setPlaybackSpeed(nextSpeed)
-                                status = "Playback speed: " + nextSpeed + "×"
-                            }) { Text(playbackSpeed.toString() + "×") }
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            FilledTonalButton(
+                                onClick = {
+                                    player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L))
+                                    status = "Rewind 10 seconds"
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color.White),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                            ) { Text("↶  10s", fontWeight = FontWeight.SemiBold) }
+                            FilledTonalButton(
+                                onClick = {
+                                    val target = player.currentPosition + 10_000L
+                                    player.seekTo(if (player.duration > 0L) target.coerceAtMost(player.duration) else target)
+                                    status = "Forward 10 seconds"
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color.White),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                            ) { Text("10s  ↷", fontWeight = FontWeight.SemiBold) }
+                            FilledTonalButton(
+                                onClick = {
+                                    val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }
+                                    playbackSpeed = nextSpeed
+                                    player.setPlaybackSpeed(nextSpeed)
+                                    status = "Playback speed: " + nextSpeed + "×"
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color(0xFFFF8A33)),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            ) { Text(playbackSpeed.toString() + "×", fontWeight = FontWeight.Bold) }
                         }
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Row(
+                            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
                             TextButton(onClick = {
                                 aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
                                 status = "Screen mode: " + aspectMode
-                            }) { Text(aspectMode) }
+                            }) { Icon(Icons.Default.AspectRatio, null, tint = Lavender); Text(aspectMode) }
+                            TextButton(onClick = {
+                                try { TrackSelectionDialogBuilder(context, "Video quality / tracks", player, C.TRACK_TYPE_VIDEO).build().show() }
+                                catch (_: Exception) { status = "Video quality selection is unavailable for this file. The source resolution is unchanged." }
+                            }) { Icon(Icons.Default.HighQuality, null, tint = Lavender); Text("Quality") }
                             TextButton(onClick = {
                                 try { TrackSelectionDialogBuilder(context, "Audio tracks", player, C.TRACK_TYPE_AUDIO).build().show() }
                                 catch (_: Exception) { status = "Audio track selection is unavailable for this media." }
