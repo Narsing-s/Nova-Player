@@ -187,6 +187,7 @@ private fun NovaHome(player: Player) {
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
     var controlsLocked by remember { mutableStateOf(false) }
+    var keepScreenOn by remember { mutableStateOf(prefs.getBoolean("keep_screen_on", true)) }
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
@@ -235,7 +236,7 @@ private fun NovaHome(player: Player) {
             delay(150L)
         }
     }
-    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
+    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled, keepScreenOn) {
         prefs.edit()
             .putFloat("playback_speed", playbackSpeed)
             .putBoolean("shuffle_enabled", shuffleEnabled)
@@ -245,6 +246,7 @@ private fun NovaHome(player: Player) {
             .putBoolean("gesture_seek_enabled", gestureSeekEnabled)
             .putBoolean("gesture_brightness_enabled", gestureBrightnessEnabled)
             .putBoolean("gesture_volume_enabled", gestureVolumeEnabled)
+            .putBoolean("keep_screen_on", keepScreenOn)
             .putInt("subtitle_delay_ms", subtitleDelayMs)
             .apply()
         player.shuffleModeEnabled = shuffleEnabled
@@ -292,8 +294,18 @@ private fun NovaHome(player: Player) {
                 prefs.edit().putString(KEY_LAST_URI, uri.toString())
                     .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
             }
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             player.removeListener(listener)
             // The service owns the player; releasing it here would stop background playback.
+        }
+    }
+
+    LaunchedEffect(selectedUri, keepScreenOn) {
+        val window = context.findActivity()?.window ?: return@LaunchedEffect
+        if (selectedUri != null && keepScreenOn) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 
@@ -1165,6 +1177,14 @@ private fun NovaHome(player: Player) {
                                     Player.REPEAT_MODE_ONE -> "Repeat one"
                                     else -> "Repeat off"
                                 }, color = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White)
+                            }
+                            TextButton(onClick = {
+                                keepScreenOn = !keepScreenOn
+                                prefs.edit().putBoolean("keep_screen_on", keepScreenOn).apply()
+                                status = if (keepScreenOn) "Screen stays awake during playback" else "Screen may sleep during playback"
+                            }) {
+                                Icon(if (keepScreenOn) Icons.Default.BrightnessHigh else Icons.Default.BrightnessLow, null, tint = if (keepScreenOn) Mint else Lavender)
+                                Text(if (keepScreenOn) "Keep awake" else "Allow sleep", color = if (keepScreenOn) Mint else Color.White)
                             }
                             TextButton(onClick = {
                                 aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
