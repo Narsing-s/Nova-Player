@@ -187,6 +187,8 @@ private fun NovaHome(player: Player) {
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
     var controlsLocked by remember { mutableStateOf(false) }
+    var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
+    var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var sleepTimerActive by remember { mutableStateOf(false) }
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
@@ -212,6 +214,17 @@ private fun NovaHome(player: Player) {
 
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
+    }
+
+    LaunchedEffect(selectedUri, abLoopStartMs, abLoopEndMs) {
+        while (true) {
+            val start = abLoopStartMs
+            val end = abLoopEndMs
+            if (selectedUri != null && start != null && end != null && end > start && player.currentPosition >= end) {
+                player.seekTo(start)
+            }
+            delay(150L)
+        }
     }
     LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
         prefs.edit()
@@ -1018,6 +1031,30 @@ private fun NovaHome(player: Player) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            TextButton(onClick = {
+                                abLoopStartMs = player.currentPosition.coerceAtLeast(0L)
+                                abLoopEndMs = null
+                                status = "A–B loop point A set at " + formatTime(player.currentPosition)
+                            }) {
+                                Text(if (abLoopStartMs == null) "Set A" else "A: " + formatTime(abLoopStartMs!!), color = if (abLoopStartMs != null) Mint else Color.White, fontWeight = FontWeight.Bold)
+                            }
+                            TextButton(onClick = {
+                                val start = abLoopStartMs
+                                val end = player.currentPosition.coerceAtLeast(0L)
+                                if (start != null && end > start) {
+                                    abLoopEndMs = end
+                                    status = "A–B loop enabled: " + formatTime(start) + " – " + formatTime(end)
+                                } else {
+                                    status = "Set point A first, then set point B later in the video"
+                                }
+                            }) {
+                                Text(if (abLoopEndMs == null) "Set B" else "B: " + formatTime(abLoopEndMs!!), color = if (abLoopEndMs != null) Mint else Color.White, fontWeight = FontWeight.Bold)
+                            }
+                            TextButton(onClick = {
+                                abLoopStartMs = null
+                                abLoopEndMs = null
+                                status = "A–B loop cleared"
+                            }) { Text("Clear A–B", color = Lavender) }
                             TextButton(onClick = {
                                 shuffleEnabled = !shuffleEnabled
                                 player.shuffleModeEnabled = shuffleEnabled
