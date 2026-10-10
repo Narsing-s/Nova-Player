@@ -214,6 +214,12 @@ private fun NovaHome() {
             status = "Already in queue: ${video.title}"
             return
         }
+        val currentPlayingUri = player.currentMediaItem?.localConfiguration?.uri?.toString()
+        if (queueItems.isEmpty() && currentPlayingUri == entry.uri) {
+            queueItems = listOf(entry)
+            status = "Current video added to queue"
+            return
+        }
         val updated = if (queueItems.isEmpty() && player.mediaItemCount > 0) {
             val current = player.currentMediaItem
             val currentUri = current?.localConfiguration?.uri
