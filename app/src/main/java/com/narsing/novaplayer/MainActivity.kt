@@ -4,9 +4,7 @@ import android.net.Uri
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.ComponentName
-import android.content.ServiceConnection
 import android.content.Intent
-import android.os.IBinder
 import android.provider.MediaStore
 import android.content.ContentUris
 import android.os.Bundle
@@ -54,6 +52,9 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -84,28 +85,11 @@ private const val KEY_PLAYLISTS = "saved_playlists"
 private const val KEY_QUEUE = "play_queue"
 
 class MainActivity : ComponentActivity() {
-    private val playbackPlayer = mutableStateOf<ExoPlayer?>(null)
-    private var playbackBound = false
-
-    private val playbackConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as? NovaPlaybackService.PlaybackBinder ?: return
-            playbackPlayer.value = binder.playbackPlayer()
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            playbackPlayer.value = null
-        }
-    }
+    private val playbackPlayer = mutableStateOf<Player?>(null)
+    private var controllerFuture: ListenableFuture<MediaController>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startService(Intent(this, NovaPlaybackService::class.java))
-        playbackBound = bindService(
-            Intent(this, NovaPlaybackService::class.java).setAction(NovaPlaybackService.ACTION_LOCAL_BIND),
-            playbackConnection,
-            Context.BIND_AUTO_CREATE
-        )
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(primary = Mint, secondary = Lavender, background = Midnight, surface = Panel)) {
                 val player = playbackPlayer.value
@@ -122,18 +106,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() {
-        if (playbackBound) {
-            unbindService(playbackConnection)
-            playbackBound = false
+    override fun onStart() {
+        super.onStart()
+        val token = SessionToken(this, ComponentName(this, NovaPlaybackService::class.java))
+        controllerFuture = MediaController.Builder(this, token).buildAsync().also { future ->
+            future.addListener({
+                try {
+                    playbackPlayer.value = future.get()
+                } catch (_: Exception) {
+                    playbackPlayer.value = null
+                }
+            }, androidx.core.content.ContextCompat.getMainExecutor(this))
         }
-        super.onDestroy()
+    }
+
+    override fun onStop() {
+        playbackPlayer.value = null
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
+        super.onStop()
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun NovaHome(player: ExoPlayer) {
+private fun NovaHome(player: Player) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
