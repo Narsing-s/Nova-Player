@@ -12,10 +12,14 @@ import android.media.AudioManager
 import android.app.Activity
 import android.os.Build
 import android.util.Rational
+import android.util.Size
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -30,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +52,8 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.TrackSelectionDialogBuilder
 import kotlin.math.abs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -260,7 +268,7 @@ private fun NovaHome() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(Modifier.size(width = 100.dp, height = 66.dp).background(Color(0xFF292929), RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Movie, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
+                                    VideoThumbnail(video)
                                     Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 4.dp)).padding(horizontal = 4.dp, vertical = 2.dp)) {
                                         Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp)
                                     }
@@ -298,7 +306,7 @@ private fun NovaHome() {
                         Divider(color = Color(0xFF292929))
                     }
                 }
-
+            }
 
             if (selectedUri != null) {
                 Card(
@@ -419,6 +427,35 @@ private fun NovaHome() {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun VideoThumbnail(video: LocalVideo) {
+    val context = LocalContext.current
+    val bitmap by produceState<Bitmap?>(initialValue = null, key1 = video.uri) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    context.contentResolver.loadThumbnail(video.uri, Size(320, 180), null)
+                } else {
+                    val retriever = MediaMetadataRetriever()
+                    try {
+                        retriever.setDataSource(context, video.uri)
+                        retriever.getFrameAtTime(1_000_000L, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    } finally {
+                        retriever.release()
+                    }
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+    if (bitmap != null) {
+        Image(bitmap = bitmap!!.asImageBitmap(), contentDescription = video.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+    } else {
+        Icon(Icons.Default.Movie, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
     }
 }
 
