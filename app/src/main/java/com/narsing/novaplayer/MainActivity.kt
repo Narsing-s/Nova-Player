@@ -3,6 +3,7 @@ package com.narsing.novaplayer
 import android.net.Uri
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.pm.ActivityInfo
 import android.content.ComponentName
 import android.content.Intent
 import android.provider.MediaStore
@@ -191,6 +192,7 @@ private fun NovaHome(player: Player) {
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
+    var orientationMode by remember { mutableStateOf(prefs.getString("player_orientation", "Auto") ?: "Auto") }
     var controlsLocked by remember { mutableStateOf(false) }
     var keepScreenOn by remember { mutableStateOf(prefs.getBoolean("keep_screen_on", true)) }
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
@@ -314,6 +316,16 @@ private fun NovaHome(player: Player) {
         } else {
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
+    }
+
+    LaunchedEffect(orientationMode, selectedUri) {
+        val activity = context.findActivity() ?: return@LaunchedEffect
+        activity.requestedOrientation = when (orientationMode) {
+            "Portrait" -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            "Landscape" -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
+        }
+        prefs.edit().putString("player_orientation", orientationMode).apply()
     }
 
     LaunchedEffect(fullScreen) {
@@ -1306,6 +1318,17 @@ private fun NovaHome(player: Player) {
                                 aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
                                 status = "Screen mode: " + aspectMode
                             }) { Icon(Icons.Default.AspectRatio, null, tint = Lavender); Text(aspectMode) }
+                            TextButton(onClick = {
+                                orientationMode = when (orientationMode) {
+                                    "Auto" -> "Landscape"
+                                    "Landscape" -> "Portrait"
+                                    else -> "Auto"
+                                }
+                                status = "Player orientation: " + orientationMode
+                            }) {
+                                Icon(Icons.Default.ScreenRotation, null, tint = if (orientationMode == "Auto") Lavender else Mint)
+                                Text(orientationMode, color = if (orientationMode == "Auto") Color.White else Mint)
+                            }
                             TextButton(onClick = {
                                 try { TrackSelectionDialogBuilder(context, "Video quality / tracks", player, C.TRACK_TYPE_VIDEO).build().show() }
                                 catch (_: Exception) { status = "Video quality selection is unavailable for this file. The source resolution is unchanged." }
