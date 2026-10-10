@@ -1348,6 +1348,34 @@ private fun NovaHome(player: Player) {
                                         Text("Favorite", color = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White)
                                     }
                                     TextButton(onClick = {
+                                        val start = abLoopStartMs
+                                        val end = abLoopEndMs
+                                        if (start == null || end != null) {
+                                            abLoopStartMs = player.currentPosition.coerceAtLeast(0L)
+                                            abLoopEndMs = null
+                                            status = "A–B loop point A set at " + formatTime(player.currentPosition)
+                                        } else {
+                                            val current = player.currentPosition.coerceAtLeast(0L)
+                                            if (current > start) {
+                                                abLoopEndMs = current
+                                                status = "A–B loop enabled: " + formatTime(start) + " – " + formatTime(current)
+                                            } else {
+                                                status = "Point B must be after point A"
+                                            }
+                                        }
+                                    }) {
+                                        Icon(Icons.Default.RepeatOne, contentDescription = "Set or clear A-B loop", tint = if (abLoopStartMs != null) Lavender else Color.White)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(
+                                            when {
+                                                abLoopStartMs == null -> "Set A"
+                                                abLoopEndMs == null -> "Set B"
+                                                else -> "Clear A–B"
+                                            },
+                                            color = if (abLoopStartMs != null) Lavender else Color.White
+                                        )
+                                    }
+                                    TextButton(onClick = {
                                         shuffleEnabled = !shuffleEnabled
                                         player.shuffleModeEnabled = shuffleEnabled
                                         prefs.edit().putBoolean("shuffle_enabled", shuffleEnabled).apply()
