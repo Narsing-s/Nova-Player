@@ -545,8 +545,9 @@ private fun NovaHome() {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxWidth().weight(1f)) {
                         AndroidView(
-                            modifier = Modifier.fillMaxWidth().weight(1f).pointerInput(selectedUri) {
+                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri) {
                                 var totalX = 0f
                                 var totalY = 0f
                                 var startX = 0f
@@ -623,6 +624,19 @@ private fun NovaHome() {
                                 ))
                             }
                         )
+                        if (fullScreen) {
+                            IconButton(
+                                onClick = {
+                                    fullScreen = false
+                                    status = "Immersive full-screen disabled"
+                                },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
+                            ) {
+                                Icon(Icons.Default.FullscreenExit, "Exit full screen", tint = Mint)
+                            }
+                        }
+                        }
+                        if (!fullScreen) {
                         Row(
                             Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -721,9 +735,10 @@ private fun NovaHome() {
                                 } else status = "Picture-in-Picture requires Android 8.0 or newer."
                             }) { Icon(Icons.Default.PictureInPictureAlt, null, tint = Mint); Text("PiP") }
                         }
+                        }
                     }
                 }
-                Text(
+                if (!fullScreen) Text(
                     if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
                     color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
                     fontSize = 12.sp,
