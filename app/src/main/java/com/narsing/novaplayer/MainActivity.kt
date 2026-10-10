@@ -207,13 +207,13 @@ private fun NovaHome() {
         status = if (resume > 5_000L) "Resuming from " + formatTime(resume) else "Now playing: $title"
     }
 
-    fun playQueue(startIndex: Int = 0) {
-        if (queueItems.isEmpty()) {
+    fun playQueueEntries(entries: List<HistoryEntry>, startIndex: Int = 0) {
+        if (entries.isEmpty()) {
             status = "Your play queue is empty. Add videos using the queue icon."
             return
         }
-        val safeIndex = startIndex.coerceIn(queueItems.indices)
-        val mediaItems = queueItems.map { entry ->
+        val safeIndex = startIndex.coerceIn(entries.indices)
+        val mediaItems = entries.map { entry ->
             MediaItem.Builder()
                 .setUri(Uri.parse(entry.uri))
                 .setMediaId(entry.uri)
@@ -224,10 +224,12 @@ private fun NovaHome() {
         player.setMediaItems(mediaItems, safeIndex, 0L)
         player.prepare()
         player.play()
-        selectedUri = Uri.parse(queueItems[safeIndex].uri)
-        selectedTitle = queueItems[safeIndex].title
-        status = "Playing queue: ${selectedTitle}"
+        selectedUri = Uri.parse(entries[safeIndex].uri)
+        selectedTitle = entries[safeIndex].title
+        status = "Playing queue: $selectedTitle"
     }
+
+    fun playQueue(startIndex: Int = 0) = playQueueEntries(queueItems, startIndex)
 
     fun enqueueMedia(video: LocalVideo) {
         val entry = HistoryEntry(video.uri.toString(), video.title)
@@ -498,7 +500,7 @@ private fun NovaHome() {
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Button(onClick = { queueItems = playlist.items; playQueue(0) }, enabled = playlist.items.isNotEmpty(), modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
+                                    Button(onClick = { queueItems = playlist.items; playQueueEntries(playlist.items, 0) }, enabled = playlist.items.isNotEmpty(), modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
                                         Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(5.dp)); Text("Play playlist")
                                     }
                                     OutlinedButton(onClick = {
