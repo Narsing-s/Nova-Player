@@ -49,10 +49,10 @@ import kotlin.math.abs
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val Midnight = Color(0xFF0B1020)
-private val Panel = Color(0xFF151D31)
-private val Mint = Color(0xFF75F0D1)
-private val Lavender = Color(0xFFB9A4FF)
+private val Midnight = Color(0xFF101010)
+private val Panel = Color(0xFF171717)
+private val Mint = Color(0xFFFF6D00)
+private val Lavender = Color(0xFFFF8A33)
 private const val PREFS = "nova_player_state"
 private const val KEY_LAST_URI = "last_uri"
 private const val KEY_LAST_TITLE = "last_title"
@@ -87,7 +87,7 @@ private fun NovaHome() {
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
-    var sortByName by remember { mutableStateOf(false) }
+    var sortByName by remember { mutableStateOf(false) }\n    var activeTab by remember { mutableStateOf("Videos") }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -159,110 +159,146 @@ private fun NovaHome() {
         } else status = "Allow video access to show your device library. You can still use Browse videos."
     }
 
-    Surface(Modifier.fillMaxSize(), color = Midnight) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(Brush.verticalGradient(listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18)))).padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(48.dp).background(Brush.linearGradient(listOf(Mint, Lavender)), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.PlayArrow, null, tint = Midnight, modifier = Modifier.size(32.dp))
+    Surface(Modifier.fillMaxSize(), color = Color(0xFF101010)) {
+        Column(Modifier.fillMaxSize().background(Color(0xFF101010))) {
+            Row(
+                Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(38.dp).background(Color(0xFFFF6D00), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(28.dp))
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("NOVA PLAYER", color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                    Text("Your video space", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text("NOVA PLAYER", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Text("LOCAL VIDEO PLAYER", color = Color(0xFFAAAAAA), fontSize = 9.sp, letterSpacing = 1.4.sp)
                 }
-                Text(if (isPlaying) "PLAYING" else "READY", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                IconButton(onClick = {
+                    if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                        localVideos = loadLocalVideos(context)
+                        status = "Found " + localVideos.size + " videos on this device."
+                    } else libraryPermissionLauncher.launch(libraryPermission)
+                }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
+                IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
             }
 
-            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.VideoLibrary, null, tint = Mint); Spacer(Modifier.width(8.dp))
-                        Text("Your library", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
+                listOf("Videos", "Recent", "Online").forEach { tab ->
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
+                            Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
+                        }
+                        Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFFFF6D00) else Color.Transparent))
                     }
-                    Text("Open a local video with Android's secure file picker.", color = Color(0xFFB6C1D8), fontSize = 13.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = { videoPicker.launch(arrayOf("video/*")) }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Browse videos")
+                }
+            }
+
+            if (activeTab == "Videos") {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = librarySearch, onValueChange = { librarySearch = it },
+                        modifier = Modifier.weight(1f), singleLine = true,
+                        label = { Text("Search videos") },
+                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFF6D00),
+                            unfocusedBorderColor = Color(0xFF454545),
+                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                            focusedLabelColor = Color(0xFFFF6D00), unfocusedLabelColor = Color(0xFFAAAAAA)
+                        )
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) {
+                        Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFFFF6D00))
                     }
-                    val lastTitle = prefs.getString(KEY_LAST_TITLE, null)
-                    val lastUri = prefs.getString(KEY_LAST_URI, null)
-                    if (!lastTitle.isNullOrBlank() && !lastUri.isNullOrBlank()) {
-                        TextButton(onClick = {
-                            try { playMedia(Uri.parse(lastUri), lastTitle) }
-                            catch (_: Exception) { status = "Last video unavailable. Browse and select it again." }
-                        }, modifier = Modifier.fillMaxWidth()) { Text("Resume recent • $lastTitle", color = Lavender, maxLines = 1) }
+                }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Spacer(Modifier.weight(1f))
+                    Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                }
+                val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) }
+                    .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
+                if (visibleVideos.isEmpty()) {
+                    Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(58.dp))
+                        Spacer(Modifier.height(12.dp))
+                        Text("Your videos appear here", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Scan your device to build your local library, or browse and open a single video.", color = Color(0xFFAAAAAA), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Spacer(Modifier.height(18.dp))
+                        Button(onClick = {
+                            if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                                localVideos = loadLocalVideos(context)
+                                status = "Found " + localVideos.size + " videos on this device."
+                            } else libraryPermissionLauncher.launch(libraryPermission)
+                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))) {
+                            Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
+                        }
+                        TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFFFF8A33)) }
                     }
-                    if (recentItems.isNotEmpty()) {
-                        Spacer(Modifier.height(8.dp))
-                        Text("Recently played", color = Color(0xFFB6C1D8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        recentItems.take(5).forEach { item ->
-                            TextButton(onClick = {
+                } else {
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                        visibleVideos.take(200).forEach { video ->
+                            Row(
+                                Modifier.fillMaxWidth().background(Color(0xFF101010)).padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(Modifier.size(width = 100.dp, height = 66.dp).background(Color(0xFF292929), RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Movie, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
+                                    Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 4.dp)).padding(horizontal = 4.dp, vertical = 2.dp)) {
+                                        Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp)
+                                    }
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(video.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(formatBytes(video.size) + "  •  Local video", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                                }
+                                IconButton(onClick = { playMedia(video.uri, video.title) }) {
+                                    Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
+                                }
+                            }
+                            Divider(color = Color(0xFF292929), thickness = 1.dp)
+                        }
+                    }
+                }
+            } else if (activeTab == "Recent") {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
+                    Text("PLAYBACK HISTORY", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Spacer(Modifier.height(8.dp))
+                    if (recentItems.isEmpty()) {
+                        Text("Videos you play will appear here.", color = Color(0xFFAAAAAA), modifier = Modifier.padding(vertical = 24.dp))
+                    } else recentItems.forEach { item ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.History, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(34.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Text(item.title, color = Color.White, modifier = Modifier.weight(1f), maxLines = 2)
+                            IconButton(onClick = {
                                 try { playMedia(Uri.parse(item.uri), item.title) }
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
-                            }, modifier = Modifier.fillMaxWidth()) {
-                                Icon(Icons.Default.History, null, tint = Lavender)
-                                Spacer(Modifier.width(8.dp))
-                                Text(item.title, color = Color.White, maxLines = 1)
-                            }
+                            }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFFFF6D00)) }
                         }
+                        Divider(color = Color(0xFF292929))
                     }
                 }
-            }
-
-            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.VideoLibrary, null, tint = Lavender)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Device library", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-                        Spacer(Modifier.weight(1f))
-                        TextButton(onClick = { sortByName = !sortByName }) { Text(if (sortByName) "A–Z" else "Recent") }
-                    }
-                    OutlinedTextField(value = librarySearch, onValueChange = { librarySearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Search videos") })
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = {
-                        if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-                            localVideos = loadLocalVideos(context)
-                            status = "Found " + localVideos.size + " videos on this device."
-                        } else libraryPermissionLauncher.launch(libraryPermission)
-                    }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
-                    }
-                    val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) }
-                        .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
-                    if (visibleVideos.isEmpty()) {
-                        Text("Your indexed videos will appear here after scanning.", color = Color(0xFFB6C1D8), fontSize = 12.sp)
-                    } else {
-                        visibleVideos.take(100).forEach { video ->
-                            TextButton(onClick = { playMedia(video.uri, video.title) }, modifier = Modifier.fillMaxWidth()) {
-                                Icon(Icons.Default.PlayCircle, null, tint = Mint)
-                                Spacer(Modifier.width(8.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(video.title, color = Color.White, maxLines = 1)
-                                    Text(formatTime(video.duration) + "  •  " + formatBytes(video.size), color = Color(0xFFB6C1D8), fontSize = 11.sp)
-                                }
-                                Icon(Icons.Default.PlayArrow, null, tint = Lavender)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Link, null, tint = Lavender); Spacer(Modifier.width(8.dp)); Text("Secure streaming", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-                    }
-                    Spacer(Modifier.height(8.dp))
+            } else {
+                Column(Modifier.weight(1f).padding(16.dp)) {
+                    Text("Play a network video", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("Paste a direct HTTPS video, HLS or DASH URL.", color = Color(0xFFAAAAAA), fontSize = 13.sp)
+                    Spacer(Modifier.height(14.dp))
                     OutlinedTextField(value = streamUrl, onValueChange = { streamUrl = it }, modifier = Modifier.fillMaxWidth(), singleLine = true,
                         label = { Text("HTTPS video / HLS / DASH URL") }, placeholder = { Text("https://example.com/video.m3u8") })
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     Button(onClick = {
                         val parsed = Uri.parse(streamUrl.trim())
                         if (parsed.scheme == "https" && !parsed.host.isNullOrBlank()) {
                             playMedia(parsed, parsed.lastPathSegment?.substringAfterLast('/')?.ifBlank { "Online stream" } ?: "Online stream")
                         } else status = "Use a valid HTTPS media URL. Plain HTTP is disabled for network security."
-                    }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text("Play stream") }
+                    }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))) {
+                        Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text("Play stream")
+                    }
                 }
             }
 
@@ -369,9 +405,12 @@ private fun NovaHome() {
                 Text(if (isSeekingGesture) "Swipe horizontally to seek" else selectedTitle, color = Lavender, fontSize = 12.sp, maxLines = 1)
             }
 
-            Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFB6C1D8), fontSize = 12.sp)
-            Spacer(Modifier.height(8.dp))
-            Text("PRIVATE BY DESIGN  •  NOVA PLAYER", color = Mint, fontSize = 10.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold)
+            Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
+            Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Icon(Icons.Default.VideoLibrary, null, tint = if (activeTab == "Videos") Color(0xFFFF6D00) else Color(0xFF777777))
+                Icon(Icons.Default.History, null, tint = if (activeTab == "Recent") Color(0xFFFF6D00) else Color(0xFF777777))
+                Icon(Icons.Default.Link, null, tint = if (activeTab == "Online") Color(0xFFFF6D00) else Color(0xFF777777))
+            }
         }
     }
 }
