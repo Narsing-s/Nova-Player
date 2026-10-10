@@ -87,7 +87,8 @@ private fun NovaHome() {
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
-    var sortByName by remember { mutableStateOf(false) }\n    var activeTab by remember { mutableStateOf("Videos") }
+    var sortByName by remember { mutableStateOf(false) }
+    var activeTab by remember { mutableStateOf("Videos") }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -407,10 +408,15 @@ private fun NovaHome() {
             }
 
             Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
-            Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Icon(Icons.Default.VideoLibrary, null, tint = if (activeTab == "Videos") Color(0xFFFF6D00) else Color(0xFF777777))
-                Icon(Icons.Default.History, null, tint = if (activeTab == "Recent") Color(0xFFFF6D00) else Color(0xFF777777))
-                Icon(Icons.Default.Link, null, tint = if (activeTab == "Online") Color(0xFFFF6D00) else Color(0xFF777777))
+            if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                listOf("Videos", "Recent", "Online").forEach { tab ->
+                    TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Recent" -> Icons.Default.History; else -> Icons.Default.Link }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
+                            Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFAAAAAA))
+                        }
+                    }
+                }
             }
         }
     }
