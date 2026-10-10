@@ -174,23 +174,28 @@ private fun NovaHome() {
                     Text("NOVA PLAYER", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     Text("LOCAL VIDEO PLAYER", color = Color(0xFFAAAAAA), fontSize = 9.sp, letterSpacing = 1.4.sp)
                 }
-                if (selectedUri != null) IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
-                IconButton(onClick = {
-                    if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
-                        localVideos = loadLocalVideos(context)
-                        status = "Found " + localVideos.size + " videos on this device."
-                    } else libraryPermissionLauncher.launch(libraryPermission)
-                }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
-                IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                if (selectedUri != null) {
+                    IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
+                } else {
+                    IconButton(onClick = {
+                        if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                            localVideos = loadLocalVideos(context)
+                            status = "Found " + localVideos.size + " videos on this device."
+                        } else libraryPermissionLauncher.launch(libraryPermission)
+                    }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
+                    IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                }
             }
 
-            Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Recent", "Online").forEach { tab ->
-                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
-                            Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
+            if (selectedUri == null) {
+                Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    listOf("Videos", "Recent", "Online").forEach { tab ->
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                            TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
+                                Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
+                            }
+                            Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFFFF6D00) else Color.Transparent))
                         }
-                        Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFFFF6D00) else Color.Transparent))
                     }
                 }
             }
@@ -305,10 +310,14 @@ private fun NovaHome() {
             }
 
             if (selectedUri != null) {
-                Card(colors = CardDefaults.cardColors(containerColor = Color.Black), shape = RoundedCornerShape(20.dp)) {
-                    Column {
+                Card(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(Modifier.fillMaxSize()) {
                         AndroidView(
-                            modifier = Modifier.fillMaxWidth().height(220.dp).pointerInput(selectedUri) {
+                            modifier = Modifier.fillMaxWidth().weight(1f).pointerInput(selectedUri) {
                                 var totalX = 0f
                                 var totalY = 0f
                                 var startX = 0f
@@ -407,7 +416,7 @@ private fun NovaHome() {
                 Text(if (isSeekingGesture) "Swipe horizontally to seek" else selectedTitle, color = Lavender, fontSize = 12.sp, maxLines = 1)
             }
 
-            Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
+            if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("Videos", "Recent", "Online").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
