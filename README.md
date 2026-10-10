@@ -174,3 +174,43 @@ Nova Player uses a midnight-blue foundation with cyan and violet accents and an 
 ## 📄 License
 
 Original project code is intended to use Apache-2.0. Third-party dependencies retain their respective licenses.
+
+---
+
+## ✅ Release-readiness verification
+
+A successful CI build confirms that the Android project compiles; it does **not** replace testing on a physical Android device. Use this checklist before calling a build production-ready.
+
+### Core playback
+- [ ] Open a video from the library and from Android's document picker.
+- [ ] Confirm play, pause, seek bar, previous/next, queue order, shuffle and all repeat modes.
+- [ ] Rotate between portrait and landscape and confirm the video surface expands to the available screen instead of remaining thumbnail-sized.
+- [ ] Confirm Auto / Fit / Fill / Zoom behavior with both landscape movies and portrait clips.
+- [ ] Test double-tap seeking, horizontal seek gestures, brightness and volume gestures.
+- [ ] Lock controls, verify touches are blocked, then use the visible unlock action.
+- [ ] Verify speed presets, keep-screen-awake, sleep timer and timer cancellation.
+- [ ] Confirm playback position is restored after leaving and reopening a video.
+
+### Library and saved data
+- [ ] Grant and deny media permission; verify the document picker still provides a way to open a file.
+- [ ] Search, sort, switch grid/list views, and filter watched/unwatched videos.
+- [ ] Add/remove favorites; add, reorder, remove and clear queue items.
+- [ ] Create, reopen, play, merge and delete playlists.
+- [ ] Verify history, Continue Watching, watched state and resume position persist after force-closing the app.
+- [ ] Try a file that has been moved or deleted and confirm the app recovers without crashing.
+
+### Subtitles, tracks and Android integration
+- [ ] Load valid SRT and VTT subtitles; test subtitle size, background and timing offset.
+- [ ] Open audio/video with multiple tracks and confirm track selection is available where supported.
+- [ ] Test background playback and media notification controls.
+- [ ] Test Picture-in-Picture on a supported Android device.
+- [ ] Test HTTP/HTTPS streams, unsupported formats, corrupt files and network loss.
+- [ ] Verify no control is visually enabled when its operation cannot be performed, and confirm each operation reports success or a useful error.
+
+### Build and distribution
+- [ ] Check the latest [Android CI run](https://github.com/Narsing-s/Nova-Player/actions) and download its APK artifact.
+- [ ] Install and test on at least one physical Android device in both orientations.
+- [ ] Publish only a release APK signed with the project's private release key. Never commit a keystore or signing passwords.
+- [ ] Verify the installed release APK upgrades the previous release without losing local preferences and saved lists.
+
+**Current verification boundary:** GitHub Actions has reported a successful build. The physical-device checklist above is not claimed complete until each item has actually been tested. Media format support and Picture-in-Picture behavior can vary by Android version and device.
