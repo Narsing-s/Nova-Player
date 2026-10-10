@@ -23,7 +23,6 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
 - **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability.
 - **Playback speed** cycling from 0.5× to 2×.
-- **Shuffle playback** toggle and repeat modes for off, repeat-all and repeat-one.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
 - **Playback failure feedback** surfaces Media3 playback errors in the player view instead of leaving the user guessing.
 - **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
