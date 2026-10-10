@@ -94,6 +94,8 @@ private fun NovaHome() {
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
     var favoriteItems by remember { mutableStateOf(readFavorites(prefs)) }
     var playbackSpeed by remember { mutableStateOf(1.0f) }
+    var shuffleEnabled by remember { mutableStateOf(false) }
+    var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
@@ -104,6 +106,8 @@ private fun NovaHome() {
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
             playWhenReady = false
+            shuffleModeEnabled = false
+            repeatMode = Player.REPEAT_MODE_OFF
             addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
@@ -113,6 +117,9 @@ private fun NovaHome() {
                 }
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
+                }
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    status = "Playback failed (${error.errorCodeName}). Try reopening the file or choosing another video."
                 }
             })
         }
@@ -204,19 +211,6 @@ private fun NovaHome() {
                         } else libraryPermissionLauncher.launch(libraryPermission)
                     }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
                     IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
-                }
-            }
-
-            if (selectedUri == null) {
-                Row(Modifier.fillMaxWidth().background(Color(0xFF12182A)), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                            TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
-                                Text(tab, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFFBAC6DF), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
-                            }
-                            Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFF39E7D5) else Color.Transparent))
-                        }
-                    }
                 }
             }
 
@@ -508,6 +502,34 @@ private fun NovaHome() {
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             TextButton(onClick = {
+                                shuffleEnabled = !shuffleEnabled
+                                player.shuffleModeEnabled = shuffleEnabled
+                                status = if (shuffleEnabled) "Shuffle enabled" else "Shuffle disabled"
+                            }) {
+                                Icon(Icons.Default.Shuffle, null, tint = if (shuffleEnabled) Mint else Lavender)
+                                Text("Shuffle", color = if (shuffleEnabled) Mint else Color.White)
+                            }
+                            TextButton(onClick = {
+                                repeatMode = when (repeatMode) {
+                                    Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                                    Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                                    else -> Player.REPEAT_MODE_OFF
+                                }
+                                player.repeatMode = repeatMode
+                                status = when (repeatMode) {
+                                    Player.REPEAT_MODE_ALL -> "Repeat all enabled"
+                                    Player.REPEAT_MODE_ONE -> "Repeat current video enabled"
+                                    else -> "Repeat disabled"
+                                }
+                            }) {
+                                Icon(if (repeatMode == Player.REPEAT_MODE_ONE) Icons.Default.RepeatOne else Icons.Default.Repeat, null, tint = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Lavender)
+                                Text(when (repeatMode) {
+                                    Player.REPEAT_MODE_ALL -> "Repeat all"
+                                    Player.REPEAT_MODE_ONE -> "Repeat one"
+                                    else -> "Repeat off"
+                                }, color = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White)
+                            }
+                            TextButton(onClick = {
                                 aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
                                 status = "Screen mode: " + aspectMode
                             }) { Icon(Icons.Default.AspectRatio, null, tint = Lavender); Text(aspectMode) }
@@ -531,7 +553,13 @@ private fun NovaHome() {
                         }
                     }
                 }
-                Text(if (isSeekingGesture) "Swipe horizontally to seek" else selectedTitle, color = Lavender, fontSize = 12.sp, maxLines = 1)
+                Text(
+                    if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
+                    color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
+                    fontSize = 12.sp,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+                )
             }
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
