@@ -25,6 +25,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Subtitle timing sync**: shift external `.srt` and `.vtt` cues up to 5 seconds earlier or later in 250 ms steps; adjusted subtitle copies are generated in the app cache, keeping the original file untouched.
 - **Background playback and media notification**: a dedicated Media3 session service owns the player beyond the Activity lifecycle, allowing playback to continue when the app is minimized, with Android media-session notification/lock-screen controls where supported by the device.
 - **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
+- **A–B repeat loop**: mark a start point (A) and a later end point (B) to replay a specific scene, lecture segment, music passage or language-learning phrase; clear the loop at any time.
 - **Persistent play queue**: add videos from the library, play the queue from any item, move entries up/down, remove individual items or clear the queue. Queue order is saved locally and restored when the app is reopened.
 - **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
