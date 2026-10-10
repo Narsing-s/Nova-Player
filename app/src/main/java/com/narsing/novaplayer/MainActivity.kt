@@ -634,6 +634,13 @@ private fun NovaHome(player: Player) {
                                         Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 8.dp)).padding(horizontal = 7.dp, vertical = 4.dp)) {
                                             Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                                         }
+                                        if (watchedUris.contains(video.uri.toString())) {
+                                            Row(Modifier.align(Alignment.TopStart).padding(6.dp).background(Color(0xE6192438), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(Icons.Default.CheckCircle, null, tint = Mint, modifier = Modifier.size(12.dp))
+                                                Spacer(Modifier.width(3.dp))
+                                                Text("WATCHED", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
                                         Box(Modifier.align(Alignment.Center).size(42.dp).background(Color(0xB31A263B), RoundedCornerShape(50)), contentAlignment = Alignment.Center) {
                                             Icon(Icons.Default.PlayArrow, "Play video", tint = Mint, modifier = Modifier.size(30.dp))
                                         }
@@ -649,6 +656,12 @@ private fun NovaHome(player: Player) {
                                         }) {
                                             Icon(if (favoriteItems.any { it.uri == video.uri.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder, "Toggle favorite", tint = if (favoriteItems.any { it.uri == video.uri.toString() }) Color(0xFFFF6B9D) else Color(0xFF9BA8C7), modifier = Modifier.size(19.dp))
                                         }
+                                        IconButton(onClick = {
+                                            val uri = video.uri.toString()
+                                            watchedUris = if (uri in watchedUris) watchedUris - uri else watchedUris + uri
+                                            prefs.edit().putStringSet("watched_video_uris", watchedUris).apply()
+                                            status = if (uri in watchedUris) "Marked as watched" else "Marked as unwatched"
+                                        }) { Icon(if (video.uri.toString() in watchedUris) Icons.Default.CheckCircle else Icons.Default.Visibility, "Toggle watched status", tint = if (video.uri.toString() in watchedUris) Mint else Color(0xFF9BA8C7), modifier = Modifier.size(19.dp)) }
                                         IconButton(onClick = { enqueueMedia(video) }) { Icon(Icons.Default.PlaylistAdd, "Add to queue", tint = Lavender, modifier = Modifier.size(20.dp)) }
                                         IconButton(onClick = { selectedVideoInfo = video }) { Icon(Icons.Default.Info, "Video details", tint = Color(0xFF9BA8C7), modifier = Modifier.size(19.dp)) }
                                     }
@@ -690,6 +703,14 @@ private fun NovaHome(player: Player) {
                                         "Toggle favorite",
                                         tint = Color(0xFF39E7D5)
                                     )
+                                }
+                                IconButton(onClick = {
+                                    val uri = video.uri.toString()
+                                    watchedUris = if (uri in watchedUris) watchedUris - uri else watchedUris + uri
+                                    prefs.edit().putStringSet("watched_video_uris", watchedUris).apply()
+                                    status = if (uri in watchedUris) "Marked as watched" else "Marked as unwatched"
+                                }) {
+                                    Icon(if (video.uri.toString() in watchedUris) Icons.Default.CheckCircle else Icons.Default.Visibility, "Toggle watched status", tint = if (video.uri.toString() in watchedUris) Mint else Color(0xFF9BA8C7), modifier = Modifier.size(22.dp))
                                 }
                                 IconButton(onClick = { enqueueMedia(video) }) {
                                 Icon(Icons.Default.PlaylistAdd, "Add ${video.title} to queue", tint = Color(0xFF8A70FF), modifier = Modifier.size(26.dp))
