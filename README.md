@@ -1,141 +1,176 @@
-# Nova Player
+# ✦ Nova Player
 
-A modern Android video player built from the ground up with Kotlin, Jetpack Compose, Material 3 and AndroidX Media3.
+<p align="center">
+  <strong>A modern, offline-first Android video player.</strong><br/>
+  Built for movies, reels, lectures, and everything in between.
+</p>
 
-[**Repository**](https://github.com/Narsing-s/Nova-Player) · [**Builds & APK artifacts**](https://github.com/Narsing-s/Nova-Player/actions) · [**Releases**](https://github.com/Narsing-s/Nova-Player/releases)
+<p align="center">
+  <a href="https://github.com/Narsing-s/Nova-Player/actions/runs/38076384534"><img alt="Latest Android build" src="https://img.shields.io/badge/Android%20CI-passing-27C7A5?style=for-the-badge&logo=android&logoColor=white"/></a>
+  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Android-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white"/>
+  <img alt="Jetpack Compose" src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white"/>
+  <img alt="Media3" src="https://img.shields.io/badge/Playback-AndroidX%20Media3-00BFA5?style=for-the-badge&logo=android&logoColor=white"/>
+</p>
 
-> **Development status:** active preview. The app includes offline video browsing, playback controls, a session queue and locally saved playlists. Android CI builds the debug APK; physical-device playback testing is still required before release.
+<p align="center">
+  <a href="https://github.com/Narsing-s/Nova-Player/actions">⬇ Download test APK</a> ·
+  <a href="https://github.com/Narsing-s/Nova-Player/releases">Releases</a> ·
+  <a href="https://github.com/Narsing-s/Nova-Player/issues">Report an issue</a>
+</p>
 
-## Features implemented
+> **Project status:** Active preview. The latest Android CI build succeeded and the debug APK artifact is available. Real-device playback, notification, PiP, and release-signing checks are still required before a production release.
 
-- **Modern dark UI** with Compose and Material 3, using a midnight-blue canvas, cyan accents and violet highlights.
-- **Original Nova Player identity**: custom orbit-and-play launcher icon with adaptive resources on Android 8.0+ and vector fallbacks on older devices.
-- **Responsive device-library scanning** using MediaStore: refresh runs off the main UI thread, displays a scanning indicator, prevents duplicate scans, reports the resulting video count, and keeps the app responsive while indexing. Includes permission-gated access, search, sorting, duration and file-size metadata.
-- **Switchable library layouts**: browse a thumbnail-rich two-column grid or a compact list, with the layout choice remembered locally; grid cards expose quick favorite and queue actions.
-- **Quick duration filters**: instantly narrow the local video library to all videos, clips under 10 minutes, videos from 10–60 minutes, or feature-length videos over an hour; the selected filter is remembered on-device.
-- **Smart watched tracking**: videos are automatically marked watched when playback reaches the end; users can still manually mark them watched or unwatched from grid or list view, see watched badges on thumbnails, and filter by watched state. Changes persist locally on the device.
-- **Keep-awake playback control**: prevent the display from sleeping while a video is playing, or allow normal screen timeout; the preference is saved locally and the screen-on flag is cleared when playback is closed.
-- **Advanced library sorting**: sort videos by newest, title A–Z or Z–A, longest duration, or largest file size from a quick sort menu; the selected order is remembered locally.
-- **Video details panel**: inspect each indexed video's duration, file size, device folder, date added and media URI from either grid or list view, with a direct Play action. The panel also opens Android's native share sheet so users can send the selected video to compatible apps.
-- **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
-- **Local video picker** using Android's system document picker as a fallback.
-- **Playback resume with periodic checkpoints** stores the current media URI, title and position locally every five seconds while watching, as well as on pause, and offers a prominent **Continue Watching** card on the Videos tab. This reduces lost progress if the app process is interrupted.
-- **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
-- **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
-- **In-player favorite toggle**: add or remove the currently playing video from Favorites directly from the player overlay, with a clear filled-heart state and immediate local persistence; no need to return to the library.
-- **External subtitles** for .srt and .vtt files.
-- **MX Player-inspired controls**: dedicated Previous/Next buttons for queued media, plus configurable 5, 10, 15 or 30-second rewind/forward intervals shared by the dedicated buttons and double-tap seeking; horizontal swipe seeking with a live preview showing the offset and target time; and vertical brightness/volume gestures. The chosen seek interval persists locally. Double-tap seeking respects touch lock, and swipe seeking clamps to the media's valid duration and reports the final target time.
-- **Touch lock for distraction-free viewing**: lock the on-screen player controls and seek/brightness/volume gestures to prevent accidental touches; a visible unlock action restores controls immediately.
-- **Custom gesture controls**: independently enable or disable horizontal seek, left-side brightness and right-side volume swipes; choices are saved locally.
-- **Subtitle timing sync**: shift external `.srt` and `.vtt` cues up to 5 seconds earlier or later in 250 ms steps; adjusted subtitle copies are generated in the app cache, keeping the original file untouched.
-- **Background playback and media notification**: a dedicated Media3 session service owns the player beyond the Activity lifecycle, allowing playback to continue when the app is minimized, with Android media-session notification/lock-screen controls where supported by the device.
-- **Advanced playback modes**: shuffle, repeat-all and repeat-one, with active-state styling.
-- **A–B repeat loop**: mark a start point (A) and a later end point (B) to replay a specific scene, lecture segment, music passage or language-learning phrase; clear the loop at any time.
-- **Persistent play queue**: add videos from the library or directly from the player overlay, play the queue from any item, move entries up/down, remove individual items or clear the queue. The player’s queue icon disables when the current video is already queued. Queue order is saved locally and restored when the app is reopened; opening a standalone video or reapplying subtitle timing no longer silently clears the saved Up Next list.
-- **Saved playlists**: save a named playlist from the current queue, restore it after restarting the app, play it, merge it into the queue, or delete it. Playlist metadata is stored locally and works offline.
-- **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
-- **Subtitle appearance**: adjust subtitle text size, choose one-tap Compact, Standard, or Large presets, and toggle a dark subtitle background for readability; your preference is remembered locally.
-- **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
-- **Precision playback-speed picker** with one-tap presets from 0.25× slow motion through 3×, highlighted active speed, and immediate changes while watching; the chosen speed is remembered locally.
-- **Offline sleep timer**: automatically pause playback after 15, 30, 45, 60 or 90 minutes, with the ability to cancel or replace an active timer.
-- **Adaptive screen-fit modes** cycle through Auto, Fit, Fill and Zoom, and remember the selected mode. Auto uses a crop-to-fill Zoom for landscape movies in landscape orientation, while portrait reels stay in Fit so the complete vertical frame remains visible without distortion; unsupported/unknown video dimensions safely fall back to Fit. Fit preserves the whole frame, Fill stretches to the view, and Zoom fills by cropping edges. **Landscape-first immersive playback** automatically hides the app header, library chrome and extra control rows when a video is viewed in landscape, expands the video surface edge-to-edge, and hides system bars. A visible on-video exit/return control remains available. **Player orientation modes** cycle between Auto, Landscape and Portrait, and remember your preference on-device. **Pinch-to-zoom** lets you magnify video up to 2.5× with two fingers, shows the active zoom level, and offers a one-tap Reset control; zoom resets when you open another video.
-- **Playback recovery actions** surface Media3 playback errors with Retry playback and Back to library actions instead of leaving the user guessing.
-- **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
-- **Audio-track selection** using Media3's track selection dialog when the media exposes selectable tracks.
-- **Picture-in-Picture (PiP)** action on Android 8.0+ devices, with manifest support enabled.
-- **Subtitle track controls** in the Media3 player UI where supported by the media.
-- **GitHub Actions** workflow to build a debug APK and upload it as an artifact.
+---
 
-## Roadmap
+## ✨ Why Nova Player?
 
-- [x] Verify Android CI debug build and APK artifact upload
-- [ ] Install and test playback on physical Android devices
-- [ ] Verify background playback, notification actions and lock-screen controls on Android 13–15 devices
-- [x] Indexed MediaStore video library with search and recent/name sorting
-- [x] Basic folder navigation for indexed MediaStore videos
-- [x] Video thumbnails
-- [x] Original Nova Player launcher icon with adaptive and legacy Android resources
-- [x] Basic recent playback history (up to eight entries)
-- [x] Local favourites
-- [x] Session play queue with add, play-from-item, reorder, remove and clear actions
-- [x] Named playlists persisted locally with play, add-to-queue and delete actions
-- [x] Restore the last session queue automatically after app restart
-- [x] Basic brightness/volume/seek swipe gestures
-- [x] Immersive system-bar toggle for playback
-- [x] Subtitle text-size and background styling controls
-- [x] Orientation-aware immersive layout: landscape playback expands to the available screen, hides library chrome and system bars, and keeps aspect-ratio-aware video scaling
-- [x] Basic audio-track selection
-- [x] Basic subtitle appearance controls (text size and background)
-- [x] Subtitle timing offset controls
-- [x] Background playback via MediaSession service (CI build verified; physical-device notification testing still required)
-- [x] Playback error reporting with retry and return-to-library actions
-- [x] Continue Watching card with saved resume position
-- [ ] More recovery guidance for unsupported or damaged local files
-- [ ] Automated tests and accessibility checks
-- [x] Signed release APK workflow and public GitHub Releases (requires owner-configured signing secrets)
-- [ ] Verify signed release on physical devices
+Nova Player combines a cinematic dark interface with practical, power-user playback controls. It is designed for **local videos first**—no account, cloud library, or streaming service is required.
 
-## Nova Player visual identity
+| 🎬 Cinema-style playback | 🎛️ Fine-grained control | 📚 Your personal library |
+|---|---|---|
+| Landscape immersive mode, adaptive fit, zoom | Swipe gestures, seek presets, speed and A–B loop | Search, folders, favorites, history and playlists |
 
-The launcher uses an original midnight-blue tile with a cyan orbit, violet ring and crisp play mark. Its vector-based assets live in `app/src/main/res/`; Android 8.0+ uses adaptive launcher resources, while older Android versions use the vector fallback. The icon is part of the app source and is built into the APK—no downloaded artwork or runtime network request is required.
+## 🚀 Feature highlights
 
-## Tech stack
+### 🎥 A better viewing experience
+- **Adaptive Auto / Fit / Fill / Zoom:** landscape movies can crop-to-fill in landscape mode; portrait reels remain fully visible in Auto mode.
+- **Immersive landscape playback:** expands the video edge-to-edge, hides library chrome and system bars, and keeps an on-video way back.
+- **Pinch-to-zoom:** magnify up to 2.5× with a quick reset.
+- **Orientation choices:** Auto, Landscape and Portrait, with the preference remembered locally.
+- **Playback speed:** quick presets from 0.25× to 3×.
+- **Keep screen awake** while watching, or allow normal screen timeout.
 
-- Kotlin, Android SDK 35, JDK 17
-- Jetpack Compose, Material 3
-- AndroidX Media3 ExoPlayer and PlayerView
-- SharedPreferences for resume state, favorites, history, persistent queue, saved playlists and playback preferences
-- GitHub Actions
+### 🕹️ MX Player-inspired controls
+- Double-tap and dedicated Previous / Next controls for queued media.
+- Configurable 5, 10, 15 or 30-second skip intervals.
+- Horizontal swipe seeking with a live time preview.
+- Left-side brightness and right-side volume gestures, each independently configurable.
+- Touch lock with a visible unlock action.
+- Shuffle, repeat-all, repeat-one, and A–B scene looping.
+- Sleep timer for 15, 30, 45, 60 or 90 minutes, with cancel/replace support.
 
-## Build locally
+### 💬 Subtitles and tracks
+- Load external **.srt** and **.vtt** subtitles.
+- Shift subtitle timing by up to ±5 seconds in 250 ms steps without modifying the original subtitle file.
+- Compact, Standard and Large subtitle presets, text-size adjustment and optional dark background.
+- Choose audio and subtitle tracks when the media exposes selectable tracks.
+- Select available video tracks where supported. A player cannot increase the source file's original resolution.
 
-Requirements: Android Studio with Android SDK 35 and JDK 17. The CI currently uses Gradle 8.11.1.
+### 🗂️ Your offline video library
+- Scan videos through Android MediaStore with a background refresh indicator.
+- Browse in a thumbnail grid or compact list.
+- Search and sort by newest, title, duration or file size.
+- Filter by clip length and watched status.
+- Automatically mark a video watched when playback finishes; manual watched/unwatched controls remain available.
+- Browse folders, inspect video details, and share through Android's native share sheet.
+- Use Android's document picker when a video is not listed in the library.
+- See recent playback history, favorites and **Continue Watching** with saved resume position.
 
-Open the project in Android Studio and sync Gradle. If Gradle is installed separately, run:
+### 📋 Queue and playlists
+- Add videos from the library or player overlay.
+- Play from any queue position, reorder entries, remove individual items or clear the queue.
+- Save named playlists locally and play, merge or delete them later.
+- Queue order persists across app restarts. Opening a standalone file or reapplying subtitle timing should not silently clear the saved Up Next list.
+- Background playback is implemented with a Media3 session service and media notification support; verify device-specific behavior during testing.
 
-```bash
-gradle assembleDebug
-```
+### 🛟 Useful extras
+- Retry playback or return to the library when Media3 reports an error.
+- Picture-in-Picture action on supported Android devices.
+- Local preferences for playback speed, repeat/shuffle, subtitle appearance, seek interval and display mode.
+- Original Nova Player launcher identity with adaptive and legacy vector resources.
 
-The debug APK should be generated at:
+---
 
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
+## 📲 Get the latest test APK
 
-Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions) for the newest workflow result. After a successful run, open it and download the `nova-player-debug` artifact. The debug APK is for testing, not public release distribution.
+1. Open the [latest successful GitHub Actions run](https://github.com/Narsing-s/Nova-Player/actions/runs/38076384534).
+2. Scroll to **Artifacts**.
+3. Download **`nova-player-debug`** and extract the ZIP.
+4. Transfer the APK to your Android device and install it. If Android asks, allow installs from the app you used to open the APK.
 
-## Offline-only library
+**Note:** this is a debug build for testing, not a signed production release. Artifact links can expire. For public distribution, use the [Releases page](https://github.com/Narsing-s/Nova-Player/releases) after a signed release is successfully published.
 
-Nova Player is designed to work with videos already stored on your Android device. On launch, it requests video-library permission and scans the device media index; videos from available device folders appear in the Videos tab, with search, sorting, duration and file-size details. The Folders tab groups indexed videos by folder and filters the library when a folder is opened. If permission is denied or a video is not indexed, use **Browse files** to select it with Android’s system picker. No online-stream tab or streaming URL input is provided.
+## 🧰 Tech stack
 
-## Privacy
+- **Language:** Kotlin
+- **UI:** Jetpack Compose + Material 3
+- **Playback:** AndroidX Media3 ExoPlayer and PlayerView
+- **Platform:** Android SDK 35, JDK 17
+- **Local persistence:** SharedPreferences for resume state, favorites, history, queue, playlists and playback preferences
+- **Automation:** GitHub Actions builds a debug APK and uploads it as an artifact
 
-- Local files are selected through Android's document picker; the app does not request broad storage access for this flow.
-- The most recent media URI, title and resume position are stored locally in app preferences.
-- No analytics or account backend is configured in this preview.
-- Publish a full privacy policy before a public release.
+## 🛠️ Build locally
 
-## Publish a signed APK
+**Requirements:** Android Studio, Android SDK 35 and JDK 17. The CI workflow currently uses Gradle 8.11.1.
 
-The `.github/workflows/release.yml` workflow builds and publishes a signed APK when a `v*` tag is pushed, or when manually run. It intentionally stops if signing secrets are missing.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Narsing-s/Nova-Player.git
+   cd Nova-Player
+   ```
+2. Open the project in Android Studio and sync Gradle.
+3. Build the debug APK:
+   ```bash
+   gradle assembleDebug
+   ```
+4. Find the APK at:
+   ```
+   app/build/outputs/apk/debug/app-debug.apk
+   ```
 
-1. Create a persistent Android release keystore and store a secure backup outside this repository.
+Alternatively, download the latest artifact from [GitHub Actions](https://github.com/Narsing-s/Nova-Player/actions).
+
+## 🗺️ Roadmap
+
+- [x] Modern Compose / Material 3 interface and original launcher identity
+- [x] MediaStore library, thumbnails, search, sort and folder navigation
+- [x] Grid/list layouts, favorites, recent history and watched filters
+- [x] Resume checkpoints and Continue Watching
+- [x] Persistent queue and named local playlists
+- [x] Swipe gestures, touch lock, seek presets and pinch-to-zoom
+- [x] Landscape immersive mode and adaptive screen fitting
+- [x] External subtitle loading, timing sync and appearance controls
+- [x] Playback speed, shuffle/repeat, A–B loop and sleep timer
+- [x] CI debug build and APK artifact upload
+- [ ] Physical-device playback testing across common video formats
+- [ ] Verify background playback, notification controls and PiP across Android versions
+- [ ] Automated tests, accessibility review and additional damaged-file recovery guidance
+- [ ] Verify a signed release APK on physical devices
+
+## 🔐 Privacy and offline design
+
+- Nova Player is designed to browse videos available on the Android device.
+- Files selected through the document picker are handled through Android's content URI flow.
+- Resume position, recent history, favorites, watched state, queue, playlists and playback preferences are stored locally in app preferences.
+- No account backend or analytics service is configured in this preview.
+- A complete privacy policy should be published before a public production release.
+
+## 📦 Publish a signed release
+
+The `.github/workflows/release.yml` workflow can build and publish a signed APK when a `v*` tag is pushed or the workflow is manually run. It stops if the required signing secrets are missing.
+
+1. Create a persistent Android release keystore and keep a secure backup outside this repository.
 2. In **Repository → Settings → Secrets and variables → Actions**, add:
-   - `ANDROID_KEYSTORE_BASE64`: base64-encoded keystore file contents
-   - `ANDROID_KEYSTORE_PASSWORD`: keystore password
-   - `ANDROID_KEY_ALIAS`: key alias
-   - `ANDROID_KEY_PASSWORD`: key password
-3. To encode a keystore locally, use `base64 -w 0 your-release.jks` on Linux or `[Convert]::ToBase64String([IO.File]::ReadAllBytes("your-release.jks"))` in PowerShell. Keep the output private.
-4. Push a version tag such as `v0.1.0` to trigger a signed build and GitHub Release:
+   - `ANDROID_KEYSTORE_BASE64` — base64-encoded keystore contents
+   - `ANDROID_KEYSTORE_PASSWORD` — keystore password
+   - `ANDROID_KEY_ALIAS` — key alias
+   - `ANDROID_KEY_PASSWORD` — key password
+3. Encode the keystore locally:
+   - Linux: `base64 -w 0 your-release.jks`
+   - Windows PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("your-release.jks"))`
+4. Push a version tag:
    ```bash
    git tag v0.1.0
    git push origin v0.1.0
    ```
-5. Check the release workflow and install-test the APK before sharing it.
+5. Check the release workflow, install the APK and test it before sharing.
 
-Never commit a keystore or signing passwords. Losing the signing key can prevent future in-place updates. A GitHub Release is not published until the signing secrets are configured and the release workflow succeeds.
+**Never commit your keystore or signing passwords.** Losing the signing key can prevent future in-place app updates. A public GitHub Release is available only after the signing secrets are configured and the release workflow succeeds.
 
-## License
+## 🎨 Visual identity
+
+Nova Player uses a midnight-blue foundation with cyan and violet accents and an original orbit-and-play launcher icon. Vector assets are included in `app/src/main/res/`; no downloaded artwork or runtime network request is needed for the app icon.
+
+## 📄 License
 
 Original project code is intended to use Apache-2.0. Third-party dependencies retain their respective licenses.
