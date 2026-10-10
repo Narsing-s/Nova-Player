@@ -176,6 +176,7 @@ private fun NovaHome(player: Player) {
     var status by remember { mutableStateOf("Loading videos on this device…") }
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
+    var seekPreviewDeltaMs by remember { mutableStateOf(0L) }
     var dragTotal by remember { mutableStateOf(0f) }
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
     var favoriteItems by remember { mutableStateOf(readFavorites(prefs)) }
@@ -1007,6 +1008,7 @@ private fun NovaHome(player: Player) {
                                             ?.takeIf { it >= 0f } ?: 0.5f
                                         gestureAxis = if (controlsLocked) "locked" else "none"
                                         isSeekingGesture = false
+                                        seekPreviewDeltaMs = 0L
                                     },
                                     onDrag = { change, amount ->
                                         change.consume()
@@ -1020,7 +1022,10 @@ private fun NovaHome(player: Player) {
                                             }
                                         }
                                         when (gestureAxis) {
-                                            "horizontal" -> isSeekingGesture = true
+                                            "horizontal" -> {
+                                                isSeekingGesture = true
+                                                seekPreviewDeltaMs = (totalX / 8f).toLong() * 1_000L
+                                            }
                                             "vertical" -> {
                                                 val adjustment = -totalY / size.height.coerceAtLeast(1).toFloat()
                                                 if (startX < size.width / 2f) {
@@ -1048,9 +1053,10 @@ private fun NovaHome(player: Player) {
                                             }
                                         }
                                         isSeekingGesture = false
+                                        seekPreviewDeltaMs = 0L
                                         gestureAxis = "none"
                                     },
-                                    onDragCancel = { isSeekingGesture = false; gestureAxis = "none" }
+                                    onDragCancel = { isSeekingGesture = false; seekPreviewDeltaMs = 0L; gestureAxis = "none" }
                                 )
                             },
                             factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = !controlsLocked; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
@@ -1069,6 +1075,43 @@ private fun NovaHome(player: Player) {
                                 ))
                             }
                         )
+                        if (isSeekingGesture && !controlsLocked) {
+                            val previewPosition = (player.currentPosition + seekPreviewDeltaMs)
+                                .coerceAtLeast(0L)
+                                .let { if (player.duration > 0L) it.coerceAtMost(player.duration) else it }
+                            Surface(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = Color(0xE6101829),
+                                shape = RoundedCornerShape(18.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.55f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        if (seekPreviewDeltaMs >= 0L) Icons.Default.FastForward else Icons.Default.FastRewind,
+                                        contentDescription = null,
+                                        tint = Mint,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            (if (seekPreviewDeltaMs >= 0L) "+" else "−") + formatTime(abs(seekPreviewDeltaMs)),
+                                            color = Mint,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 17.sp
+                                        )
+                                        Text(
+                                            formatTime(previewPosition) + if (player.duration > 0L) " / " + formatTime(player.duration) else "",
+                                            color = Color.White,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         if (controlsLocked) {
                             FilledTonalButton(
                                 onClick = {
