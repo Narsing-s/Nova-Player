@@ -199,6 +199,8 @@ private fun NovaHome(player: Player) {
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
+    var showSkipIntervalDialog by remember { mutableStateOf(false) }
+    var skipIntervalSeconds by remember { mutableIntStateOf(prefs.getInt("skip_interval_seconds", 10).coerceIn(5, 30)) }
     var sleepTimerActive by remember { mutableStateOf(false) }
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
     val uiScope = rememberCoroutineScope()
@@ -261,9 +263,10 @@ private fun NovaHome(player: Player) {
             delay(150L)
         }
     }
-    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled, keepScreenOn) {
+    LaunchedEffect(playbackSpeed, skipIntervalSeconds, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled, keepScreenOn) {
         prefs.edit()
             .putFloat("playback_speed", playbackSpeed)
+            .putInt("skip_interval_seconds", skipIntervalSeconds)
             .putBoolean("shuffle_enabled", shuffleEnabled)
             .putInt("repeat_mode", repeatMode)
             .putFloat("subtitle_scale", subtitleScale)
@@ -1040,11 +1043,11 @@ private fun NovaHome(player: Player) {
                                             if (!controlsLocked && selectedUri != null) {
                                                 val forward = offset.x >= size.width / 2f
                                                 val duration = player.duration
-                                                val target = (player.currentPosition + if (forward) 10_000L else -10_000L)
+                                                val target = (player.currentPosition + if (forward) skipIntervalSeconds * 1_000L else -skipIntervalSeconds * 1_000L)
                                                     .coerceAtLeast(0L)
                                                     .let { if (duration > 0L) it.coerceAtMost(duration) else it }
                                                 player.seekTo(target)
-                                                status = (if (forward) "Forward" else "Rewind") + " 10 seconds"
+                                                status = (if (forward) "Forward " else "Rewind ") + "$skipIntervalSeconds seconds"
                                             }
                                         }
                                     )
@@ -1233,27 +1236,32 @@ private fun NovaHome(player: Player) {
                         }
                         if (!fullScreen && !controlsLocked) {
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             FilledTonalButton(
                                 onClick = {
-                                    player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L))
-                                    status = "Rewind 10 seconds"
+                                    player.seekTo((player.currentPosition - skipIntervalSeconds * 1_000L).coerceAtLeast(0L))
+                                    status = "Rewind $skipIntervalSeconds seconds"
                                 },
                                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                            ) { Text("↶  10s", fontWeight = FontWeight.SemiBold) }
+                            ) { Text("↶  ${skipIntervalSeconds}s", fontWeight = FontWeight.SemiBold) }
                             FilledTonalButton(
                                 onClick = {
-                                    val target = player.currentPosition + 10_000L
+                                    val target = player.currentPosition + skipIntervalSeconds * 1_000L
                                     player.seekTo(if (player.duration > 0L) target.coerceAtMost(player.duration) else target)
-                                    status = "Forward 10 seconds"
+                                    status = "Forward $skipIntervalSeconds seconds"
                                 },
                                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                            ) { Text("10s  ↷", fontWeight = FontWeight.SemiBold) }
+                            ) { Text("${skipIntervalSeconds}s  ↷", fontWeight = FontWeight.SemiBold) }
+                            FilledTonalButton(
+                                onClick = { showSkipIntervalDialog = true },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Mint),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                            ) { Text("Skip ${skipIntervalSeconds}s", fontWeight = FontWeight.SemiBold) }
                             FilledTonalButton(
                                 onClick = { showPlaybackSpeedDialog = true },
                                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color(0xFF8A70FF)),
@@ -1451,7 +1459,45 @@ private fun NovaHome(player: Player) {
                 containerColor = Panel, titleContentColor = Color.White, textContentColor = Color.White
             )
         }
-        if (showPlaybackSpeedDialog) {
+        if (showSkipIntervalDialog) {
+        AlertDialog(
+            onDismissRequest = { showSkipIntervalDialog = false },
+            containerColor = Panel,
+            title = { Text("Seek interval", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Choose how far the player skips when you tap the rewind or forward controls, or double-tap the video.", color = Color(0xFFBAC6DF), fontSize = 13.sp)
+                    listOf(5, 10, 15, 30).forEach { seconds ->
+                        Row(
+                            Modifier.fillMaxWidth().background(
+                                if (skipIntervalSeconds == seconds) Mint.copy(alpha = 0.14f) else Color(0xFF202A40),
+                                RoundedCornerShape(10.dp)
+                            ).padding(horizontal = 12.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    skipIntervalSeconds = seconds
+                                    prefs.edit().putInt("skip_interval_seconds", seconds).apply()
+                                    showSkipIntervalDialog = false
+                                    status = "Seek interval set to ${seconds} seconds"
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("${seconds} seconds", color = if (skipIntervalSeconds == seconds) Mint else Color.White, fontWeight = FontWeight.SemiBold)
+                            }
+                            if (skipIntervalSeconds == seconds) Icon(Icons.Default.CheckCircle, null, tint = Mint, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSkipIntervalDialog = false }) { Text("Done", color = Mint) }
+            }
+        )
+    }
+
+    if (showPlaybackSpeedDialog) {
             val speedPresets = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
             AlertDialog(
                 onDismissRequest = { showPlaybackSpeedDialog = false },
