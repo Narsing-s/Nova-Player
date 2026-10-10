@@ -4,12 +4,13 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 [**Repository**](https://github.com/Narsing-s/Nova-Player) · [**Builds & APK artifacts**](https://github.com/Narsing-s/Nova-Player/actions) · [**Releases**](https://github.com/Narsing-s/Nova-Player/releases)
 
-> **Development status:** early preview. The latest Android CI build passed and produced a debug APK artifact. The app still needs installation and playback testing on physical Android devices; it is not yet a complete indexed video-library app.
+> **Development status:** active preview. The latest source changes add folder-based browsing; the corresponding Android CI build is running. Install and test the APK on a physical Android device before treating the preview as release-ready.
 
 ## Features implemented
 
 - **Modern dark UI** with Compose and Material 3.
 - **Indexed device video library** using MediaStore, with permission-gated scanning, search, recent/name sorting, duration and file-size metadata.
+- **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
 - **Local video picker** using Android's system document picker as a fallback.
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
@@ -29,7 +30,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Verify Android CI debug build and APK artifact upload
 - [ ] Install and test playback on physical Android devices
 - [x] Indexed MediaStore video library with search and recent/name sorting
-- [ ] Folder navigation
+- [x] Basic folder navigation for indexed MediaStore videos
 - [x] Video thumbnails
 - [x] Basic recent playback history (up to eight entries)
 - [x] Local favourites
@@ -68,11 +69,11 @@ The debug APK should be generated at:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-A previous app-code revision built successfully and uploaded `nova-player-debug`. The latest offline-library and thumbnail changes passed CI; the newest rewind/forward and video-track quality controls are awaiting a fresh CI run. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open a successful run, and download its `nova-player-debug` artifact. Debug APKs are for testing, not public release distribution.
+The latest CI run for folder browsing is in progress. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open the newest successful run, and download its `nova-player-debug` artifact. The debug APK is for testing, not public release distribution. Debug APKs are for testing, not public release distribution.
 
 ## Offline-only library
 
-Nova Player is designed to work with videos already stored on your Android device. On launch, it requests video-library permission and scans the device media index; videos from available device folders appear in the Videos tab, with search, sorting, duration and file-size details. If permission is denied or a video is not indexed, use **Browse files** to select it with Android’s system picker. No online-stream tab or streaming URL input is provided.
+Nova Player is designed to work with videos already stored on your Android device. On launch, it requests video-library permission and scans the device media index; videos from available device folders appear in the Videos tab, with search, sorting, duration and file-size details. The Folders tab groups indexed videos by folder and filters the library when a folder is opened. If permission is denied or a video is not indexed, use **Browse files** to select it with Android’s system picker. No online-stream tab or streaming URL input is provided.
 
 ## Privacy
 
