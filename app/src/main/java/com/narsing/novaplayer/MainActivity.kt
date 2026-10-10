@@ -1273,6 +1273,23 @@ private fun NovaHome(player: Player) {
                                     tint = if (isFavorite) Color(0xFFFF6B8A) else Color.White
                                 )
                             }
+                            val isQueued = currentUri != null && queueItems.any { it.uri == currentUri }
+                            IconButton(
+                                onClick = {
+                                    if (currentUri != null && !isQueued) {
+                                        queueItems = queueItems + HistoryEntry(currentUri, selectedTitle)
+                                        status = "Added to play queue"
+                                    }
+                                },
+                                enabled = currentUri != null && !isQueued,
+                                modifier = Modifier.background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
+                            ) {
+                                Icon(
+                                    Icons.Default.QueueMusic,
+                                    contentDescription = if (isQueued) "Already in queue" else "Add to play queue",
+                                    tint = if (isQueued) Mint else Color.White
+                                )
+                            }
                             if (fullScreen) {
                                 IconButton(
                                     onClick = {
