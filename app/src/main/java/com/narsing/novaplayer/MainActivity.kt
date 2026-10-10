@@ -38,6 +38,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.AspectRatioFrameLayout
 import kotlin.math.abs
 import org.json.JSONArray
 import org.json.JSONObject
@@ -76,6 +77,8 @@ private fun NovaHome() {
     var isSeekingGesture by remember { mutableStateOf(false) }
     var dragTotal by remember { mutableStateOf(0f) }
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
+    var playbackSpeed by remember { mutableStateOf(1.0f) }
+    var aspectMode by remember { mutableStateOf("Fit") }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -226,12 +229,14 @@ private fun NovaHome() {
                                     onDragCancel = { isSeekingGesture = false }
                                 )
                             },
-                            factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true) } },
-                            update = { it.player = player }
+                            factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT },
+                            update = { view -> view.player = player; view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT } }
                         )
                         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                             TextButton(onClick = { player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L)) }) { Text("−10 sec") }
                             TextButton(onClick = { player.seekTo(player.currentPosition + 10_000L) }) { Text("+10 sec") }
+                            TextButton(onClick = { val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }; playbackSpeed = nextSpeed; player.setPlaybackSpeed(nextSpeed); status = "Playback speed: " + nextSpeed + "×" }) { Text(playbackSpeed.toString() + "×") }
+                            TextButton(onClick = { aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }; status = "Screen mode: " + aspectMode }) { Text(aspectMode) }
                             TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
                                 Icon(Icons.Default.Subtitles, null, tint = Lavender); Spacer(Modifier.width(4.dp)); Text("Subtitles")
                             }
