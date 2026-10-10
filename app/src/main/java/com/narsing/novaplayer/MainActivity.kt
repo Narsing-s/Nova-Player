@@ -59,6 +59,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.ui.TrackSelectionDialogBuilder
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -108,6 +111,10 @@ private fun NovaHome() {
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var sleepTimerActive by remember { mutableStateOf(false) }
+    var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
+    val uiScope = rememberCoroutineScope()
     var showSubtitleSettings by remember { mutableStateOf(false) }
     var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
     var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
@@ -849,6 +856,10 @@ private fun NovaHome() {
                             TextButton(onClick = { showSubtitleSettings = true }) {
                                 Icon(Icons.Default.TextFields, null, tint = Lavender); Text("Text")
                             }
+                            TextButton(onClick = { showSleepTimerDialog = true }) {
+                                Icon(Icons.Default.Bedtime, null, tint = if (sleepTimerActive) Mint else Lavender)
+                                Text(if (sleepTimerActive) "Sleep on" else "Sleep timer", color = if (sleepTimerActive) Mint else Color.White)
+                            }
                             TextButton(onClick = {
                                 fullScreen = !fullScreen
                                 status = if (fullScreen) "Immersive full-screen enabled. Swipe from an edge to reveal system bars." else "Immersive full-screen disabled"
@@ -933,6 +944,60 @@ private fun NovaHome() {
                 },
                 dismissButton = { TextButton(onClick = { showCreatePlaylistDialog = false }) { Text("Cancel") } },
                 containerColor = Panel, titleContentColor = Color.White, textContentColor = Color.White
+            )
+        }
+        if (showSleepTimerDialog) {
+            AlertDialog(
+                onDismissRequest = { showSleepTimerDialog = false },
+                title = { Text("Sleep timer") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            if (sleepTimerActive) "A sleep timer is active. Choose a new duration to replace it, or cancel it below."
+                            else "Pause playback automatically after the selected time.",
+                            color = Color(0xFF9BA8C7),
+                            fontSize = 12.sp
+                        )
+                        listOf(15, 30, 45, 60, 90).forEach { minutes ->
+                            OutlinedButton(
+                                onClick = {
+                                    sleepTimerJob?.cancel()
+                                    sleepTimerActive = true
+                                    showSleepTimerDialog = false
+                                    status = "Sleep timer set for $minutes minutes"
+                                    sleepTimerJob = uiScope.launch {
+                                        delay(minutes * 60_000L)
+                                        player.pause()
+                                        sleepTimerActive = false
+                                        sleepTimerJob = null
+                                        status = "Sleep timer finished — playback paused"
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            ) {
+                                Icon(Icons.Default.Bedtime, null, tint = Mint)
+                                Spacer(Modifier.width(8.dp))
+                                Text("$minutes minutes")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        sleepTimerJob?.cancel()
+                        sleepTimerJob = null
+                        sleepTimerActive = false
+                        showSleepTimerDialog = false
+                        status = "Sleep timer cancelled"
+                    }) { Text(if (sleepTimerActive) "Cancel timer" else "Close", color = Mint) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSleepTimerDialog = false }) { Text("Done") }
+                },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
             )
         }
         if (showSubtitleSettings) {
