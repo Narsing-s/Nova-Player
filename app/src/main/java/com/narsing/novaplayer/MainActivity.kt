@@ -459,13 +459,21 @@ private fun NovaHome(player: Player) {
                 listOf(HistoryEntry(currentUri.toString(), currentTitle.ifBlank { currentUri.lastPathSegment ?: "Now playing" })) + entry
             } else listOf(entry)
         } else queueItems + entry
+        val playerAlreadyMirrorsQueue = playerMatchesQueue(player, queueItems)
         queueItems = updated
         if (player.mediaItemCount == 0) {
             playQueue(updated.lastIndex)
-        } else {
+        } else if (queueItems.size == 2 && updated.firstOrNull()?.uri == player.currentMediaItem?.localConfiguration?.uri?.toString() && player.mediaItemCount == 1) {
+            // Seed the actual playback timeline with the currently playing item plus the new item.
             player.addMediaItem(MediaItem.Builder().setUri(video.uri).setMediaId(entry.uri)
                 .setMediaMetadata(MediaMetadata.Builder().setTitle(video.title).build()).build())
             status = "Added to queue: ${video.title}"
+        } else if (playerAlreadyMirrorsQueue) {
+            player.addMediaItem(MediaItem.Builder().setUri(video.uri).setMediaId(entry.uri)
+                .setMediaMetadata(MediaMetadata.Builder().setTitle(video.title).build()).build())
+            status = "Added to queue: ${video.title}"
+        } else {
+            status = "Saved to Up Next for the next queue playback: ${video.title}"
         }
     }
 
@@ -962,7 +970,7 @@ private fun NovaHome(player: Player) {
                             IconButton(onClick = {
                                 if (index > 0) {
                                     val reordered = queueItems.toMutableList().apply { add(index - 1, removeAt(index)) }
-                                    val mirrorsPlayerQueue = player.mediaItemCount == queueItems.size
+                                    val mirrorsPlayerQueue = playerMatchesQueue(player, queueItems)
                                     if (mirrorsPlayerQueue) player.moveMediaItem(index, index - 1)
                                     queueItems = reordered
                                     status = if (mirrorsPlayerQueue) "Queue order updated" else "Order saved for the next queue playback"
@@ -984,16 +992,17 @@ private fun NovaHome(player: Player) {
                             IconButton(onClick = { playQueue(index) }) { Icon(Icons.Default.PlayArrow, "Play ${item.title}", tint = Mint) }
                             IconButton(onClick = {
                                 val wasCurrent = selectedUri?.toString() == item.uri
+                                val mirrorsPlayerQueue = playerMatchesQueue(player, queueItems)
                                 queueItems = queueItems.filterIndexed { i, _ -> i != index }
-                                if (player.mediaItemCount > 0) {
-                                    val playerIndex = player.currentMediaItemIndex
-                                    player.removeMediaItem(index.coerceAtMost(player.mediaItemCount - 1))
-                                    if (wasCurrent && queueItems.isEmpty()) {
-                                        selectedUri = null
-                                        selectedTitle = ""
-                                    }
+                                // Never remove an unrelated timeline item when a standalone video is playing.
+                                if (mirrorsPlayerQueue && index < player.mediaItemCount) {
+                                    player.removeMediaItem(index)
                                 }
-                                status = "Removed from queue"
+                                if (wasCurrent && queueItems.isEmpty() && mirrorsPlayerQueue) {
+                                    selectedUri = null
+                                    selectedTitle = ""
+                                }
+                                status = if (mirrorsPlayerQueue) "Removed from queue" else "Removed from saved Up Next list"
                             }) { Icon(Icons.Default.Close, "Remove ${item.title} from queue", tint = Color(0xFF9BA8C7)) }
                         }
                         Divider(color = Color(0xFF202A40))
@@ -1939,6 +1948,13 @@ private fun VideoThumbnail(video: LocalVideo) {
         Image(bitmap = bitmap!!.asImageBitmap(), contentDescription = video.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     } else {
         Icon(Icons.Default.Movie, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(30.dp))
+    }
+}
+
+private fun playerMatchesQueue(player: Player, entries: List<HistoryEntry>): Boolean {
+    if (player.mediaItemCount != entries.size) return false
+    return entries.indices.all { index ->
+        player.getMediaItemAt(index).localConfiguration?.uri?.toString() == entries[index].uri
     }
 }
 
