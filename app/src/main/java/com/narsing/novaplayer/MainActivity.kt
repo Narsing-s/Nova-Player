@@ -206,7 +206,8 @@ private fun NovaHome(player: Player) {
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
-    var sortByName by remember { mutableStateOf(false) }
+    var librarySort by remember { mutableStateOf(prefs.getString("library_sort", "Recently added") ?: "Recently added") }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
     var durationFilter by remember { mutableStateOf(prefs.getString("library_duration_filter", "All") ?: "All") }
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
@@ -443,7 +444,22 @@ private fun NovaHome(player: Player) {
                         } else libraryPermissionLauncher.launch(libraryPermission)
                     }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
                     if (activeTab == "Videos") {
-                        IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                        Box {
+                            IconButton(onClick = { sortMenuExpanded = true }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                            DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = { sortMenuExpanded = false }, modifier = Modifier.background(Panel)) {
+                                listOf("Recently added", "Name A–Z", "Name Z–A", "Longest first", "Largest first").forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option, color = if (librarySort == option) Mint else Color.White) },
+                                        leadingIcon = { if (librarySort == option) Icon(Icons.Default.Check, null, tint = Mint) else Icon(Icons.Default.Sort, null, tint = Color(0xFF9BA8C7)) },
+                                        onClick = {
+                                            librarySort = option
+                                            prefs.edit().putString("library_sort", option).apply()
+                                            sortMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                         IconButton(onClick = {
                             gridView = !gridView
                             prefs.edit().putBoolean("library_grid_view", gridView).apply()
@@ -526,7 +542,7 @@ private fun NovaHome(player: Player) {
                     Text(if (selectedFolder != null) "FOLDER: $selectedFolder" else if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     if (selectedFolder != null) TextButton(onClick = { selectedFolder = null }) { Text("Clear", color = Color(0xFF8A70FF), fontSize = 11.sp) }
                     Spacer(Modifier.weight(1f))
-                    Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                    Text(librarySort, color = Color(0xFF9BA8C7), fontSize = 11.sp)
                 }
                 val visibleVideos = localVideos.filter { video ->
                     val matchesDuration = when (durationFilter) {
@@ -538,7 +554,15 @@ private fun NovaHome(player: Player) {
                     video.title.contains(librarySearch, ignoreCase = true) &&
                         (selectedFolder == null || video.folder == selectedFolder) &&
                         matchesDuration
-                }.let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
+                }.let { list ->
+                    when (librarySort) {
+                        "Name A–Z" -> list.sortedBy { it.title.lowercase() }
+                        "Name Z–A" -> list.sortedByDescending { it.title.lowercase() }
+                        "Longest first" -> list.sortedByDescending { it.duration }
+                        "Largest first" -> list.sortedByDescending { it.size }
+                        else -> list.sortedByDescending { it.dateAdded }
+                    }
+                }
                 if (visibleVideos.isEmpty()) {
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                         Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
