@@ -58,7 +58,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 
 ### 🗂️ Your offline video library
 - Scan videos through Android MediaStore with a background refresh indicator.
-- Browse in a responsive thumbnail grid (adapts to phone/tablet width) or compact list, with consistent 16:9 previews.
+- Browse the full matching library in a responsive thumbnail grid (adapts to phone/tablet width) or compact list, with consistent 16:9 previews; neither view artificially caps results at 200 videos.
 - Quickly clear search with one tap; search by video title/filename or the containing folder name.
 - Search by video title/filename or containing folder; sort by newest, recently played, title, duration or file size.
 - Filter by clip length and watched status.
