@@ -58,10 +58,10 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val Midnight = Color(0xFF101010)
-private val Panel = Color(0xFF171717)
-private val Mint = Color(0xFFFF6D00)
-private val Lavender = Color(0xFFFF8A33)
+private val Midnight = Color(0xFF0A0E1A)
+private val Panel = Color(0xFF12182A)
+private val Mint = Color(0xFF39E7D5)
+private val Lavender = Color(0xFF8A70FF)
 private const val PREFS = "nova_player_state"
 private const val KEY_LAST_URI = "last_uri"
 private const val KEY_LAST_TITLE = "last_title"
@@ -180,19 +180,19 @@ private fun NovaHome() {
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = Color(0xFF101010)) {
-        Column(Modifier.fillMaxSize().background(Color(0xFF101010))) {
+    Surface(Modifier.fillMaxSize(), color = Color(0xFF0A0E1A)) {
+        Column(Modifier.fillMaxSize().background(Color(0xFF0A0E1A))) {
             Row(
-                Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 16.dp, vertical = 14.dp),
+                Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(38.dp).background(Color(0xFFFF6D00), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(38.dp).background(Color(0xFF39E7D5), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(28.dp))
                 }
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text("NOVA PLAYER", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                    Text("LOCAL VIDEO PLAYER", color = Color(0xFFAAAAAA), fontSize = 9.sp, letterSpacing = 1.4.sp)
+                    Text("LOCAL VIDEO PLAYER", color = Color(0xFF9BA8C7), fontSize = 9.sp, letterSpacing = 1.4.sp)
                 }
                 if (selectedUri != null) {
                     IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
@@ -208,13 +208,13 @@ private fun NovaHome() {
             }
 
             if (selectedUri == null) {
-                Row(Modifier.fillMaxWidth().background(Color(0xFF171717)), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Row(Modifier.fillMaxWidth().background(Color(0xFF12182A)), horizontalArrangement = Arrangement.SpaceEvenly) {
                     listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { activeTab = tab }, modifier = Modifier.fillMaxWidth()) {
-                                Text(tab, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFBDBDBD), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
+                                Text(tab, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFFBAC6DF), fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal)
                             }
-                            Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFFFF6D00) else Color.Transparent))
+                            Box(Modifier.fillMaxWidth().height(2.dp).background(if (activeTab == tab) Color(0xFF39E7D5) else Color.Transparent))
                         }
                     }
                 }
@@ -228,51 +228,51 @@ private fun NovaHome() {
                         label = { Text("Search videos") },
                         leadingIcon = { Icon(Icons.Default.Search, null) },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFFF6D00),
-                            unfocusedBorderColor = Color(0xFF454545),
+                            focusedBorderColor = Color(0xFF39E7D5),
+                            unfocusedBorderColor = Color(0xFF35415B),
                             focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                            focusedLabelColor = Color(0xFFFF6D00), unfocusedLabelColor = Color(0xFFAAAAAA)
+                            focusedLabelColor = Color(0xFF39E7D5), unfocusedLabelColor = Color(0xFF9BA8C7)
                         )
                     )
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) {
-                        Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFFFF6D00))
+                        Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFF39E7D5))
                     }
                 }
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (selectedFolder != null) "FOLDER: $selectedFolder" else if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    if (selectedFolder != null) TextButton(onClick = { selectedFolder = null }) { Text("Clear", color = Color(0xFFFF8A33), fontSize = 11.sp) }
+                    Text(if (selectedFolder != null) "FOLDER: $selectedFolder" else if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    if (selectedFolder != null) TextButton(onClick = { selectedFolder = null }) { Text("Clear", color = Color(0xFF8A70FF), fontSize = 11.sp) }
                     Spacer(Modifier.weight(1f))
-                    Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                    Text(if (sortByName) "Name A–Z" else "Recently added", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                 }
                 val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) && (selectedFolder == null || it.folder == selectedFolder) }
                     .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
                 if (visibleVideos.isEmpty()) {
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                        Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(58.dp))
+                        Icon(Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
                         Spacer(Modifier.height(12.dp))
                         Text("Your videos appear here", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(6.dp))
-                        Text("Scan your device to build your local library, or browse and open a single video.", color = Color(0xFFAAAAAA), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Text("Scan your device to build your local library, or browse and open a single video.", color = Color(0xFF9BA8C7), fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         Spacer(Modifier.height(18.dp))
                         Button(onClick = {
                             if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
                                 localVideos = loadLocalVideos(context)
                                 status = "Found " + localVideos.size + " videos on this device."
                             } else libraryPermissionLauncher.launch(libraryPermission)
-                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6D00))) {
+                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
                             Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
                         }
-                        TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFFFF8A33)) }
+                        TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFF8A70FF)) }
                     }
                 } else {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                         visibleVideos.take(200).forEach { video ->
                             Row(
-                                Modifier.fillMaxWidth().background(Color(0xFF101010)).padding(horizontal = 14.dp, vertical = 8.dp),
+                                Modifier.fillMaxWidth().background(Color(0xFF0A0E1A)).padding(horizontal = 14.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(Modifier.size(width = 100.dp, height = 66.dp).background(Color(0xFF292929), RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
+                                Box(Modifier.size(width = 100.dp, height = 66.dp).background(Color(0xFF202A40), RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
                                     VideoThumbnail(video)
                                     Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 4.dp)).padding(horizontal = 4.dp, vertical = 2.dp)) {
                                         Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp)
@@ -297,61 +297,61 @@ private fun NovaHome() {
                                     Icon(
                                         if (favoriteItems.any { it.uri == video.uri.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                         "Toggle favorite",
-                                        tint = Color(0xFFFF6D00)
+                                        tint = Color(0xFF39E7D5)
                                     )
                                 }
                                 IconButton(onClick = { playMedia(video.uri, video.title) }) {
-                                    Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
+                                    Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFF39E7D5), modifier = Modifier.size(30.dp))
                                 }
                             }
-                            Divider(color = Color(0xFF292929), thickness = 1.dp)
+                            Divider(color = Color(0xFF202A40), thickness = 1.dp)
                         }
                     }
                 }
             } else if (selectedUri == null && activeTab == "Folders") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    Text("BROWSE BY FOLDER", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("BROWSE BY FOLDER", color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.height(10.dp))
                     val folders = localVideos.groupBy { it.folder }.toList().sortedBy { it.first.lowercase() }
                     if (folders.isEmpty()) {
                         Column(Modifier.fillMaxWidth().padding(vertical = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.FolderOpen, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(48.dp))
+                            Icon(Icons.Default.FolderOpen, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(48.dp))
                             Spacer(Modifier.height(10.dp))
                             Text("No indexed video folders yet", color = Color.White, fontWeight = FontWeight.SemiBold)
-                            Text("Scan device videos or use Browse files.", color = Color(0xFFAAAAAA), fontSize = 12.sp)
-                            TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files", color = Color(0xFFFF8A33)) }
+                            Text("Scan device videos or use Browse files.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                            TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files", color = Color(0xFF8A70FF)) }
                         }
                     } else folders.forEach { (folder, videos) ->
-                        Row(Modifier.fillMaxWidth().background(Color(0xFF171717), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Folder, null, tint = Color(0xFFFF8A33), modifier = Modifier.size(32.dp))
+                        Row(Modifier.fillMaxWidth().background(Color(0xFF12182A), RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Folder, null, tint = Color(0xFF8A70FF), modifier = Modifier.size(32.dp))
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(folder.substringAfterLast('/').ifBlank { "Device storage" }, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                                Text("${videos.size} video${if (videos.size == 1) "" else "s"}  •  ${formatBytes(videos.sumOf { it.size })}", color = Color(0xFFAAAAAA), fontSize = 11.sp)
-                                Text(folder, color = Color(0xFF777777), fontSize = 10.sp, maxLines = 1)
+                                Text("${videos.size} video${if (videos.size == 1) "" else "s"}  •  ${formatBytes(videos.sumOf { it.size })}", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                                Text(folder, color = Color(0xFF6F7D9C), fontSize = 10.sp, maxLines = 1)
                             }
-                            IconButton(onClick = { selectedFolder = folder; activeTab = "Videos" }) { Icon(Icons.Default.ChevronRight, "Open folder", tint = Color(0xFFFF6D00)) }
+                            IconButton(onClick = { selectedFolder = folder; activeTab = "Videos" }) { Icon(Icons.Default.ChevronRight, "Open folder", tint = Color(0xFF39E7D5)) }
                         }
                         Spacer(Modifier.height(8.dp))
                     }
                 }
             } else if (selectedUri == null && activeTab == "Recent") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    Text("PLAYBACK HISTORY", color = Color(0xFFAAAAAA), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("PLAYBACK HISTORY", color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.height(8.dp))
                     if (recentItems.isEmpty()) {
-                        Text("Videos you play will appear here.", color = Color(0xFFAAAAAA), modifier = Modifier.padding(vertical = 24.dp))
+                        Text("Videos you play will appear here.", color = Color(0xFF9BA8C7), modifier = Modifier.padding(vertical = 24.dp))
                     } else recentItems.forEach { item ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.History, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(34.dp))
+                            Icon(Icons.Default.History, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(34.dp))
                             Spacer(Modifier.width(12.dp))
                             Text(item.title, color = Color.White, modifier = Modifier.weight(1f), maxLines = 2)
                             IconButton(onClick = {
                                 try { playMedia(Uri.parse(item.uri), item.title) }
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
-                            }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFFFF6D00)) }
+                            }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFF39E7D5)) }
                         }
-                        Divider(color = Color(0xFF292929))
+                        Divider(color = Color(0xFF202A40))
                     }
                 }
             }
@@ -359,39 +359,39 @@ private fun NovaHome() {
             if (selectedUri == null && activeTab == "Favorites") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, null, tint = Color(0xFFFF6D00))
+                        Icon(Icons.Default.Favorite, null, tint = Color(0xFF39E7D5))
                         Spacer(Modifier.width(8.dp))
                         Text("YOUR FAVORITES", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         Spacer(Modifier.weight(1f))
-                        Text("${favoriteItems.size} saved", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                        Text("${favoriteItems.size} saved", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                     }
                     Spacer(Modifier.height(8.dp))
                     if (favoriteItems.isEmpty()) {
                         Column(Modifier.fillMaxWidth().padding(vertical = 42.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.FavoriteBorder, null, tint = Color(0xFF777777), modifier = Modifier.size(44.dp))
+                            Icon(Icons.Default.FavoriteBorder, null, tint = Color(0xFF6F7D9C), modifier = Modifier.size(44.dp))
                             Spacer(Modifier.height(10.dp))
                             Text("No favorites yet", color = Color.White, fontWeight = FontWeight.SemiBold)
-                            Text("Tap the heart beside a video to save it here.", color = Color(0xFFAAAAAA), fontSize = 12.sp)
+                            Text("Tap the heart beside a video to save it here.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
                         }
                     } else favoriteItems.forEach { item ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Movie, null, tint = Color(0xFFFF8A33), modifier = Modifier.size(30.dp))
+                            Icon(Icons.Default.Movie, null, tint = Color(0xFF8A70FF), modifier = Modifier.size(30.dp))
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(item.title, color = Color.White, maxLines = 2, fontSize = 14.sp)
-                                Text("Saved on this device", color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                                Text("Saved on this device", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                             }
                             IconButton(onClick = {
                                 try { playMedia(Uri.parse(item.uri), item.title) }
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
-                            }) { Icon(Icons.Default.PlayCircle, "Play favorite", tint = Color(0xFFFF6D00)) }
+                            }) { Icon(Icons.Default.PlayCircle, "Play favorite", tint = Color(0xFF39E7D5)) }
                             IconButton(onClick = {
                                 favoriteItems = favoriteItems.filterNot { it.uri == item.uri }
                                 saveFavorites(prefs, favoriteItems)
                                 status = "Removed from favorites"
-                            }) { Icon(Icons.Default.DeleteOutline, "Remove favorite", tint = Color(0xFFAAAAAA)) }
+                            }) { Icon(Icons.Default.DeleteOutline, "Remove favorite", tint = Color(0xFF9BA8C7)) }
                         }
-                        Divider(color = Color(0xFF292929))
+                        Divider(color = Color(0xFF202A40))
                     }
                 }
             }
@@ -479,7 +479,7 @@ private fun NovaHome() {
                                     player.seekTo((player.currentPosition - 10_000L).coerceAtLeast(0L))
                                     status = "Rewind 10 seconds"
                                 },
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color.White),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                             ) { Text("↶  10s", fontWeight = FontWeight.SemiBold) }
                             FilledTonalButton(
@@ -488,7 +488,7 @@ private fun NovaHome() {
                                     player.seekTo(if (player.duration > 0L) target.coerceAtMost(player.duration) else target)
                                     status = "Forward 10 seconds"
                                 },
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color.White),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                             ) { Text("10s  ↷", fontWeight = FontWeight.SemiBold) }
                             FilledTonalButton(
@@ -498,7 +498,7 @@ private fun NovaHome() {
                                     player.setPlaybackSpeed(nextSpeed)
                                     status = "Playback speed: " + nextSpeed + "×"
                                 },
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF292929), contentColor = Color(0xFFFF8A33)),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color(0xFF8A70FF)),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                             ) { Text(playbackSpeed.toString() + "×", fontWeight = FontWeight.Bold) }
                         }
@@ -534,13 +534,13 @@ private fun NovaHome() {
                 Text(if (isSeekingGesture) "Swipe horizontally to seek" else selectedTitle, color = Lavender, fontSize = 12.sp, maxLines = 1)
             }
 
-            if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
-            if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
+            if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("Videos", "Folders", "Recent", "Favorites").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
-                            Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFAAAAAA))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
+                            Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
                 }
@@ -574,7 +574,7 @@ private fun VideoThumbnail(video: LocalVideo) {
     if (bitmap != null) {
         Image(bitmap = bitmap!!.asImageBitmap(), contentDescription = video.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     } else {
-        Icon(Icons.Default.Movie, null, tint = Color(0xFFFF6D00), modifier = Modifier.size(30.dp))
+        Icon(Icons.Default.Movie, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(30.dp))
     }
 }
 
