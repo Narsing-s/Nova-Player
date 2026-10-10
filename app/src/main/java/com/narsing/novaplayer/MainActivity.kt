@@ -874,7 +874,7 @@ private fun NovaHome(player: Player) {
                                             color = Mint,
                                             trackColor = Color(0xFF29344A)
                                         )
-                                        Text("Continue · " + formatTime(lastSavedPosition) + " left in progress", color = Mint, fontSize = 10.sp, maxLines = 1)
+                                        Text("Resume at " + formatTime(lastSavedPosition), color = Mint, fontSize = 10.sp, maxLines = 1)
                                     }
                                 }
                                 IconButton(onClick = {
