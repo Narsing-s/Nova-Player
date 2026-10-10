@@ -13,6 +13,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Local video picker** using Android's system document picker as a fallback.
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
+- **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Playback speed** cycling from 0.5× to 2×.
@@ -31,7 +32,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [ ] Folder navigation
 - [x] Video thumbnails
 - [x] Basic recent playback history (up to eight entries)
-- [ ] Favourites and playlists
+- [x] Local favourites
+- [ ] Playlists
 - [x] Basic brightness/volume/seek swipe gestures
 - [ ] Orientation-aware immersive full-screen playback
 - [x] Basic audio-track selection
