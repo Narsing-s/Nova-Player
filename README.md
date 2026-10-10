@@ -60,7 +60,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Scan videos through Android MediaStore with a background refresh indicator.
 - Browse in a responsive thumbnail grid (adapts to phone/tablet width) or compact list, with consistent 16:9 previews.
 - Quickly clear search with one tap; search by video title/filename or the containing folder name.
-- Search and sort by newest, title, duration or file size.
+- Search by video title/filename or containing folder; sort by newest, recently played, title, duration or file size.
 - Filter by clip length and watched status.
 - Automatically mark a video watched when playback finishes; manual watched/unwatched controls remain available.
 - Browse folders, inspect video details, and share through Android's native share sheet.
