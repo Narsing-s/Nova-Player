@@ -1222,6 +1222,73 @@ private fun NovaHome(player: Player) {
                                 ))
                             }
                         )
+                        // Landscape quick controls: keep advanced playback actions reachable
+                        // without leaving the immersive video surface.
+                        if (isLandscape && !controlsLocked) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                                color = Color(0xE6101829),
+                                shape = RoundedCornerShape(22.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.32f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    TextButton(onClick = { showPlaybackSpeedDialog = true }) {
+                                        Icon(Icons.Default.Speed, contentDescription = null, tint = Mint)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("${playbackSpeed}×", color = Color.White)
+                                    }
+                                    TextButton(onClick = {
+                                        aspectMode = when (aspectMode) { "Auto" -> "Fit"; "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Auto" }
+                                        prefs.edit().putString("player_aspect_mode", aspectMode).apply()
+                                        status = "Screen mode: " + aspectMode
+                                    }) {
+                                        Icon(Icons.Default.AspectRatio, contentDescription = null, tint = Mint)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text(aspectMode, color = Color.White)
+                                    }
+                                    TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
+                                        Icon(Icons.Default.Subtitles, contentDescription = null, tint = Mint)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Subtitles", color = Color.White)
+                                    }
+                                    TextButton(onClick = {
+                                        try { TrackSelectionDialogBuilder(context, "Audio tracks", player, C.TRACK_TYPE_AUDIO).build().show() }
+                                        catch (_: Exception) { status = "Audio track selection is unavailable for this media." }
+                                    }) {
+                                        Icon(Icons.Default.Audiotrack, contentDescription = null, tint = Mint)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Audio", color = Color.White)
+                                    }
+                                    TextButton(onClick = {
+                                        try {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                context.findActivity()?.enterPictureInPictureMode(
+                                                    PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
+                                                )
+                                            } else status = "Picture-in-Picture requires Android 8.0 or newer."
+                                        } catch (_: Exception) { status = "Picture-in-Picture could not be started on this device." }
+                                    }) {
+                                        Icon(Icons.Default.PictureInPictureAlt, contentDescription = null, tint = Mint)
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("PiP", color = Color.White)
+                                    }
+                                    IconButton(onClick = {
+                                        fullScreen = !fullScreen
+                                        status = if (fullScreen) "Immersive full-screen enabled" else "Immersive full-screen disabled"
+                                    }) {
+                                        Icon(
+                                            if (fullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                            contentDescription = if (fullScreen) "Exit immersive mode" else "Enter immersive mode",
+                                            tint = Mint
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         if (playerZoomScale > 1.01f && !controlsLocked) {
                             Surface(
                                 modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
