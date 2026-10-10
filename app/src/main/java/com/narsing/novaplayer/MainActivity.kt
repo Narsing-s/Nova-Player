@@ -186,6 +186,7 @@ private fun NovaHome(player: Player) {
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
+    var controlsLocked by remember { mutableStateOf(false) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var sleepTimerActive by remember { mutableStateOf(false) }
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
@@ -860,7 +861,7 @@ private fun NovaHome(player: Player) {
                     Column(Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxWidth().weight(1f)) {
                         AndroidView(
-                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
+                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri, controlsLocked, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
                                 var totalX = 0f
                                 var totalY = 0f
                                 var startX = 0f
@@ -878,7 +879,7 @@ private fun NovaHome(player: Player) {
                                         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
                                         startBrightness = context.findActivity()?.window?.attributes?.screenBrightness
                                             ?.takeIf { it >= 0f } ?: 0.5f
-                                        gestureAxis = "none"
+                                        gestureAxis = if (controlsLocked) "locked" else "none"
                                         isSeekingGesture = false
                                     },
                                     onDrag = { change, amount ->
@@ -926,9 +927,10 @@ private fun NovaHome(player: Player) {
                                     onDragCancel = { isSeekingGesture = false; gestureAxis = "none" }
                                 )
                             },
-                            factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
+                            factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = !controlsLocked; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
                             update = { view ->
                                 view.player = player
+                                view.useController = !controlsLocked
                                 view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT }
                                 view.subtitleView?.setFractionalTextSize(subtitleScale)
                                 view.subtitleView?.setStyle(CaptionStyleCompat(
@@ -941,6 +943,30 @@ private fun NovaHome(player: Player) {
                                 ))
                             }
                         )
+                        if (controlsLocked) {
+                            FilledTonalButton(
+                                onClick = {
+                                    controlsLocked = false
+                                    status = "Player controls unlocked"
+                                },
+                                modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Mint, contentColor = Midnight)
+                            ) {
+                                Icon(Icons.Default.LockOpen, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Unlock controls")
+                            }
+                        } else {
+                            IconButton(
+                                onClick = {
+                                    controlsLocked = true
+                                    status = "Player controls locked · Tap Unlock controls to restore"
+                                },
+                                modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
+                            ) {
+                                Icon(Icons.Default.Lock, "Lock player controls", tint = Mint)
+                            }
+                        }
                         if (fullScreen) {
                             IconButton(
                                 onClick = {
@@ -953,7 +979,7 @@ private fun NovaHome(player: Player) {
                             }
                         }
                         }
-                        if (!fullScreen) {
+                        if (!fullScreen && !controlsLocked) {
                         Row(
                             Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1066,7 +1092,7 @@ private fun NovaHome(player: Player) {
                         }
                     }
                 }
-                if (!fullScreen) {
+                if (!fullScreen && !controlsLocked) {
                     Text(
                         if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
                         color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
