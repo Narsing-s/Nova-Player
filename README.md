@@ -61,6 +61,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Browse the full matching library in a responsive thumbnail grid (adapts to phone/tablet width) or compact list, with consistent 16:9 previews; neither view artificially caps results at 200 videos.
 - Quickly clear search with one tap; search by video title/filename or the containing folder name.
 - Search by video title/filename or containing folder; sort by newest, recently played, title, duration or file size.
+- Helpful empty states distinguish an empty device library from filters with no matches, with a one-tap clear-search-and-filters action.
 - Filter by clip length and watched status.
 - Automatically mark a video watched when playback finishes; manual watched/unwatched controls remain available.
 - Browse folders, inspect video details, and share through Android's native share sheet.
