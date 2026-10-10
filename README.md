@@ -13,6 +13,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Direct HTTPS streaming** with Media3 / ExoPlayer.
 - **HLS and DASH playback support** through Media3 modules (subject to URL, codec, server and device compatibility).
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
+- **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
+- **Picture-in-Picture action** is available on Android 8.0+ while a video is selected.
 - **External subtitles** for .srt and .vtt files.
 - **Seeking** with 10-second buttons and a horizontal swipe gesture over the video surface.
 - **Picture-in-Picture action** on Android 8.0+ devices, with manifest support enabled.
@@ -23,7 +25,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 - [ ] Verify CI build and install on physical Android devices
 - [ ] Indexed library using MediaStore, folders, thumbnails and search
-- [ ] Multiple-item playback history, favourites and playlists
+- [x] Basic recent playback history (up to eight entries)
+- [ ] Favourites and playlists
 - [ ] Gesture tuning for brightness/volume, orientation and immersive full-screen
 - [ ] Audio-track selection and subtitle styling / timing controls
 - [ ] Background playback via MediaSession service
