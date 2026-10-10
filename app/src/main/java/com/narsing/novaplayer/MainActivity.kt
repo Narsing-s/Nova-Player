@@ -213,6 +213,12 @@ private fun NovaHome() {
                             TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
                                 Icon(Icons.Default.Subtitles, null, tint = Lavender); Spacer(Modifier.width(4.dp)); Text("Subtitles")
                             }
+                            TextButton(onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    val activity = context.findActivity()
+                                    activity?.enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build())
+                                } else status = "Picture-in-Picture requires Android 8.0 or newer."
+                            }) { Icon(Icons.Default.PictureInPictureAlt, null, tint = Mint); Text("PiP") }
                         }
                     }
                 }
