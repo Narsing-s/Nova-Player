@@ -1048,8 +1048,12 @@ private fun NovaHome(player: Player) {
                                         if (gestureAxis == "horizontal") {
                                             val delta = (totalX / 8f).toLong() * 1_000L
                                             if (abs(delta) >= 1_000L) {
-                                                player.seekTo((player.currentPosition + delta).coerceAtLeast(0L))
-                                                status = if (delta > 0) "Skipped forward " + (delta / 1000) + "s" else "Skipped back " + (abs(delta) / 1000) + "s"
+                                                val target = (player.currentPosition + delta)
+                                                    .coerceAtLeast(0L)
+                                                    .let { if (player.duration > 0L) it.coerceAtMost(player.duration) else it }
+                                                player.seekTo(target)
+                                                status = (if (delta > 0) "Skipped forward " else "Skipped back ") +
+                                                    (abs(delta) / 1000) + "s · " + formatTime(target)
                                             }
                                         }
                                         isSeekingGesture = false
