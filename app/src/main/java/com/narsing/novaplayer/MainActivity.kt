@@ -180,6 +180,7 @@ private fun NovaHome(player: Player) {
     val prefs = remember { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedTitle by remember { mutableStateOf("") }
+    var lastSavedPosition by remember { mutableLongStateOf(prefs.getLong(KEY_LAST_POSITION, 0L)) }
     var status by remember { mutableStateOf("Loading videos on this device…") }
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
@@ -271,6 +272,7 @@ private fun NovaHome(player: Player) {
                     .putString(KEY_LAST_TITLE, selectedTitle)
                     .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L))
                     .apply()
+                lastSavedPosition = player.currentPosition.coerceAtLeast(0L)
             }
         }
     }
@@ -311,12 +313,14 @@ private fun NovaHome(player: Player) {
                 if (!playing) player.currentMediaItem?.localConfiguration?.uri?.let { uri ->
                     prefs.edit().putString(KEY_LAST_URI, uri.toString())
                         .putLong(KEY_LAST_POSITION, player.currentPosition.coerceAtLeast(0L)).apply()
+                    lastSavedPosition = player.currentPosition.coerceAtLeast(0L)
                 }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) {
                     prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
+                    lastSavedPosition = 0L
                     // Reaching the end marks the current video watched; the library still lets users undo it.
                     player.currentMediaItem?.localConfiguration?.uri?.toString()?.let { completedUri ->
                         val updatedWatched = watchedUris + completedUri
@@ -809,6 +813,15 @@ private fun NovaHome(player: Player) {
                                         Box(Modifier.align(Alignment.Center).size(42.dp).background(Color(0xB31A263B), RoundedCornerShape(50)), contentAlignment = Alignment.Center) {
                                             Icon(Icons.Default.PlayArrow, "Play video", tint = Mint, modifier = Modifier.size(30.dp))
                                         }
+                                    }
+                                    val isLastPlayedVideo = prefs.getString(KEY_LAST_URI, null) == video.uri.toString()
+                                    if (isLastPlayedVideo && video.duration > 0L && lastSavedPosition > 0L) {
+                                        LinearProgressIndicator(
+                                            progress = { (lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) },
+                                            modifier = Modifier.fillMaxWidth().height(3.dp),
+                                            color = Mint,
+                                            trackColor = Color(0xFF29344A)
+                                        )
                                     }
                                     Text(video.title, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 10.dp), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2)
                                     Text(formatBytes(video.size) + " · " + video.folder.substringAfterLast('/').ifBlank { "Device" }, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), color = Color(0xFF9BA8C7), fontSize = 10.sp, maxLines = 1)
