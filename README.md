@@ -14,7 +14,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Switchable library layouts**: browse a thumbnail-rich two-column grid or a compact list, with the layout choice remembered locally; grid cards expose quick favorite and queue actions.
 - **Quick duration filters**: instantly narrow the local video library to all videos, clips under 10 minutes, videos from 10–60 minutes, or feature-length videos over an hour; the selected filter is remembered on-device.
 - **Advanced library sorting**: sort videos by newest, title A–Z or Z–A, longest duration, or largest file size from a quick sort menu; the selected order is remembered locally.
-- **Video details panel**: inspect each indexed video's duration, file size, device folder, date added and media URI from either grid or list view, with a direct Play action.
+- **Video details panel**: inspect each indexed video's duration, file size, device folder, date added and media URI from either grid or list view, with a direct Play action. The panel also opens Android's native share sheet so users can send the selected video to compatible apps.
 - **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
 - **Local video picker** using Android's system document picker as a fallback.
 - **Playback resume** stores the last media URI and position locally and offers a prominent **Continue Watching** card on the Videos tab, showing the saved resume point when available.
