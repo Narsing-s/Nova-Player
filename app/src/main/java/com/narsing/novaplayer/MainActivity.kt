@@ -100,17 +100,17 @@ private fun NovaHome() {
     var dragTotal by remember { mutableStateOf(0f) }
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
     var favoriteItems by remember { mutableStateOf(readFavorites(prefs)) }
-    var playbackSpeed by remember { mutableStateOf(1.0f) }
-    var shuffleEnabled by remember { mutableStateOf(false) }
-    var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
+    var playbackSpeed by remember { mutableStateOf(prefs.getFloat("playback_speed", 1.0f)) }
+    var shuffleEnabled by remember { mutableStateOf(prefs.getBoolean("shuffle_enabled", false)) }
+    var repeatMode by remember { mutableIntStateOf(prefs.getInt("repeat_mode", Player.REPEAT_MODE_OFF)) }
     var queueItems by remember { mutableStateOf(readQueue(prefs)) }
     var playlists by remember { mutableStateOf(readPlaylists(prefs)) }
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var fullScreen by remember { mutableStateOf(false) }
     var showSubtitleSettings by remember { mutableStateOf(false) }
-    var subtitleScale by remember { mutableFloatStateOf(0.065f) }
-    var subtitleBackgroundEnabled by remember { mutableStateOf(true) }
+    var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
+    var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
     var aspectMode by remember { mutableStateOf("Fit") }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
@@ -148,6 +148,18 @@ private fun NovaHome() {
 
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
+    }
+    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled) {
+        prefs.edit()
+            .putFloat("playback_speed", playbackSpeed)
+            .putBoolean("shuffle_enabled", shuffleEnabled)
+            .putInt("repeat_mode", repeatMode)
+            .putFloat("subtitle_scale", subtitleScale)
+            .putBoolean("subtitle_background", subtitleBackgroundEnabled)
+            .apply()
+        player.shuffleModeEnabled = shuffleEnabled
+        player.repeatMode = repeatMode
+        player.setPlaybackSpeed(playbackSpeed)
     }
 
     DisposableEffect(player) {
