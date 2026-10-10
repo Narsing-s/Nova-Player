@@ -25,7 +25,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
@@ -982,13 +983,27 @@ private fun NovaHome(player: Player) {
                                     scaleY = playerZoomScale
                                 }
                                 .pointerInput(controlsLocked) {
-                                    detectTransformGestures { _, _, zoomChange, _ ->
-                                        if (!controlsLocked) {
-                                            playerZoomScale = (playerZoomScale * zoomChange).coerceIn(1f, 2.5f)
-                                            if (playerZoomScale > 1.01f) {
-                                                status = "Pinch zoom " + "%.1f".format(playerZoomScale) + "×"
+                                    awaitEachGesture {
+                                        awaitFirstDown(requireUnconsumed = false)
+                                        var previousDistance = 0f
+                                        do {
+                                            val event = awaitPointerEvent()
+                                            val pressed = event.changes.filter { it.pressed }
+                                            if (pressed.size >= 2) {
+                                                val distance = (pressed[0].position - pressed[1].position).getDistance()
+                                                if (previousDistance > 0f && !controlsLocked && distance > 0f) {
+                                                    val factor = distance / previousDistance
+                                                    playerZoomScale = (playerZoomScale * factor).coerceIn(1f, 2.5f)
+                                                    if (playerZoomScale > 1.01f) {
+                                                        status = "Pinch zoom " + "%.1f".format(playerZoomScale) + "×"
+                                                    }
+                                                    event.changes.forEach { it.consume() }
+                                                }
+                                                previousDistance = distance
+                                            } else {
+                                                previousDistance = 0f
                                             }
-                                        }
+                                        } while (event.changes.any { it.pressed })
                                     }
                                 }
                                 .pointerInput(selectedUri, controlsLocked) {
