@@ -198,6 +198,7 @@ private fun NovaHome(player: Player) {
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
     var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     var sleepTimerActive by remember { mutableStateOf(false) }
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
     val uiScope = rememberCoroutineScope()
@@ -1239,15 +1240,10 @@ private fun NovaHome(player: Player) {
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                             ) { Text("10s  ↷", fontWeight = FontWeight.SemiBold) }
                             FilledTonalButton(
-                                onClick = {
-                                    val nextSpeed = when (playbackSpeed) { 0.5f -> 0.75f; 0.75f -> 1.0f; 1.0f -> 1.25f; 1.25f -> 1.5f; 1.5f -> 2.0f; else -> 0.5f }
-                                    playbackSpeed = nextSpeed
-                                    player.setPlaybackSpeed(nextSpeed)
-                                    status = "Playback speed: " + nextSpeed + "×"
-                                },
+                                onClick = { showPlaybackSpeedDialog = true },
                                 colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color(0xFF8A70FF)),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                            ) { Text(playbackSpeed.toString() + "×", fontWeight = FontWeight.Bold) }
+                            ) { Text("Speed " + playbackSpeed.toString() + "×", fontWeight = FontWeight.Bold) }
                         }
                         Row(
                             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp),
@@ -1438,6 +1434,48 @@ private fun NovaHome(player: Player) {
                 },
                 dismissButton = { TextButton(onClick = { showCreatePlaylistDialog = false }) { Text("Cancel") } },
                 containerColor = Panel, titleContentColor = Color.White, textContentColor = Color.White
+            )
+        }
+        if (showPlaybackSpeedDialog) {
+            val speedPresets = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
+            AlertDialog(
+                onDismissRequest = { showPlaybackSpeedDialog = false },
+                title = { Text("Playback speed") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Choose a precise speed for movies, lectures or language practice.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        speedPresets.chunked(3).forEach { rowSpeeds ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                rowSpeeds.forEach { speed ->
+                                    FilterChip(
+                                        selected = playbackSpeed == speed,
+                                        onClick = {
+                                            playbackSpeed = speed
+                                            player.setPlaybackSpeed(speed)
+                                            showPlaybackSpeedDialog = false
+                                            status = "Playback speed: ${speed}×"
+                                        },
+                                        label = { Text(if (speed == 1.0f) "1×" else "${speed}×", fontSize = 12.sp) },
+                                        modifier = Modifier.weight(1f),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Mint.copy(alpha = 0.18f),
+                                            selectedLabelColor = Mint,
+                                            labelColor = Color.White
+                                        )
+                                    )
+                                }
+                                repeat(3 - rowSpeeds.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
+                        Text("Current speed: ${playbackSpeed}×", color = Mint, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showPlaybackSpeedDialog = false }) { Text("Done", color = Mint) }
+                },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
             )
         }
         if (showSleepTimerDialog) {
