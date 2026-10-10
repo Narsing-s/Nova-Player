@@ -35,7 +35,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Immersive viewing toggle**: hide Android system bars while watching, with an in-player control to exit immersive mode.
 - **Subtitle appearance**: adjust subtitle text size, choose one-tap Compact, Standard, or Large presets, and toggle a dark subtitle background for readability; your preference is remembered locally.
 - **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
-- **Playback speed** cycling from 0.5× to 2×.
+- **Precision playback-speed picker** with one-tap presets from 0.25× slow motion through 3×, highlighted active speed, and immediate changes while watching; the chosen speed is remembered locally.
 - **Offline sleep timer**: automatically pause playback after 15, 30, 45, 60 or 90 minutes, with the ability to cancel or replace an active timer.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom. **Player orientation modes** cycle between Auto, Landscape and Portrait, and remember your preference on-device. **Pinch-to-zoom** lets you magnify video up to 2.5× with two fingers, shows the active zoom level, and offers a one-tap Reset control; zoom resets when you open another video.
 - **Playback recovery actions** surface Media3 playback errors with Retry playback and Back to library actions instead of leaving the user guessing.
