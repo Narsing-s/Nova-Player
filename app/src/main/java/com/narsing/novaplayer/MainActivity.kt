@@ -25,6 +25,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -207,6 +209,8 @@ private fun NovaHome(player: Player) {
     var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
     var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
     var aspectMode by remember { mutableStateOf("Fit") }
+    var playerZoomScale by remember { mutableFloatStateOf(1f) }
+    LaunchedEffect(selectedUri) { playerZoomScale = 1f }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
     var librarySort by remember { mutableStateOf(prefs.getString("library_sort", "Recently added") ?: "Recently added") }
@@ -973,6 +977,20 @@ private fun NovaHome(player: Player) {
                         AndroidView(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = playerZoomScale
+                                    scaleY = playerZoomScale
+                                }
+                                .pointerInput(controlsLocked) {
+                                    detectTransformGestures { _, _, zoomChange, _ ->
+                                        if (!controlsLocked) {
+                                            playerZoomScale = (playerZoomScale * zoomChange).coerceIn(1f, 2.5f)
+                                            if (playerZoomScale > 1.01f) {
+                                                status = "Pinch zoom " + "%.1f".format(playerZoomScale) + "×"
+                                            }
+                                        }
+                                    }
+                                }
                                 .pointerInput(selectedUri, controlsLocked) {
                                     detectTapGestures(
                                         onDoubleTap = { offset ->
@@ -1079,6 +1097,24 @@ private fun NovaHome(player: Player) {
                                 ))
                             }
                         )
+                        if (playerZoomScale > 1.01f && !controlsLocked) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                                color = Color(0xE6101829),
+                                shape = RoundedCornerShape(50),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Lavender.copy(alpha = 0.7f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Zoom " + "%.1f".format(playerZoomScale) + "×", color = Color.White, fontSize = 12.sp)
+                                    TextButton(onClick = { playerZoomScale = 1f; status = "Pinch zoom reset" }) {
+                                        Text("Reset", color = Mint)
+                                    }
+                                }
+                            }
+                        }
                         if (isSeekingGesture && !controlsLocked) {
                             val previewPosition = (player.currentPosition + seekPreviewDeltaMs)
                                 .coerceAtLeast(0L)
