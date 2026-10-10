@@ -692,7 +692,7 @@ private fun NovaHome(player: Player) {
                         "Unwatched" -> !isWatched
                         else -> true
                     }
-                    video.title.contains(librarySearch, ignoreCase = true) &&
+                    (video.title.contains(librarySearch, ignoreCase = true) || video.folder.contains(librarySearch, ignoreCase = true)) &&
                         (selectedFolder == null || video.folder == selectedFolder) &&
                         matchesDuration && matchesWatch
                 }.let { list ->
