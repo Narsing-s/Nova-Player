@@ -25,6 +25,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Subtitle appearance**: adjust subtitle text size and toggle a dark subtitle background for readability; your preference is remembered locally.
 - **Remembered playback preferences**: speed, shuffle, repeat mode and subtitle appearance settings persist locally between app launches.
 - **Playback speed** cycling from 0.5× to 2×.
+- **Offline sleep timer**: automatically pause playback after 15, 30, 45, 60 or 90 minutes, with the ability to cancel or replace an active timer.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
 - **Playback recovery actions** surface Media3 playback errors with Retry playback and Back to library actions instead of leaving the user guessing.
 - **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
