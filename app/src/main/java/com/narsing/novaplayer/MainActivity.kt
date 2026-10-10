@@ -1294,6 +1294,32 @@ private fun NovaHome(player: Player) {
                         ) {
                             FilledTonalButton(
                                 onClick = {
+                                    player.seekToPreviousMediaItem()
+                                    status = "Previous video"
+                                },
+                                enabled = player.hasPreviousMediaItem(),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White, disabledContentColor = Color(0xFF65718B)),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.SkipPrevious, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Previous")
+                            }
+                            FilledTonalButton(
+                                onClick = {
+                                    player.seekToNextMediaItem()
+                                    status = "Next video"
+                                },
+                                enabled = player.hasNextMediaItem(),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF202A40), contentColor = Color.White, disabledContentColor = Color(0xFF65718B)),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.SkipNext, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Next")
+                            }
+                            FilledTonalButton(
+                                onClick = {
                                     player.seekTo((player.currentPosition - skipIntervalSeconds * 1_000L).coerceAtLeast(0L))
                                     status = "Rewind $skipIntervalSeconds seconds"
                                 },
