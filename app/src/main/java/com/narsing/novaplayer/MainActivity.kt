@@ -212,6 +212,7 @@ private fun NovaHome(player: Player) {
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
+    var selectedVideoInfo by remember { mutableStateOf<LocalVideo?>(null) }
 
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
@@ -618,6 +619,7 @@ private fun NovaHome(player: Player) {
                                             Icon(if (favoriteItems.any { it.uri == video.uri.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder, "Toggle favorite", tint = if (favoriteItems.any { it.uri == video.uri.toString() }) Color(0xFFFF6B9D) else Color(0xFF9BA8C7), modifier = Modifier.size(19.dp))
                                         }
                                         IconButton(onClick = { enqueueMedia(video) }) { Icon(Icons.Default.PlaylistAdd, "Add to queue", tint = Lavender, modifier = Modifier.size(20.dp)) }
+                                        IconButton(onClick = { selectedVideoInfo = video }) { Icon(Icons.Default.Info, "Video details", tint = Color(0xFF9BA8C7), modifier = Modifier.size(19.dp)) }
                                     }
                                 }
                             }
@@ -1365,6 +1367,37 @@ private fun NovaHome(player: Player) {
                         prefs.edit().putInt("subtitle_delay_ms", 0).apply()
                     }) { Text("Reset") }
                 },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
+            )
+        }
+        selectedVideoInfo?.let { video ->
+            AlertDialog(
+                onDismissRequest = { selectedVideoInfo = null },
+                title = { Text("Video details", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(video.title, color = Mint, fontWeight = FontWeight.SemiBold)
+                        HorizontalDivider(color = Color(0xFF35415B))
+                        listOf(
+                            "Duration" to formatTime(video.duration),
+                            "File size" to formatBytes(video.size),
+                            "Folder" to video.folder,
+                            "Added" to java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(video.dateAdded * 1000L)),
+                            "Media URI" to video.uri.toString()
+                        ).forEach { (label, value) ->
+                            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text(label, color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Text(value, color = Color.White, fontSize = 13.sp)
+                            }
+                        }
+                        OutlinedButton(onClick = { selectedVideoInfo = null; playMedia(video.uri, video.title) }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play video")
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { selectedVideoInfo = null }) { Text("Close", color = Mint) } },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 textContentColor = Color.White
