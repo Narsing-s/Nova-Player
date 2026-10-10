@@ -14,9 +14,10 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **External subtitles** for .srt and .vtt files.
-- **Player gestures**: horizontal swipes seek; vertical swipes on the left half adjust brightness and on the right half adjust media volume.
+- **MX Player-inspired controls**: dedicated 10-second rewind/forward buttons, horizontal swipe seeking, and vertical brightness/volume gestures.
 - **Playback speed** cycling from 0.5× to 2×.
 - **Screen-fit modes** cycling through Fit, Fill and Zoom.
+- **Video quality/track selection** when the local file exposes selectable video tracks; a file's original resolution cannot be increased by the player.
 - **Audio-track selection** using Media3's track selection dialog when the media exposes selectable tracks.
 - **Picture-in-Picture (PiP)** action on Android 8.0+ devices, with manifest support enabled.
 - **Subtitle track controls** in the Media3 player UI where supported by the media.
@@ -27,10 +28,12 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [x] Verify Android CI debug build and APK artifact upload
 - [ ] Install and test playback on physical Android devices
 - [x] Indexed MediaStore video library with search and recent/name sorting
-- [ ] Folder navigation and video thumbnails
+- [ ] Folder navigation
+- [x] Video thumbnails
 - [x] Basic recent playback history (up to eight entries)
 - [ ] Favourites and playlists
-- [x] Basic brightness/volume/seek swipe gestures\n- [ ] Orientation-aware immersive full-screen playback
+- [x] Basic brightness/volume/seek swipe gestures
+- [ ] Orientation-aware immersive full-screen playback
 - [x] Basic audio-track selection
 - [ ] Subtitle styling / timing controls
 - [ ] Background playback via MediaSession service
@@ -63,7 +66,7 @@ The debug APK should be generated at:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-A previous app-code revision built successfully and uploaded `nova-player-debug`. The latest library, playback-control and gesture changes are awaiting a fresh successful CI run. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open a successful run, and download its `nova-player-debug` artifact. Debug APKs are for testing, not public release distribution.
+A previous app-code revision built successfully and uploaded `nova-player-debug`. The latest offline-library and thumbnail changes passed CI; the newest rewind/forward and video-track quality controls are awaiting a fresh CI run. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open a successful run, and download its `nova-player-debug` artifact. Debug APKs are for testing, not public release distribution.
 
 ## Offline-only library
 
