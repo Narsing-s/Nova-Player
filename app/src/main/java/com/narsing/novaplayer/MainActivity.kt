@@ -550,7 +550,7 @@ private fun NovaHome(player: Player) {
                         Box {
                             IconButton(onClick = { sortMenuExpanded = true }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
                             DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = { sortMenuExpanded = false }, modifier = Modifier.background(Panel)) {
-                                listOf("Recently added", "Name A–Z", "Name Z–A", "Longest first", "Largest first").forEach { option ->
+                                listOf("Recently added", "Recently played", "Name A–Z", "Name Z–A", "Longest first", "Largest first").forEach { option ->
                                     DropdownMenuItem(
                                         text = { Text(option, color = if (librarySort == option) Mint else Color.White) },
                                         leadingIcon = { if (librarySort == option) Icon(Icons.Default.Check, null, tint = Mint) else Icon(Icons.Default.Sort, null, tint = Color(0xFF9BA8C7)) },
@@ -701,6 +701,7 @@ private fun NovaHome(player: Player) {
                         "Name Z–A" -> list.sortedByDescending { it.title.lowercase() }
                         "Longest first" -> list.sortedByDescending { it.duration }
                         "Largest first" -> list.sortedByDescending { it.size }
+                        "Recently played" -> list.sortedWith(compareBy<LocalVideo> { recentItems.indexOfFirst { entry -> entry.uri == it.uri.toString() }.let { historyIndex -> if (historyIndex < 0) Int.MAX_VALUE else historyIndex } }.thenByDescending { it.dateAdded })
                         else -> list.sortedByDescending { it.dateAdded }
                     }
                 }
