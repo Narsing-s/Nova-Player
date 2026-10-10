@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -132,7 +133,7 @@ private fun NovaHome() {
     }
 
     Surface(Modifier.fillMaxSize(), color = Midnight) {
-        Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18)))).padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(Brush.verticalGradient(listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18)))).padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(48.dp).background(Brush.linearGradient(listOf(Mint, Lavender)), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.PlayArrow, null, tint = Midnight, modifier = Modifier.size(32.dp))
@@ -226,7 +227,7 @@ private fun NovaHome() {
             }
 
             Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFB6C1D8), fontSize = 12.sp)
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(8.dp))
             Text("PRIVATE BY DESIGN  •  NOVA PLAYER", color = Mint, fontSize = 10.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold)
         }
     }
