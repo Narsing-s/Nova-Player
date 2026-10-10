@@ -28,6 +28,9 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -201,6 +204,7 @@ private fun NovaHome(player: Player) {
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
     var librarySearch by remember { mutableStateOf("") }
     var sortByName by remember { mutableStateOf(false) }
+    var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
 
@@ -419,6 +423,10 @@ private fun NovaHome(player: Player) {
                         } else libraryPermissionLauncher.launch(libraryPermission)
                     }) { Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White) }
                     IconButton(onClick = { sortByName = !sortByName }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                    IconButton(onClick = {
+                        gridView = !gridView
+                        prefs.edit().putBoolean("library_grid_view", gridView).apply()
+                    }) { Icon(if (gridView) Icons.Default.ViewList else Icons.Default.GridView, if (gridView) "Switch to list view" else "Switch to grid view", tint = Mint) }
                 }
             }
 
@@ -494,6 +502,48 @@ private fun NovaHome(player: Player) {
                             Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
                         }
                         TextButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) { Text("Browse files instead", color = Color(0xFF8A70FF)) }
+                    }
+                } else if (gridView) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(visibleVideos.take(200), key = { it.uri.toString() }) { video ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Panel),
+                                onClick = { playMedia(video.uri, video.title) }
+                            ) {
+                                Column {
+                                    Box(Modifier.fillMaxWidth().height(116.dp).background(Color(0xFF202A40)), contentAlignment = Alignment.Center) {
+                                        VideoThumbnail(video)
+                                        Box(Modifier.align(Alignment.BottomEnd).background(Color(0xCC000000), RoundedCornerShape(topStart = 8.dp)).padding(horizontal = 7.dp, vertical = 4.dp)) {
+                                            Text(formatTime(video.duration), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Box(Modifier.align(Alignment.Center).size(42.dp).background(Color(0xB31A263B), RoundedCornerShape(50)), contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Default.PlayArrow, "Play video", tint = Mint, modifier = Modifier.size(30.dp))
+                                        }
+                                    }
+                                    Text(video.title, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 10.dp), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2)
+                                    Text(formatBytes(video.size) + " · " + video.folder.substringAfterLast('/').ifBlank { "Device" }, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), color = Color(0xFF9BA8C7), fontSize = 10.sp, maxLines = 1)
+                                    Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                                        IconButton(onClick = {
+                                            val uri = video.uri.toString()
+                                            favoriteItems = if (favoriteItems.any { it.uri == uri }) favoriteItems.filterNot { it.uri == uri } else listOf(HistoryEntry(uri, video.title)) + favoriteItems
+                                            saveFavorites(prefs, favoriteItems)
+                                            status = if (favoriteItems.any { it.uri == uri }) "Added to favorites" else "Removed from favorites"
+                                        }) {
+                                            Icon(if (favoriteItems.any { it.uri == video.uri.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder, "Toggle favorite", tint = if (favoriteItems.any { it.uri == video.uri.toString() }) Color(0xFFFF6B9D) else Color(0xFF9BA8C7), modifier = Modifier.size(19.dp))
+                                        }
+                                        IconButton(onClick = { enqueueMedia(video) }) { Icon(Icons.Default.PlaylistAdd, "Add to queue", tint = Lavender, modifier = Modifier.size(20.dp)) }
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
