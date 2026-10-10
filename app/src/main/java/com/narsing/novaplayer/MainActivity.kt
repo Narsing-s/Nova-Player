@@ -154,6 +154,10 @@ private fun NovaHome(player: Player) {
     var sleepTimerJob by remember { mutableStateOf<Job?>(null) }
     val uiScope = rememberCoroutineScope()
     var showSubtitleSettings by remember { mutableStateOf(false) }
+    var showGestureSettings by remember { mutableStateOf(false) }
+    var gestureSeekEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_seek_enabled", true)) }
+    var gestureBrightnessEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_brightness_enabled", true)) }
+    var gestureVolumeEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_volume_enabled", true))
     var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
     var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
     var aspectMode by remember { mutableStateOf("Fit") }
@@ -166,13 +170,16 @@ private fun NovaHome(player: Player) {
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
     }
-    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled) {
+    LaunchedEffect(playbackSpeed, shuffleEnabled, repeatMode, subtitleScale, subtitleBackgroundEnabled, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
         prefs.edit()
             .putFloat("playback_speed", playbackSpeed)
             .putBoolean("shuffle_enabled", shuffleEnabled)
             .putInt("repeat_mode", repeatMode)
             .putFloat("subtitle_scale", subtitleScale)
             .putBoolean("subtitle_background", subtitleBackgroundEnabled)
+            .putBoolean("gesture_seek_enabled", gestureSeekEnabled)
+            .putBoolean("gesture_brightness_enabled", gestureBrightnessEnabled)
+            .putBoolean("gesture_volume_enabled", gestureVolumeEnabled)
             .apply()
         player.shuffleModeEnabled = shuffleEnabled
         player.repeatMode = repeatMode
@@ -724,7 +731,7 @@ private fun NovaHome(player: Player) {
                     Column(Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxWidth().weight(1f)) {
                         AndroidView(
-                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri) {
+                            modifier = Modifier.fillMaxSize().pointerInput(selectedUri, gestureSeekEnabled, gestureBrightnessEnabled, gestureVolumeEnabled) {
                                 var totalX = 0f
                                 var totalY = 0f
                                 var startX = 0f
@@ -750,7 +757,11 @@ private fun NovaHome(player: Player) {
                                         totalX += amount.x
                                         totalY += amount.y
                                         if (gestureAxis == "none" && (abs(totalX) > 12f || abs(totalY) > 12f)) {
-                                            gestureAxis = if (abs(totalX) >= abs(totalY)) "horizontal" else "vertical"
+                                            gestureAxis = if (abs(totalX) >= abs(totalY)) {
+                                                if (gestureSeekEnabled) "horizontal" else "none"
+                                            } else {
+                                                if ((startX < size.width / 2f && gestureBrightnessEnabled) || (startX >= size.width / 2f && gestureVolumeEnabled)) "vertical" else "none"
+                                            }
                                         }
                                         when (gestureAxis) {
                                             "horizontal" -> isSeekingGesture = true
@@ -898,6 +909,10 @@ private fun NovaHome(player: Player) {
                             TextButton(onClick = { showSubtitleSettings = true }) {
                                 Icon(Icons.Default.TextFields, null, tint = Lavender); Text("Text")
                             }
+                            TextButton(onClick = { showGestureSettings = true }) {
+                                Icon(Icons.Default.Tune, null, tint = Lavender)
+                                Text("Gestures", color = Color.White)
+                            }
                             TextButton(onClick = { showSleepTimerDialog = true }) {
                                 Icon(Icons.Default.Bedtime, null, tint = if (sleepTimerActive) Mint else Lavender)
                                 Text(if (sleepTimerActive) "Sleep on" else "Sleep timer", color = if (sleepTimerActive) Mint else Color.White)
@@ -1036,6 +1051,47 @@ private fun NovaHome(player: Player) {
                 },
                 dismissButton = {
                     TextButton(onClick = { showSleepTimerDialog = false }) { Text("Done") }
+                },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
+            )
+        }
+        if (showGestureSettings) {
+            AlertDialog(
+                onDismissRequest = { showGestureSettings = false },
+                title = { Text("Gesture controls") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Choose which swipe gestures are active while watching a video.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Horizontal swipe to seek", color = Color.White)
+                                Text("Swipe left or right to jump through a video", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                            }
+                            Switch(checked = gestureSeekEnabled, onCheckedChange = { gestureSeekEnabled = it })
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Left-side brightness", color = Color.White)
+                                Text("Swipe vertically on the left half", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                            }
+                            Switch(checked = gestureBrightnessEnabled, onCheckedChange = { gestureBrightnessEnabled = it })
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Right-side volume", color = Color.White)
+                                Text("Swipe vertically on the right half", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                            }
+                            Switch(checked = gestureVolumeEnabled, onCheckedChange = { gestureVolumeEnabled = it })
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showGestureSettings = false
+                        status = "Gesture preferences saved"
+                    }) { Text("Done", color = Mint) }
                 },
                 containerColor = Panel,
                 titleContentColor = Color.White,
