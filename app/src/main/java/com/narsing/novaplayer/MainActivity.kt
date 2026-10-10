@@ -197,6 +197,7 @@ private fun NovaHome(player: Player) {
     var fullScreen by remember { mutableStateOf(false) }
     var orientationMode by remember { mutableStateOf(prefs.getString("player_orientation", "Auto") ?: "Auto") }
     var controlsLocked by remember { mutableStateOf(false) }
+    var showLandscapeDock by remember { mutableStateOf(true) }
     var keepScreenOn by remember { mutableStateOf(prefs.getBoolean("keep_screen_on", true)) }
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
@@ -1287,7 +1288,7 @@ private fun NovaHome(player: Player) {
                         )
                         // Landscape quick controls: keep advanced playback actions reachable
                         // without leaving the immersive video surface.
-                        if (isLandscape && !controlsLocked) {
+                        if (isLandscape && !controlsLocked && showLandscapeDock) {
                             Surface(
                                 modifier = Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                                 color = Color(0xE6101829),
@@ -1390,6 +1391,12 @@ private fun NovaHome(player: Player) {
                                         Icon(Icons.Default.Lock, contentDescription = "Lock player controls", tint = Mint)
                                     }
                                     IconButton(onClick = {
+                                        showLandscapeDock = false
+                                        status = "Playback dock hidden · Tap the controls icon to show it"
+                                    }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Hide playback dock", tint = Color.White)
+                                    }
+                                    IconButton(onClick = {
                                         fullScreen = !fullScreen
                                         status = if (fullScreen) "Immersive full-screen enabled" else "Immersive full-screen disabled"
                                     }) {
@@ -1399,6 +1406,21 @@ private fun NovaHome(player: Player) {
                                             tint = Mint
                                         )
                                     }
+                                }
+                            }
+                        }
+                        if (isLandscape && !controlsLocked && !showLandscapeDock) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                                color = Color(0xE6101829),
+                                shape = RoundedCornerShape(50),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.5f))
+                            ) {
+                                IconButton(onClick = {
+                                    showLandscapeDock = true
+                                    status = "Playback dock shown"
+                                }) {
+                                    Icon(Icons.Default.Tune, contentDescription = "Show playback controls", tint = Mint)
                                 }
                             }
                         }
