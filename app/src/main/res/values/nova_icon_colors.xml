@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nova_icon_background">#0B1020</color>
+    <color name="nova_icon_cyan">#39E7D5</color>
+    <color name="nova_icon_violet">#8A70FF</color>
+    <color name="nova_icon_white">#F7FAFF</color>
+</resources>
