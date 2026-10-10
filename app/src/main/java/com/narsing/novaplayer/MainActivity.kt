@@ -1,6 +1,10 @@
 package com.narsing.novaplayer
 
 import android.net.Uri
+import android.Manifest
+import android.content.pm.PackageManager
+import android.provider.MediaStore
+import android.content.ContentUris
 import android.os.Bundle
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -80,6 +84,9 @@ private fun NovaHome() {
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
     var playbackSpeed by remember { mutableStateOf(1.0f) }
     var aspectMode by remember { mutableStateOf("Fit") }
+    var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
+    var librarySearch by remember { mutableStateOf("") }
+    var sortByName by remember { mutableStateOf(false) }
 
     val player = remember {
         ExoPlayer.Builder(context.applicationContext).build().apply {
@@ -143,6 +150,14 @@ private fun NovaHome() {
         } else status = "Start a video before loading external subtitles."
     }
 
+    val libraryPermission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO else Manifest.permission.READ_EXTERNAL_STORAGE
+    val libraryPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            localVideos = loadLocalVideos(context)
+            status = "Found " + localVideos.size + " videos on this device."
+        } else status = "Allow video access to show your device library. You can still use Browse videos."
+    }
+
     Surface(Modifier.fillMaxSize(), color = Midnight) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(Brush.verticalGradient(listOf(Color(0xFF101A31), Midnight, Color(0xFF090D18)))).padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -187,6 +202,45 @@ private fun NovaHome() {
                                 Icon(Icons.Default.History, null, tint = Lavender)
                                 Spacer(Modifier.width(8.dp))
                                 Text(item.title, color = Color.White, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(22.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.VideoLibrary, null, tint = Lavender)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Device library", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        Spacer(Modifier.weight(1f))
+                        TextButton(onClick = { sortByName = !sortByName }) { Text(if (sortByName) "A–Z" else "Recent") }
+                    }
+                    OutlinedTextField(value = librarySearch, onValueChange = { librarySearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Search videos") })
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = {
+                        if (context.checkSelfPermission(libraryPermission) == PackageManager.PERMISSION_GRANTED) {
+                            localVideos = loadLocalVideos(context)
+                            status = "Found " + localVideos.size + " videos on this device."
+                        } else libraryPermissionLauncher.launch(libraryPermission)
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text("Scan device videos")
+                    }
+                    val visibleVideos = localVideos.filter { it.title.contains(librarySearch, ignoreCase = true) }
+                        .let { list -> if (sortByName) list.sortedBy { it.title.lowercase() } else list.sortedByDescending { it.dateAdded } }
+                    if (visibleVideos.isEmpty()) {
+                        Text("Your indexed videos will appear here after scanning.", color = Color(0xFFB6C1D8), fontSize = 12.sp)
+                    } else {
+                        visibleVideos.take(100).forEach { video ->
+                            TextButton(onClick = { playMedia(video.uri, video.title) }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.PlayCircle, null, tint = Mint)
+                                Spacer(Modifier.width(8.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(video.title, color = Color.White, maxLines = 1)
+                                    Text(formatTime(video.duration) + "  •  " + formatBytes(video.size), color = Color(0xFFB6C1D8), fontSize = 11.sp)
+                                }
+                                Icon(Icons.Default.PlayArrow, null, tint = Lavender)
                             }
                         }
                     }
@@ -289,6 +343,34 @@ private fun Context.findActivity(): Activity? {
     return current as? Activity
 }
 
+
+private data class LocalVideo(val uri: Uri, val title: String, val duration: Long, val size: Long, val dateAdded: Long)
+
+private fun loadLocalVideos(context: Context): List<LocalVideo> {
+    val videos = mutableListOf<LocalVideo>()
+    val projection = arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DURATION, MediaStore.Video.Media.SIZE, MediaStore.Video.Media.DATE_ADDED)
+    context.contentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, null, null, MediaStore.Video.Media.DATE_ADDED + " DESC")?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+        val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+        val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val name = cursor.getString(nameColumn) ?: "Video"
+            val uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
+            videos.add(LocalVideo(uri, name, cursor.getLong(durationColumn), cursor.getLong(sizeColumn), cursor.getLong(dateColumn)))
+        }
+    }
+    return videos
+}
+
+private fun formatBytes(bytes: Long): String {
+    if (bytes < 1024L) return bytes.toString() + " B"
+    if (bytes < 1024L * 1024L) return "%.1f KB".format(bytes / 1024.0)
+    if (bytes < 1024L * 1024L * 1024L) return "%.1f MB".format(bytes / (1024.0 * 1024.0))
+    return "%.2f GB".format(bytes / (1024.0 * 1024.0 * 1024.0))
+}
 
 private data class HistoryEntry(val uri: String, val title: String)
 
