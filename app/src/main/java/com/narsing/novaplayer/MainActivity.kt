@@ -883,7 +883,14 @@ private fun NovaHome(player: Player) {
                                             color = Mint,
                                             trackColor = Color(0xFF29344A)
                                         )
-                                        Text("Resume at " + formatTime(lastSavedPosition), color = Mint, fontSize = 10.sp, maxLines = 1)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("RESUME ${formatTime(lastSavedPosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                            Spacer(Modifier.weight(1f))
+                                            Text("${((lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
+                                        }
                                     }
                                 }
                                 IconButton(onClick = {
