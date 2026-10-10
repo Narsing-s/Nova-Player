@@ -28,7 +28,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 ## Roadmap
 
-- [x] Verify Android CI debug build and APK artifact upload
+- [ ] Verify the latest Android CI debug build and APK artifact upload
 - [ ] Install and test playback on physical Android devices
 - [x] Indexed MediaStore video library with search and recent/name sorting
 - [x] Basic folder navigation for indexed MediaStore videos
@@ -75,7 +75,7 @@ The debug APK should be generated at:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The latest CI run for folder browsing is in progress. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open the newest successful run, and download its `nova-player-debug` artifact. The debug APK is for testing, not public release distribution. Debug APKs are for testing, not public release distribution.
+The latest CI run for folder browsing is in progress. Check the [Actions page](https://github.com/Narsing-s/Nova-Player/actions), open the newest successful run, and download its `nova-player-debug` artifact. The debug APK is for testing, not public release distribution.
 
 ## Offline-only library
 
