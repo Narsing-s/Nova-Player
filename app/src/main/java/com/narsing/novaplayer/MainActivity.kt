@@ -8,6 +8,7 @@ import android.content.ContentUris
 import android.os.Bundle
 import android.app.PictureInPictureParams
 import android.content.Context
+import android.media.AudioManager
 import android.app.Activity
 import android.os.Build
 import android.util.Rational
@@ -17,7 +18,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -270,18 +271,65 @@ private fun NovaHome() {
                     Column {
                         AndroidView(
                             modifier = Modifier.fillMaxWidth().height(220.dp).pointerInput(selectedUri) {
-                                detectHorizontalDragGestures(
-                                    onDragStart = { dragTotal = 0f; isSeekingGesture = true },
-                                    onHorizontalDrag = { change, amount -> dragTotal += amount; change.consume() },
-                                    onDragEnd = {
-                                        val delta = (dragTotal / 8f).toLong() * 1_000L
-                                        if (abs(delta) >= 1_000L) {
-                                            player.seekTo((player.currentPosition + delta).coerceAtLeast(0L))
-                                            status = if (delta > 0) "Skipped forward " + (delta / 1000) + "s" else "Skipped back " + (abs(delta) / 1000) + "s"
-                                        }
+                                var totalX = 0f
+                                var totalY = 0f
+                                var startX = 0f
+                                var startVolume = 0
+                                var maxVolume = 1
+                                var startBrightness = 0.5f
+                                var gestureAxis = "none"
+                                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                                detectDragGestures(
+                                    onDragStart = { offset ->
+                                        totalX = 0f
+                                        totalY = 0f
+                                        startX = offset.x
+                                        startVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+                                        startBrightness = context.findActivity()?.window?.attributes?.screenBrightness
+                                            ?.takeIf { it >= 0f } ?: 0.5f
+                                        gestureAxis = "none"
                                         isSeekingGesture = false
                                     },
-                                    onDragCancel = { isSeekingGesture = false }
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        totalX += amount.x
+                                        totalY += amount.y
+                                        if (gestureAxis == "none" && (abs(totalX) > 12f || abs(totalY) > 12f)) {
+                                            gestureAxis = if (abs(totalX) >= abs(totalY)) "horizontal" else "vertical"
+                                        }
+                                        when (gestureAxis) {
+                                            "horizontal" -> isSeekingGesture = true
+                                            "vertical" -> {
+                                                val adjustment = -totalY / size.height.coerceAtLeast(1).toFloat()
+                                                if (startX < size.width / 2f) {
+                                                    val window = context.findActivity()?.window
+                                                    if (window != null) {
+                                                        val attributes = window.attributes
+                                                        attributes.screenBrightness = (startBrightness + adjustment).coerceIn(0.05f, 1f)
+                                                        window.attributes = attributes
+                                                    }
+                                                    status = "Brightness " + ((startBrightness + adjustment).coerceIn(0.05f, 1f) * 100).toInt() + "%"
+                                                } else {
+                                                    val volume = (startVolume + adjustment * maxVolume).toInt().coerceIn(0, maxVolume)
+                                                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0)
+                                                    status = "Volume " + (volume * 100 / maxVolume) + "%"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        if (gestureAxis == "horizontal") {
+                                            val delta = (totalX / 8f).toLong() * 1_000L
+                                            if (abs(delta) >= 1_000L) {
+                                                player.seekTo((player.currentPosition + delta).coerceAtLeast(0L))
+                                                status = if (delta > 0) "Skipped forward " + (delta / 1000) + "s" else "Skipped back " + (abs(delta) / 1000) + "s"
+                                            }
+                                        }
+                                        isSeekingGesture = false
+                                        gestureAxis = "none"
+                                    },
+                                    onDragCancel = { isSeekingGesture = false; gestureAxis = "none" }
                                 )
                             },
                             factory = { viewContext -> PlayerView(viewContext).apply { this.player = player; useController = true; setShowSubtitleButton(true); resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT } },
