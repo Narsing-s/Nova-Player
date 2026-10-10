@@ -1246,15 +1246,43 @@ private fun NovaHome(player: Player) {
                                 Icon(Icons.Default.Lock, "Lock player controls", tint = Mint)
                             }
                         }
-                        if (fullScreen) {
+                        Row(
+                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val currentUri = selectedUri?.toString()
+                            val isFavorite = currentUri != null && favoriteItems.any { it.uri == currentUri }
                             IconButton(
                                 onClick = {
-                                    fullScreen = false
-                                    status = "Immersive full-screen disabled"
+                                    if (currentUri != null) {
+                                        favoriteItems = if (isFavorite) {
+                                            favoriteItems.filterNot { it.uri == currentUri }
+                                        } else {
+                                            listOf(HistoryEntry(currentUri, selectedTitle)) + favoriteItems
+                                        }
+                                        saveFavorites(prefs, favoriteItems)
+                                        status = if (isFavorite) "Removed from favorites" else "Added to favorites"
+                                    }
                                 },
-                                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
+                                modifier = Modifier.background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
                             ) {
-                                Icon(Icons.Default.FullscreenExit, "Exit full screen", tint = Mint)
+                                Icon(
+                                    if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                    tint = if (isFavorite) Color(0xFFFF6B8A) else Color.White
+                                )
+                            }
+                            if (fullScreen) {
+                                IconButton(
+                                    onClick = {
+                                        fullScreen = false
+                                        status = "Immersive full-screen disabled"
+                                    },
+                                    modifier = Modifier.background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
+                                ) {
+                                    Icon(Icons.Default.FullscreenExit, "Exit full screen", tint = Mint)
+                                }
                             }
                         }
                         }
