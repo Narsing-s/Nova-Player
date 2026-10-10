@@ -15,6 +15,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Playback resume** stores the last media URI and position locally and offers a Resume recent action.
 - **External subtitles** for .srt and .vtt files.
 - **Seeking** with 10-second buttons and a horizontal swipe gesture over the video surface.
+- **Picture-in-Picture action** on Android 8.0+ devices, with manifest support enabled.
 - **Subtitle track controls** in the Media3 player UI where supported by the media.
 - **GitHub Actions** workflow to build a debug APK and upload it as an artifact.
 
@@ -25,10 +26,11 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - [ ] Multiple-item playback history, favourites and playlists
 - [ ] Gesture tuning for brightness/volume, orientation and immersive full-screen
 - [ ] Audio-track selection and subtitle styling / timing controls
-- [ ] Picture-in-Picture and background playback via MediaSession service
+- [ ] Background playback via MediaSession service
 - [ ] Better playback error reporting and network retry handling
 - [ ] Automated tests and accessibility checks
-- [ ] Signed release APK workflow and public GitHub Releases
+- [x] Signed release APK workflow and public GitHub Releases (requires owner-configured signing secrets)
+- [ ] Verify signed release on physical devices
 
 ## Tech stack
 
@@ -70,9 +72,25 @@ Only play media you own or are authorized to access. Nova Player does not includ
 - No analytics or account backend is configured in this preview.
 - Publish a full privacy policy before a public release.
 
-## Release signing
+## Publish a signed APK
 
-Do not commit keystores or signing passwords. Before distributing a release, create a persistent owner-controlled release keystore, securely back it up, configure GitHub Actions secrets, and verify the signed APK on real devices. Losing the signing key can prevent future in-place updates.
+The `.github/workflows/release.yml` workflow builds and publishes a signed APK when a `v*` tag is pushed, or when manually run. It intentionally stops if signing secrets are missing.
+
+1. Create a persistent Android release keystore and store a secure backup outside this repository.
+2. In **Repository → Settings → Secrets and variables → Actions**, add:
+   - `ANDROID_KEYSTORE_BASE64`: base64-encoded keystore file contents
+   - `ANDROID_KEYSTORE_PASSWORD`: keystore password
+   - `ANDROID_KEY_ALIAS`: key alias
+   - `ANDROID_KEY_PASSWORD`: key password
+3. To encode a keystore locally, use `base64 -w 0 your-release.jks` on Linux or `[Convert]::ToBase64String([IO.File]::ReadAllBytes("your-release.jks"))` in PowerShell. Keep the output private.
+4. Push a version tag such as `v0.1.0` to trigger a signed build and GitHub Release:
+   ```bash
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+5. Check the release workflow and install-test the APK before sharing it.
+
+Never commit a keystore or signing passwords. Losing the signing key can prevent future in-place updates. A GitHub Release is not published until the signing secrets are configured and the release workflow succeeds.
 
 ## License
 
