@@ -22,6 +22,7 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 - **Playback resume with periodic checkpoints** stores the current media URI, title and position locally every five seconds while watching, as well as on pause, and offers a prominent **Continue Watching** card on the Videos tab. This reduces lost progress if the app process is interrupted.
 - **Recent playback history** stores up to eight recently played items locally; the home screen shows the latest five.
 - **Favorites library** lets you save and remove videos with a heart control; favorite entries persist locally on the device.
+- **In-player favorite toggle**: add or remove the currently playing video from Favorites directly from the player overlay, with a clear filled-heart state and immediate local persistence; no need to return to the library.
 - **External subtitles** for .srt and .vtt files.
 - **MX Player-inspired controls**: configurable 5, 10, 15 or 30-second rewind/forward intervals shared by the dedicated buttons and double-tap seeking; horizontal swipe seeking with a live preview showing the offset and target time; and vertical brightness/volume gestures. The chosen seek interval persists locally. Double-tap seeking respects touch lock, and swipe seeking clamps to the media's valid duration and reports the final target time.
 - **Touch lock for distraction-free viewing**: lock the on-screen player controls and seek/brightness/volume gestures to prevent accidental touches; a visible unlock action restores controls immediately.
