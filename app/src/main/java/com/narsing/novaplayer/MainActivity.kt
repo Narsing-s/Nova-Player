@@ -341,6 +341,34 @@ private fun NovaHome() {
                         Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFF39E7D5))
                     }
                 }
+                recentItems.firstOrNull()?.let { recent ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF152438)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(42.dp).background(Color(0xFF20374A), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.PlayCircle, null, tint = Mint, modifier = Modifier.size(27.dp))
+                            }
+                            Spacer(Modifier.width(11.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("CONTINUE WATCHING", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                Text(recent.title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                val savedPosition = if (prefs.getString(KEY_LAST_URI, null) == recent.uri) prefs.getLong(KEY_LAST_POSITION, 0L) else 0L
+                                Text(if (savedPosition > 5000L) "Resume at ${formatTime(savedPosition)}" else "Recently played · On this device", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                            }
+                            FilledTonalButton(
+                                onClick = {
+                                    try { playMedia(Uri.parse(recent.uri), recent.title) }
+                                    catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Mint, contentColor = Midnight),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            ) { Text("Resume", fontWeight = FontWeight.Bold) }
+                        }
+                    }
+                }
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(if (selectedFolder != null) "FOLDER: $selectedFolder" else if (localVideos.isEmpty()) "DEVICE VIDEOS" else "${localVideos.size} VIDEOS", color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     if (selectedFolder != null) TextButton(onClick = { selectedFolder = null }) { Text("Clear", color = Color(0xFF8A70FF), fontSize = 11.sp) }
@@ -555,6 +583,28 @@ private fun NovaHome() {
                             Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
                                 Text(item.title, color = Color.White, maxLines = 2, fontSize = 13.sp)
                                 Text(if (selectedUri?.toString() == item.uri) "Now playing" else "Queued locally", color = Color(0xFF9BA8C7), fontSize = 10.sp)
+                            }
+                            IconButton(onClick = {
+                                if (index > 0) {
+                                    val reordered = queueItems.toMutableList().apply { add(index - 1, removeAt(index)) }
+                                    val mirrorsPlayerQueue = player.mediaItemCount == queueItems.size
+                                    if (mirrorsPlayerQueue) player.moveMediaItem(index, index - 1)
+                                    queueItems = reordered
+                                    status = if (mirrorsPlayerQueue) "Queue order updated" else "Order saved for the next queue playback"
+                                }
+                            }, enabled = index > 0) {
+                                Icon(Icons.Default.ArrowUpward, "Move ${item.title} up", tint = if (index > 0) Lavender else Color(0xFF46516A), modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(onClick = {
+                                if (index < queueItems.lastIndex) {
+                                    val reordered = queueItems.toMutableList().apply { add(index + 1, removeAt(index)) }
+                                    val mirrorsPlayerQueue = player.mediaItemCount == queueItems.size
+                                    if (mirrorsPlayerQueue) player.moveMediaItem(index, index + 1)
+                                    queueItems = reordered
+                                    status = if (mirrorsPlayerQueue) "Queue order updated" else "Order saved for the next queue playback"
+                                }
+                            }, enabled = index < queueItems.lastIndex) {
+                                Icon(Icons.Default.ArrowDownward, "Move ${item.title} down", tint = if (index < queueItems.lastIndex) Lavender else Color(0xFF46516A), modifier = Modifier.size(18.dp))
                             }
                             IconButton(onClick = { playQueue(index) }) { Icon(Icons.Default.PlayArrow, "Play ${item.title}", tint = Mint) }
                             IconButton(onClick = {
@@ -816,13 +866,34 @@ private fun NovaHome() {
                         }
                     }
                 }
-                if (!fullScreen) Text(
-                    if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
-                    color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
-                )
+                if (!fullScreen) {
+                    Text(
+                        if (isSeekingGesture) "Swipe horizontally to seek" else if (status.startsWith("Playback failed")) status else selectedTitle,
+                        color = if (status.startsWith("Playback failed")) Color(0xFFFFB4AB) else Lavender,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+                    )
+                    if (status.startsWith("Playback failed")) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = {
+                                    try {
+                                        player.prepare()
+                                        player.play()
+                                        status = "Retrying playback…"
+                                    } catch (_: Exception) {
+                                        status = "Could not retry this file. Reopen it from the library or choose another video."
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)
+                            ) { Icon(Icons.Default.Refresh, null); Spacer(Modifier.width(6.dp)); Text("Retry playback") }
+                            OutlinedButton(onClick = { selectedUri = null; fullScreen = false; status = "Choose a video to continue." }) {
+                                Text("Back to library")
+                            }
+                        }
+                    }
+                }
             }
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
