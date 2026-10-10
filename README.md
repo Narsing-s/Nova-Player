@@ -8,7 +8,8 @@ A modern Android video player built from the ground up with Kotlin, Jetpack Comp
 
 ## Features implemented
 
-- **Modern dark UI** with Compose and Material 3, branded with a custom Nova orbit-and-play launcher icon (adaptive icon on Android 8.0+ and vector fallback on older devices).
+- **Modern dark UI** with Compose and Material 3, using a midnight-blue canvas, cyan accents and violet highlights.
+- **Original Nova Player identity**: custom orbit-and-play launcher icon with adaptive resources on Android 8.0+ and vector fallbacks on older devices.
 - **Indexed device video library** using MediaStore, with permission-gated scanning, search, recent/name sorting, duration and file-size metadata.
 - **Folder browser** groups indexed videos by device folder and lets you open a folder to filter the Videos library. On Android 10+, it uses MediaStore relative paths; older Android versions show a general device-storage group.
 - **Local video picker** using Android's system document picker as a fallback.
