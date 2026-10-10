@@ -507,10 +507,10 @@ private fun NovaHome() {
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBDBDBD), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().background(Color(0xFF171717)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Recent").forEach { tab ->
+                listOf("Videos", "Recent", "Favorites").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(if (tab == "Videos") Icons.Default.VideoLibrary else Icons.Default.History, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Favorites" -> Icons.Default.Favorite; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFF777777))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFFFF6D00) else Color(0xFFAAAAAA))
                         }
                     }
