@@ -708,7 +708,7 @@ private fun NovaHome(player: Player) {
                 if (visibleVideos.isEmpty()) {
                     val hasActiveLibraryFilters = librarySearch.isNotBlank() || selectedFolder != null || durationFilter != "All" || watchFilter != "All videos"
                     Column(Modifier.fillMaxWidth().weight(1f).padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                        Icon(if (hasActiveLibraryFilters) Icons.Default.SearchOff else Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
+                        Icon(if (hasActiveLibraryFilters) Icons.Default.Search else Icons.Default.VideoLibrary, null, tint = Color(0xFF39E7D5), modifier = Modifier.size(58.dp))
                         Spacer(Modifier.height(12.dp))
                         Text(
                             when {
@@ -736,7 +736,7 @@ private fun NovaHome(player: Player) {
                                 watchFilter = "All videos"
                                 prefs.edit().putString("library_duration_filter", "All").putString("library_watch_filter", "All videos").apply()
                             }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39E7D5))) {
-                                Icon(Icons.Default.FilterAltOff, null)
+                                Icon(Icons.Default.Clear, null)
                                 Spacer(Modifier.width(8.dp))
                                 Text("Clear search & filters")
                             }
