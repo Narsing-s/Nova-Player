@@ -217,7 +217,8 @@ private fun NovaHome(player: Player) {
     var gestureVolumeEnabled by remember { mutableStateOf(prefs.getBoolean("gesture_volume_enabled", true)) }
     var subtitleScale by remember { mutableFloatStateOf(prefs.getFloat("subtitle_scale", 0.065f)) }
     var subtitleBackgroundEnabled by remember { mutableStateOf(prefs.getBoolean("subtitle_background", true)) }
-    var aspectMode by remember { mutableStateOf("Fit") }
+    var aspectMode by remember { mutableStateOf(prefs.getString("player_aspect_mode", "Auto") ?: "Auto") }
+    var videoAspectRatio by remember { mutableFloatStateOf(0f) }
     var playerZoomScale by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(selectedUri) { playerZoomScale = 1f }
     var localVideos by remember { mutableStateOf(emptyList<LocalVideo>()) }
@@ -316,6 +317,10 @@ private fun NovaHome(player: Player) {
                 if (playbackState == Player.STATE_ENDED) prefs.edit().putLong(KEY_LAST_POSITION, 0L).apply()
             }
 
+            override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+                videoAspectRatio = if (videoSize.height > 0) videoSize.width.toFloat() / videoSize.height.toFloat() else 0f
+            }
+
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val uri = mediaItem?.localConfiguration?.uri ?: return
                 selectedUri = uri
@@ -329,6 +334,7 @@ private fun NovaHome(player: Player) {
         }
         player.addListener(listener)
         isPlaying = player.isPlaying
+        player.videoSize.let { size -> videoAspectRatio = if (size.height > 0) size.width.toFloat() / size.height.toFloat() else 0f }
         player.currentMediaItem?.let { item ->
             selectedUri = item.localConfiguration?.uri
             selectedTitle = item.mediaMetadata.title?.toString() ?: item.localConfiguration?.uri?.lastPathSegment.orEmpty()
@@ -1160,7 +1166,12 @@ private fun NovaHome(player: Player) {
                             update = { view ->
                                 view.player = player
                                 view.useController = !controlsLocked
-                                view.resizeMode = when (aspectMode) { "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL; "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM; else -> AspectRatioFrameLayout.RESIZE_MODE_FIT }
+                                view.resizeMode = when (aspectMode) {
+                                    "Fill" -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                    "Zoom" -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                    "Auto" -> if (isLandscape && videoAspectRatio > 1.0f) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                }
                                 view.subtitleView?.setFractionalTextSize(subtitleScale)
                                 view.subtitleView?.setStyle(CaptionStyleCompat(
                                     android.graphics.Color.WHITE,
@@ -1439,7 +1450,8 @@ private fun NovaHome(player: Player) {
                                 Text(if (keepScreenOn) "Keep awake" else "Allow sleep", color = if (keepScreenOn) Mint else Color.White)
                             }
                             TextButton(onClick = {
-                                aspectMode = when (aspectMode) { "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Fit" }
+                                aspectMode = when (aspectMode) { "Auto" -> "Fit"; "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Auto" }
+                                prefs.edit().putString("player_aspect_mode", aspectMode).apply()
                                 status = "Screen mode: " + aspectMode
                             }) { Icon(Icons.Default.AspectRatio, null, tint = Lavender); Text(aspectMode) }
                             TextButton(onClick = {
