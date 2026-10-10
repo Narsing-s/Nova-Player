@@ -45,7 +45,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Configurable 5, 10, 15 or 30-second skip intervals.
 - Horizontal swipe seeking with a live time preview.
 - Left-side brightness and right-side volume gestures, each independently configurable.
-- Touch lock with a visible unlock action.
+- Touch lock with a visible unlock action, now also reachable directly from the landscape quick-control dock.
 - Shuffle, repeat-all, repeat-one, and A–B scene looping.
 - Sleep timer for 15, 30, 45, 60 or 90 minutes, with cancel/replace support.
 
