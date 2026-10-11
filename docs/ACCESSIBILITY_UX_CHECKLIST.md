@@ -6,6 +6,7 @@ This checklist is additive: it does not change player behavior or remove existin
 
 - [ ] Every icon-only action has a meaningful accessibility label (for example, “Pause”, “Open subtitles”, “Close quick controls”, and “Unlock controls”).
 - [ ] TalkBack announces buttons by action and current state where applicable; avoid announcing decorative icons twice.
+- [ ] Verify the library scan progress is announced as “Scanning library” while a scan is active, and that the selected navigation tab is exposed as selected.
 - [ ] Interactive targets are at least 48 dp where practical, including compact landscape controls.
 - [ ] Text and icons have sufficient contrast against the midnight panels and video overlay; do not rely on color alone for active/inactive state.
 - [ ] Text remains readable with Android font scaling enabled; dialogs and quick-control rows can scroll instead of clipping.
