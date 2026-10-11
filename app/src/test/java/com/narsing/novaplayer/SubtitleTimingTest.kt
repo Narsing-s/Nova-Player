@@ -34,7 +34,7 @@ class SubtitleTimingTest {
     @Test
     fun promotesShortTimestampWhenShiftCrossesOneHour() {
         assertEquals(
-            "01:00:01.250",
+            "01:00:00.250",
             shiftSubtitleTimestamps("59:59.250", 1_000L)
         )
     }
