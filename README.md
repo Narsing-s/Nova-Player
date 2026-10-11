@@ -81,6 +81,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 
 ### 🛟 Useful extras
 - Retry playback or return to the library when Media3 reports an error.
+- Accessibility polish: library status updates are exposed as polite screen-reader announcements, navigation tabs expose selected state, and the library scan indicator announces when scanning is active.
 - Picture-in-Picture action on supported Android devices.
 - Local preferences for playback speed, repeat/shuffle, subtitle appearance, seek interval and display mode.
 - Original Nova Player launcher identity with adaptive and legacy vector resources.
