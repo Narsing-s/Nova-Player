@@ -2304,7 +2304,7 @@ private fun playerMatchesQueue(player: Player, entries: List<HistoryEntry>): Boo
     }
 }
 
-private fun formatTime(milliseconds: Long): String {
+internal fun formatTime(milliseconds: Long): String {
     val totalSeconds = milliseconds.coerceAtLeast(0L) / 1_000L
     val seconds = totalSeconds % 60L
     val totalMinutes = totalSeconds / 60L
