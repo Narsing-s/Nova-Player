@@ -20,7 +20,14 @@ internal fun shiftSubtitleTimestamps(original: String, offsetMs: Long): String {
         } else {
             ((parts[0] * 60 + parts[1]) * 1000) + fraction
         }
-        val shifted = (baseMs + offsetMs).coerceAtLeast(0L)
+        // Saturate addition before clamping so extreme offsets cannot overflow Long
+        // and accidentally move a subtitle cue far into the future.
+        val shiftedRaw = when {
+            offsetMs > 0L && baseMs > Long.MAX_VALUE - offsetMs -> Long.MAX_VALUE
+            offsetMs < 0L && baseMs < Long.MIN_VALUE - offsetMs -> Long.MIN_VALUE
+            else -> baseMs + offsetMs
+        }
+        val shifted = shiftedRaw.coerceAtLeast(0L)
         val hours = shifted / 3_600_000
         val minutes = (shifted % 3_600_000) / 60_000
         val seconds = (shifted % 60_000) / 1_000
