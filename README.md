@@ -105,6 +105,15 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Local persistence:** SharedPreferences for resume state, favorites, history, queue, playlists and playback preferences
 - **Automation:** GitHub Actions runs JVM unit tests, an advisory Android lint scan, builds a debug APK and uploads the APK plus lint report artifacts
 
+## 🧪 Automated quality checks
+
+The JVM test suite includes regression coverage for:
+- Playback time formatting for short clips, long videos and negative inputs.
+- SRT and WebVTT subtitle timing shifts, including zero-offset preservation and hour-boundary formatting.
+- Negative subtitle timestamps clamped to zero, including an extreme negative offset that must not overflow.
+
+The Android CI workflow runs these tests before building the debug APK. Android Lint is uploaded as a report and remains advisory for now. A green CI run confirms the configured automated checks passed; it does not replace physical-device playback, TalkBack, PiP, notification, or signed-upgrade testing.
+
 ## 🛠️ Build locally
 
 **Requirements:** Android Studio, Android SDK 35 and JDK 17. The CI workflow currently uses Gradle 8.11.1.
