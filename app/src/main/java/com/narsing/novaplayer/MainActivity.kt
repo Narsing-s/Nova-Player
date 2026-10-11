@@ -38,6 +38,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -157,7 +162,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 @Composable
 private fun NovaHome(player: Player) {
     val context = LocalContext.current
@@ -543,7 +548,7 @@ private fun NovaHome(player: Player) {
                     Text("LOCAL VIDEO PLAYER", color = Color(0xFF9BA8C7), fontSize = 9.sp, letterSpacing = 1.4.sp)
                 }
                 if (selectedUri != null) {
-                    IconButton(onClick = { selectedUri = null }) { Icon(Icons.Default.ArrowBack, "Back to library", tint = Color.White) }
+                    IconButton(onClick = { selectedUri = null }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to library", tint = Color.White) }
                 } else {
                     IconButton(
                         enabled = !isScanningLibrary,
@@ -561,12 +566,12 @@ private fun NovaHome(player: Player) {
                     }
                     if (activeTab == "Videos") {
                         Box {
-                            IconButton(onClick = { sortMenuExpanded = true }) { Icon(Icons.Default.Sort, "Sort videos", tint = Color.White) }
+                            IconButton(onClick = { sortMenuExpanded = true }) { Icon(Icons.AutoMirrored.Filled.Sort, "Sort videos", tint = Color.White) }
                             DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = { sortMenuExpanded = false }, modifier = Modifier.background(Panel)) {
                                 listOf("Recently added", "Recently played", "Name A–Z", "Name Z–A", "Longest first", "Largest first").forEach { option ->
                                     DropdownMenuItem(
                                         text = { Text(option, color = if (librarySort == option) Mint else Color.White) },
-                                        leadingIcon = { if (librarySort == option) Icon(Icons.Default.Check, null, tint = Mint) else Icon(Icons.Default.Sort, null, tint = Color(0xFF9BA8C7)) },
+                                        leadingIcon = { if (librarySort == option) Icon(Icons.Default.Check, null, tint = Mint) else Icon(Icons.AutoMirrored.Filled.Sort, null, tint = Color(0xFF9BA8C7)) },
                                         onClick = {
                                             librarySort = option
                                             prefs.edit().putString("library_sort", option).apply()
@@ -579,7 +584,7 @@ private fun NovaHome(player: Player) {
                         IconButton(onClick = {
                             gridView = !gridView
                             prefs.edit().putBoolean("library_grid_view", gridView).apply()
-                        }) { Icon(if (gridView) Icons.Default.ViewList else Icons.Default.GridView, if (gridView) "Switch to list view" else "Switch to grid view", tint = Mint) }
+                        }) { Icon(if (gridView) Icons.AutoMirrored.Filled.ViewList else Icons.Default.GridView, if (gridView) "Switch to list view" else "Switch to grid view", tint = Mint) }
                     }
                 }
             }
@@ -858,7 +863,7 @@ private fun NovaHome(player: Player) {
                                             prefs.edit().putStringSet("watched_video_uris", watchedUris).apply()
                                             status = if (uri in watchedUris) "Marked as watched" else "Marked as unwatched"
                                         }) { Icon(if (video.uri.toString() in watchedUris) Icons.Default.CheckCircle else Icons.Default.Visibility, "Toggle watched status", tint = if (video.uri.toString() in watchedUris) Mint else Color(0xFF9BA8C7), modifier = Modifier.size(19.dp)) }
-                                        IconButton(onClick = { enqueueMedia(video) }) { Icon(Icons.Default.PlaylistAdd, "Add to queue", tint = Lavender, modifier = Modifier.size(20.dp)) }
+                                        IconButton(onClick = { enqueueMedia(video) }) { Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add to queue", tint = Lavender, modifier = Modifier.size(20.dp)) }
                                         IconButton(onClick = { selectedVideoInfo = video }) { Icon(Icons.Default.Info, "Video details", tint = Color(0xFF9BA8C7), modifier = Modifier.size(19.dp)) }
                                     }
                                 }
@@ -928,13 +933,13 @@ private fun NovaHome(player: Player) {
                                     Icon(if (video.uri.toString() in watchedUris) Icons.Default.CheckCircle else Icons.Default.Visibility, "Toggle watched status", tint = if (video.uri.toString() in watchedUris) Mint else Color(0xFF9BA8C7), modifier = Modifier.size(22.dp))
                                 }
                                 IconButton(onClick = { enqueueMedia(video) }) {
-                                Icon(Icons.Default.PlaylistAdd, "Add ${video.title} to queue", tint = Color(0xFF8A70FF), modifier = Modifier.size(26.dp))
+                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Add ${video.title} to queue", tint = Color(0xFF8A70FF), modifier = Modifier.size(26.dp))
                             }
                             IconButton(onClick = { playMedia(video.uri, video.title) }) {
                                     Icon(Icons.Default.PlayCircle, "Play ${video.title}", tint = Color(0xFF39E7D5), modifier = Modifier.size(30.dp))
                                 }
                             }
-                            Divider(color = Color(0xFF202A40), thickness = 1.dp)
+                            HorizontalDivider(color = Color(0xFF202A40), thickness = 1.dp)
                         }
                     }
                 }
@@ -981,7 +986,7 @@ private fun NovaHome(player: Player) {
                                 catch (_: Exception) { status = "This media is unavailable. Browse and select it again." }
                             }) { Icon(Icons.Default.PlayArrow, "Play recent video", tint = Color(0xFF39E7D5)) }
                         }
-                        Divider(color = Color(0xFF202A40))
+                        HorizontalDivider(color = Color(0xFF202A40))
                     }
                 }
             }
@@ -1054,7 +1059,7 @@ private fun NovaHome(player: Player) {
                                             status = "Saved ${additions.size} new playlist videos for the next queue playback"
                                         }
                                     }, modifier = Modifier.weight(1f)) {
-                                        Icon(Icons.Default.PlaylistAdd, null); Spacer(Modifier.width(5.dp)); Text("Add to queue")
+                                        Icon(Icons.AutoMirrored.Filled.PlaylistAdd, null); Spacer(Modifier.width(5.dp)); Text("Add to queue")
                                     }
                                 }
                             }
@@ -1066,7 +1071,7 @@ private fun NovaHome(player: Player) {
             if (selectedUri == null && activeTab == "Queue") {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.QueueMusic, null, tint = Mint)
+                        Icon(Icons.AutoMirrored.Filled.QueueMusic, null, tint = Mint)
                         Spacer(Modifier.width(8.dp))
                         Text("PLAY QUEUE", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         Spacer(Modifier.weight(1f))
@@ -1091,7 +1096,7 @@ private fun NovaHome(player: Player) {
                     Spacer(Modifier.height(8.dp))
                     if (queueItems.isEmpty()) {
                         Column(Modifier.fillMaxWidth().padding(vertical = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.QueueMusic, null, tint = Lavender, modifier = Modifier.size(46.dp))
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, null, tint = Lavender, modifier = Modifier.size(46.dp))
                             Spacer(Modifier.height(10.dp))
                             Text("Your queue is empty", color = Color.White, fontWeight = FontWeight.SemiBold)
                             Text("Tap the playlist-plus icon beside any video to add it.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
@@ -1141,7 +1146,7 @@ private fun NovaHome(player: Player) {
                                 status = if (mirrorsPlayerQueue) "Removed from queue" else "Removed from saved Up Next list"
                             }) { Icon(Icons.Default.Close, "Remove ${item.title} from queue", tint = Color(0xFF9BA8C7)) }
                         }
-                        Divider(color = Color(0xFF202A40))
+                        HorizontalDivider(color = Color(0xFF202A40))
                     }
                 }
             }
@@ -1181,7 +1186,7 @@ private fun NovaHome(player: Player) {
                                 status = "Removed from favorites"
                             }) { Icon(Icons.Default.DeleteOutline, "Remove favorite", tint = Color(0xFF9BA8C7)) }
                         }
-                        Divider(color = Color(0xFF202A40))
+                        HorizontalDivider(color = Color(0xFF202A40))
                     }
                 }
             }
@@ -1644,7 +1649,7 @@ private fun NovaHome(player: Player) {
                                 modifier = Modifier.background(Panel.copy(alpha = 0.85f), RoundedCornerShape(50))
                             ) {
                                 Icon(
-                                    Icons.Default.QueueMusic,
+                                    Icons.AutoMirrored.Filled.QueueMusic,
                                     contentDescription = if (isQueued) "Already in queue" else "Add to play queue",
                                     tint = if (isQueued) Mint else Color.White
                                 )
@@ -1885,7 +1890,7 @@ private fun NovaHome(player: Player) {
                 listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.Default.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
@@ -2149,7 +2154,7 @@ private fun NovaHome(player: Player) {
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(video.title, color = Mint, fontWeight = FontWeight.SemiBold)
-                        HorizontalDivider(color = Color(0xFF35415B))
+                        HorizontalHorizontalDivider(color = Color(0xFF35415B))
                         listOf(
                             "Duration" to formatTime(video.duration),
                             "File size" to formatBytes(video.size),
