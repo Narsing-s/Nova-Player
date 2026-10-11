@@ -562,7 +562,7 @@ private fun NovaHome(player: Player) {
                         }
                     ) {
                         if (isScanningLibrary) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Mint, strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp).semantics { contentDescription = "Scanning library" }, color = Mint, strokeWidth = 2.dp)
                         } else {
                             Icon(Icons.Default.Refresh, "Refresh library", tint = Color.White)
                         }
