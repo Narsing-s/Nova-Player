@@ -1,6 +1,7 @@
 package com.narsing.novaplayer
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SubtitleTimingTest {
@@ -45,6 +46,13 @@ class SubtitleTimingTest {
             "00:00:00,000",
             shiftSubtitleTimestamps("00:00:01,000", Long.MIN_VALUE)
         )
+    }
+
+    @Test
+    fun saturatesExtremePositiveOffsetInsteadOfWrapping() {
+        val shifted = shiftSubtitleTimestamps("00:00:01,000 --> 00:00:02,000", Long.MAX_VALUE)
+        assertTrue(shifted.substringBefore(" -->").length > 12)
+        assertTrue(shifted.contains(" --> "))
     }
 
     @Test
