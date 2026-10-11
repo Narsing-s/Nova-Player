@@ -2154,7 +2154,7 @@ private fun NovaHome(player: Player) {
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(video.title, color = Mint, fontWeight = FontWeight.SemiBold)
-                        HorizontalHorizontalDivider(color = Color(0xFF35415B))
+                        HorizontalDivider(color = Color(0xFF35415B))
                         listOf(
                             "Duration" to formatTime(video.duration),
                             "File size" to formatBytes(video.size),
