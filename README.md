@@ -103,7 +103,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Playback:** AndroidX Media3 ExoPlayer and PlayerView
 - **Platform:** Android SDK 35, JDK 17
 - **Local persistence:** SharedPreferences for resume state, favorites, history, queue, playlists and playback preferences
-- **Automation:** GitHub Actions builds a debug APK and uploads it as an artifact
+- **Automation:** GitHub Actions runs JVM unit tests, builds a debug APK and uploads it as an artifact
 
 ## 🛠️ Build locally
 
@@ -137,7 +137,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Landscape immersive mode and adaptive screen fitting
 - [x] External subtitle loading, timing sync and appearance controls
 - [x] Playback speed, shuffle/repeat, A–B loop and sleep timer
-- [x] CI debug build and APK artifact upload
+- [x] CI unit-test step, debug build and APK artifact upload
 - [ ] Physical-device playback testing across common video formats
 - [ ] Verify background playback, notification controls and PiP across Android versions
 - [ ] Automated tests, accessibility review and additional damaged-file recovery guidance
