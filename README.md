@@ -155,7 +155,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 
 ## 📦 Publish a signed release
 
-The `.github/workflows/release.yml` workflow can build and publish a signed APK when a `v*` tag is pushed or the workflow is manually run. If signing secrets are missing, it builds and uploads a debug APK instead with a warning; it does **not** publish an unsigned APK as a signed release. Configure all four secrets below to publish a signed release.
+The `.github/workflows/release.yml` workflow runs JVM unit tests and an advisory Android lint scan before packaging. It can build and publish a signed APK when a `v*` tag is pushed or the workflow is manually run. If signing secrets are missing, it builds and uploads a debug APK instead with a warning; it does **not** publish an unsigned APK as a signed release. Configure all four secrets below to publish a signed release.
 
 1. Create a persistent Android release keystore and keep a secure backup outside this repository.
 2. In **Repository → Settings → Secrets and variables → Actions**, add:
