@@ -56,6 +56,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -1885,10 +1888,10 @@ private fun NovaHome(player: Player) {
                 }
             }
 
-            if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 14.dp, vertical = 8.dp))
+            if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).semantics { liveRegion = LiveRegionMode.Polite }.padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists").forEach { tab ->
-                    TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f)) {
+                    TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
