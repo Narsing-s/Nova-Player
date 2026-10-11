@@ -40,6 +40,14 @@ class SubtitleTimingTest {
     }
 
     @Test
+    fun clampsExtremeNegativeOffsetWithoutLongOverflow() {
+        assertEquals(
+            "00:00:00,000",
+            shiftSubtitleTimestamps("00:00:01,000", Long.MIN_VALUE)
+        )
+    }
+
+    @Test
     fun zeroOffsetLeavesOriginalTextUntouched() {
         val input = "WEBVTT\n\n00:01.000 --> 00:02.000"
         assertEquals(input, shiftSubtitleTimestamps(input, 0L))
