@@ -224,3 +224,10 @@ When a video is playing in landscape, an on-video quick-action dock keeps playba
 - [ ] Verify the installed release APK upgrades the previous release without losing local preferences and saved lists.
 
 **Current verification boundary:** GitHub Actions has reported a successful build. The physical-device checklist above is not claimed complete until each item has actually been tested. Media format support and Picture-in-Picture behavior can vary by Android version and device.
+
+
+## 🧭 Modernization and release-readiness
+
+The next improvements should protect existing playback controls first, then improve reliability and accessibility before adding more UI. See the [Modernization & Release Readiness checklist](docs/PRODUCTION_READINESS.md) for prioritized physical-device tests, data-safety checks, accessibility polish, CI improvements and signed-release requirements.
+
+**Important:** CI compilation is not the same as real-device validation. Confirm landscape playback sizing, every visible control, background/notification behavior, PiP, document-picker access and saved playback state on physical devices before calling a build production-ready.
