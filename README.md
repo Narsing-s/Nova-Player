@@ -18,7 +18,7 @@
   <a href="https://github.com/Narsing-s/Nova-Player/issues">Report an issue</a>
 </p>
 
-> **Project status:** Active preview. The latest completed Android CI build passed; a newer run may still be building. Open [Android CI](https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml) to see the current status and download the APK artifact from a completed successful run. Real-device playback, notification, PiP, and release-signing checks are still required before a production release.
+> **Project status:** Active preview. CI runs JVM unit tests, an advisory Android lint scan, and a debug APK build. Open [Android CI](https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml) to check the latest status and download the APK artifact from a completed successful run. Real-device playback, notification, PiP, accessibility, and release-signing checks are still required before a production release.
 
 ---
 
@@ -103,7 +103,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Playback:** AndroidX Media3 ExoPlayer and PlayerView
 - **Platform:** Android SDK 35, JDK 17
 - **Local persistence:** SharedPreferences for resume state, favorites, history, queue, playlists and playback preferences
-- **Automation:** GitHub Actions runs JVM unit tests, builds a debug APK and uploads it as an artifact
+- **Automation:** GitHub Actions runs JVM unit tests, an advisory Android lint scan, builds a debug APK and uploads the APK plus lint report artifacts
 
 ## 🛠️ Build locally
 
@@ -115,8 +115,10 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
    cd Nova-Player
    ```
 2. Open the project in Android Studio and sync Gradle.
-3. Build the debug APK:
+3. Run checks and build the debug APK:
    ```bash
+   gradle testDebugUnitTest
+   gradle lintDebug
    gradle assembleDebug
    ```
 4. Find the APK at:
@@ -137,10 +139,10 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Landscape immersive mode and adaptive screen fitting
 - [x] External subtitle loading, timing sync and appearance controls
 - [x] Playback speed, shuffle/repeat, A–B loop and sleep timer
-- [x] CI unit-test step, debug build and APK artifact upload
+- [x] CI unit-test step, advisory lint report, debug build and APK artifact upload
 - [ ] Physical-device playback testing across common video formats
 - [ ] Verify background playback, notification controls and PiP across Android versions
-- [ ] Automated tests, accessibility review and additional damaged-file recovery guidance
+- [ ] Expand automated test coverage, complete accessibility review and improve damaged-file recovery guidance
 - [ ] Verify a signed release APK on physical devices
 
 ## 🔐 Privacy and offline design
@@ -218,7 +220,7 @@ When a video is playing in landscape, an on-video quick-action dock keeps playba
 - [ ] Verify no control is visually enabled when its operation cannot be performed, and confirm each operation reports success or a useful error.
 
 ### Build and distribution
-- [ ] Check the latest [Android CI run](https://github.com/Narsing-s/Nova-Player/actions) and download its APK artifact.
+- [ ] Check the latest [Android CI run](https://github.com/Narsing-s/Nova-Player/actions), download its APK artifact and review the advisory lint report.
 - [ ] Install and test on at least one physical Android device in both orientations.
 - [ ] Publish only a release APK signed with the project's private release key. Never commit a keystore or signing passwords.
 - [ ] Verify the installed release APK upgrades the previous release without losing local preferences and saved lists.
