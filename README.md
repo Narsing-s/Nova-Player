@@ -230,6 +230,6 @@ When a video is playing in landscape, an on-video quick-action dock keeps playba
 
 ## 🧭 Modernization and release-readiness
 
-The next improvements should protect existing playback controls first, then improve reliability and accessibility before adding more UI. See the [Modernization & Release Readiness checklist](docs/PRODUCTION_READINESS.md) for prioritized physical-device tests, data-safety checks, accessibility polish, CI improvements and signed-release requirements.
+The next improvements should protect existing playback controls first, then improve reliability and accessibility before adding more UI. See the [Modernization & Release Readiness checklist](docs/PRODUCTION_READINESS.md) for prioritized physical-device tests, data-safety checks, accessibility polish, CI improvements and signed-release requirements. Also use the [Accessibility & UX Quality Gate](docs/ACCESSIBILITY_UX_CHECKLIST.md) to check TalkBack labels, touch targets, contrast, rotation, error recovery, and responsive layouts without changing existing behavior.
 
 **Important:** CI compilation is not the same as real-device validation. Confirm landscape playback sizing, every visible control, background/notification behavior, PiP, document-picker access and saved playback state on physical devices before calling a build production-ready.
