@@ -103,27 +103,7 @@ private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): U
     if (offsetMs == 0L) return source
     return try {
         val original = context.contentResolver.openInputStream(source)?.bufferedReader()?.use { it.readText() } ?: return null
-        // Handles standard SRT timestamps and both WEBVTT timestamp forms (MM:SS.mmm / HH:MM:SS.mmm).
-        val timestamp = Regex("""(?:\d{2}:)?\d{2}:\d{2}[,.]\d{3}""")
-        fun shift(value: String): String {
-            val separator = if (value.contains(',')) ',' else '.'
-            val clock = value.substringBeforeLast(separator)
-            val fraction = value.substringAfterLast(separator).toLong()
-            val parts = clock.split(':').map { it.toLong() }
-            val baseMs = if (parts.size == 3) ((parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000) + fraction
-                else ((parts[0] * 60 + parts[1]) * 1000) + fraction
-            val shifted = (baseMs + offsetMs).coerceAtLeast(0L)
-            val hours = shifted / 3600000
-            val minutes = (shifted % 3600000) / 60000
-            val seconds = (shifted % 60000) / 1000
-            val millis = shifted % 1000
-            return if (parts.size == 2 && shifted < 3600000) {
-                "%02d:%02d%c%03d".format(shifted / 60000, seconds, separator, millis)
-            } else {
-                "%02d:%02d:%02d%c%03d".format(hours, minutes, seconds, separator, millis)
-            }
-        }
-        val adjusted = timestamp.replace(original) { match -> shift(match.value) }
+        val adjusted = shiftSubtitleTimestamps(original, offsetMs)
         val suffix = if (source.lastPathSegment?.endsWith(".vtt", true) == true) ".vtt" else ".srt"
         val output = java.io.File(context.cacheDir, "subtitle-${source.lastPathSegment.hashCode()}-${offsetMs}$suffix")
         output.writeText(adjusted)
