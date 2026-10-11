@@ -36,6 +36,22 @@ jobs:
       - name: Run unit tests
         run: gradle --no-daemon testDebugUnitTest
 
+      # Advisory at first: surface existing findings without blocking the known APK build.
+      - name: Run Android lint
+        run: gradle --no-daemon lintDebug
+        continue-on-error: true
+
+      - name: Upload Android lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-player-lint-report
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-debug.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
