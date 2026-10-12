@@ -129,6 +129,7 @@ private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): U
 @UnstableApi
 class MainActivity : ComponentActivity() {
     private val playbackPlayer = mutableStateOf<Player?>(null)
+    private val controllerError = mutableStateOf<String?>(null)
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,9 +138,40 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = darkColorScheme(primary = Mint, secondary = Lavender, background = Midnight, surface = Panel)) {
                 val player = playbackPlayer.value
                 if (player == null) {
+                    val connectionError = controllerError.value
                     Surface(Modifier.fillMaxSize(), color = Midnight) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Mint)
+                        Box(
+                            Modifier.fillMaxSize().padding(28.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (connectionError == null) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                    CircularProgressIndicator(color = Mint)
+                                    Text("Connecting to Nova Player…", color = Color.White, fontSize = 15.sp)
+                                }
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Mint, modifier = Modifier.size(42.dp))
+                                    Text("Player service unavailable", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        "Nova Player could not connect to its playback service. Retry the connection or reopen the app.",
+                                        color = Color(0xFFB8C2D9),
+                                        fontSize = 14.sp
+                                    )
+                                    Button(
+                                        onClick = { recreate() },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Retry connection")
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {
@@ -151,13 +183,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        controllerError.value = null
         val token = SessionToken(this, ComponentName(this, NovaPlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, token).buildAsync().also { future ->
             future.addListener({
                 try {
                     playbackPlayer.value = future.get()
+                    controllerError.value = null
                 } catch (_: Exception) {
                     playbackPlayer.value = null
+                    controllerError.value = "Unable to connect to the playback service"
                 }
             }, androidx.core.content.ContextCompat.getMainExecutor(this))
         }
