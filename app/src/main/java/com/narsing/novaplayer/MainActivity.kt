@@ -1639,196 +1639,6 @@ private fun NovaHome(player: Player) {
                                 }
                             }
                         }
-                        // Landscape quick controls: keep advanced playback actions reachable
-                        // without leaving the immersive video surface.
-                        if (isLandscape && !controlsLocked && showLandscapeDock) {
-                            Surface(
-                                modifier = Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
-                                color = Color(0xE6101829),
-                                shape = RoundedCornerShape(22.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.32f))
-                            ) {
-                                Row(
-                                    modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 3.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                                ) {
-                                    TextButton(onClick = { showPlaybackSpeedDialog = true }) {
-                                        Icon(Icons.Default.Speed, contentDescription = null, tint = Mint)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("${playbackSpeed}×", color = Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        aspectMode = when (aspectMode) { "Auto" -> "Fit"; "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Auto" }
-                                        prefs.edit().putString("player_aspect_mode", aspectMode).apply()
-                                        status = "Screen mode: " + aspectMode
-                                    }) {
-                                        Icon(Icons.Default.AspectRatio, contentDescription = null, tint = Mint)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(aspectMode, color = Color.White)
-                                    }
-                                    TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
-                                        Icon(Icons.Default.Subtitles, contentDescription = null, tint = Mint)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Subtitles", color = Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        try { TrackSelectionDialogBuilder(context, "Audio tracks", player, C.TRACK_TYPE_AUDIO).build().show() }
-                                        catch (_: Exception) { status = "Audio track selection is unavailable for this media." }
-                                    }) {
-                                        Icon(Icons.Default.Audiotrack, contentDescription = null, tint = Mint)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Audio", color = Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        val uri = selectedUri?.toString()
-                                        if (uri == null) {
-                                            status = "Play a video before changing favorites."
-                                        } else {
-                                            val alreadyFavorite = favoriteItems.any { it.uri == uri }
-                                            favoriteItems = if (alreadyFavorite) favoriteItems.filterNot { it.uri == uri }
-                                                else listOf(HistoryEntry(uri, selectedTitle.ifBlank { "Local video" })) + favoriteItems
-                                            saveFavorites(prefs, favoriteItems)
-                                            status = if (alreadyFavorite) "Removed from favorites" else "Added to favorites"
-                                        }
-                                    }) {
-                                        Icon(
-                                            if (favoriteItems.any { it.uri == selectedUri?.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                            contentDescription = "Toggle favorite",
-                                            tint = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White
-                                        )
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Favorite", color = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        val start = abLoopStartMs
-                                        val end = abLoopEndMs
-                                        if (start == null) {
-                                            abLoopStartMs = player.currentPosition.coerceAtLeast(0L)
-                                            abLoopEndMs = null
-                                            status = "A–B loop point A set at " + formatTime(player.currentPosition)
-                                        } else if (end == null) {
-                                            val current = player.currentPosition.coerceAtLeast(0L)
-                                            if (current > start) {
-                                                abLoopEndMs = current
-                                                status = "A–B loop enabled: " + formatTime(start) + " – " + formatTime(current)
-                                            } else {
-                                                status = "Point B must be after point A"
-                                            }
-                                        } else {
-                                            abLoopStartMs = null
-                                            abLoopEndMs = null
-                                            status = "A–B loop cleared"
-                                        }
-                                    }) {
-                                        Icon(Icons.Default.RepeatOne, contentDescription = "Set or clear A-B loop", tint = if (abLoopStartMs != null) Lavender else Color.White)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            when {
-                                                abLoopStartMs == null -> "Set A"
-                                                abLoopEndMs == null -> "Set B"
-                                                else -> "Clear A–B"
-                                            },
-                                            color = if (abLoopStartMs != null) Lavender else Color.White
-                                        )
-                                    }
-                                    TextButton(onClick = {
-                                        shuffleEnabled = !shuffleEnabled
-                                        player.shuffleModeEnabled = shuffleEnabled
-                                        prefs.edit().putBoolean("shuffle_enabled", shuffleEnabled).apply()
-                                        status = if (shuffleEnabled) "Shuffle enabled" else "Shuffle disabled"
-                                    }) {
-                                        Icon(Icons.Default.Shuffle, contentDescription = null, tint = if (shuffleEnabled) Mint else Color.White)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Shuffle", color = if (shuffleEnabled) Mint else Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        repeatMode = when (repeatMode) {
-                                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                                            else -> Player.REPEAT_MODE_OFF
-                                        }
-                                        player.repeatMode = repeatMode
-                                        prefs.edit().putInt("repeat_mode", repeatMode).apply()
-                                        status = when (repeatMode) {
-                                            Player.REPEAT_MODE_ALL -> "Repeat all enabled"
-                                            Player.REPEAT_MODE_ONE -> "Repeat current video enabled"
-                                            else -> "Repeat disabled"
-                                        }
-                                    }) {
-                                        Icon(
-                                            if (repeatMode == Player.REPEAT_MODE_ONE) Icons.Default.RepeatOne else Icons.Default.Repeat,
-                                            contentDescription = null,
-                                            tint = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White
-                                        )
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            when (repeatMode) {
-                                                Player.REPEAT_MODE_ALL -> "Repeat all"
-                                                Player.REPEAT_MODE_ONE -> "Repeat one"
-                                                else -> "Repeat off"
-                                            },
-                                            color = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White
-                                        )
-                                    }
-                                    TextButton(onClick = { showSleepTimerDialog = true }) {
-                                        Icon(Icons.Default.Bedtime, contentDescription = null, tint = if (sleepTimerActive) Mint else Color.White)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(if (sleepTimerActive) "Sleep on" else "Sleep timer", color = if (sleepTimerActive) Mint else Color.White)
-                                    }
-                                    TextButton(onClick = {
-                                        try {
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                                context.findActivity()?.enterPictureInPictureMode(
-                                                    PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
-                                                )
-                                            } else status = "Picture-in-Picture requires Android 8.0 or newer."
-                                        } catch (_: Exception) { status = "Picture-in-Picture could not be started on this device." }
-                                    }) {
-                                        Icon(Icons.Default.PictureInPictureAlt, contentDescription = null, tint = Mint)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("PiP", color = Color.White)
-                                    }
-                                    IconButton(onClick = {
-                                        controlsLocked = true
-                                        status = "Player controls locked · Tap Unlock controls to restore"
-                                    }) {
-                                        Icon(Icons.Default.Lock, contentDescription = "Lock player controls", tint = Mint)
-                                    }
-                                    IconButton(onClick = {
-                                        showLandscapeDock = false
-                                        status = "Playback dock hidden · Tap the controls icon to show it"
-                                    }) {
-                                        Icon(Icons.Default.Close, contentDescription = "Hide playback dock", tint = Color.White)
-                                    }
-                                    IconButton(onClick = {
-                                        fullScreen = !fullScreen
-                                        status = if (fullScreen) "Immersive full-screen enabled" else "Immersive full-screen disabled"
-                                    }) {
-                                        Icon(
-                                            if (fullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                                            contentDescription = if (fullScreen) "Exit immersive mode" else "Enter immersive mode",
-                                            tint = Mint
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        if (isLandscape && !controlsLocked && !showLandscapeDock) {
-                            Surface(
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                                color = Color(0xE6101829),
-                                shape = RoundedCornerShape(50),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.5f))
-                            ) {
-                                IconButton(onClick = {
-                                    showLandscapeDock = true
-                                    status = "Playback dock shown"
-                                }) {
-                                    Icon(Icons.Default.Tune, contentDescription = "Show playback controls", tint = Mint)
-                                }
-                            }
-                        }
                         if (playerZoomScale > 1.01f && !controlsLocked) {
                             Surface(
                                 modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
@@ -1976,6 +1786,188 @@ private fun NovaHome(player: Player) {
                                 }
                             }
                         }
+                        }
+
+                        // Keep advanced landscape actions in a dedicated footer instead of covering the video.
+                        if (isLandscape && !controlsLocked) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 5.dp),
+                                color = Color(0xF212182A),
+                                shape = RoundedCornerShape(18.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.35f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Icon(Icons.Default.Tune, contentDescription = null, tint = Mint, modifier = Modifier.size(16.dp))
+                                            Text("PLAYBACK TOOLS", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                        }
+                                        if (!showLandscapeDock) {
+                                            TextButton(onClick = { showLandscapeDock = true; status = "Playback dock shown" }) {
+                                                Icon(Icons.Default.ExpandLess, contentDescription = null, tint = Mint)
+                                                Text("Show tools", color = Mint)
+                                            }
+                                        } else {
+                                            TextButton(onClick = { showLandscapeDock = false; status = "Playback dock hidden" }) {
+                                                Icon(Icons.Default.ExpandMore, contentDescription = null, tint = Color.White)
+                                                Text("Collapse", color = Color.White)
+                                            }
+                                        }
+                                    }
+                                    if (showLandscapeDock) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            TextButton(onClick = { showPlaybackSpeedDialog = true }) {
+                                                Icon(Icons.Default.Speed, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Speed · ${playbackSpeed}×", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                aspectMode = when (aspectMode) { "Auto" -> "Fit"; "Fit" -> "Fill"; "Fill" -> "Zoom"; else -> "Auto" }
+                                                prefs.edit().putString("player_aspect_mode", aspectMode).apply()
+                                                status = "Screen mode: " + aspectMode
+                                            }) {
+                                                Icon(Icons.Default.AspectRatio, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(aspectMode, color = Color.White)
+                                            }
+                                            TextButton(onClick = { subtitlePicker.launch(arrayOf("application/x-subrip", "text/vtt", "text/plain")) }) {
+                                                Icon(Icons.Default.Subtitles, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Subtitles", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                try { TrackSelectionDialogBuilder(context, "Audio tracks", player, C.TRACK_TYPE_AUDIO).build().show() }
+                                                catch (_: Exception) { status = "Audio track selection is unavailable for this media." }
+                                            }) {
+                                                Icon(Icons.Default.Audiotrack, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Audio tracks", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                val uri = selectedUri?.toString()
+                                                if (uri == null) status = "Play a video before changing favorites."
+                                                else {
+                                                    val alreadyFavorite = favoriteItems.any { it.uri == uri }
+                                                    favoriteItems = if (alreadyFavorite) favoriteItems.filterNot { it.uri == uri }
+                                                        else listOf(HistoryEntry(uri, selectedTitle.ifBlank { "Local video" })) + favoriteItems
+                                                    saveFavorites(prefs, favoriteItems)
+                                                    status = if (alreadyFavorite) "Removed from favorites" else "Added to favorites"
+                                                }
+                                            }) {
+                                                Icon(if (favoriteItems.any { it.uri == selectedUri?.toString() }) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                    contentDescription = "Toggle favorite",
+                                                    tint = if (favoriteItems.any { it.uri == selectedUri?.toString() }) Color(0xFFFF6B9D) else Color.White)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Favorite", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                val start = abLoopStartMs
+                                                val end = abLoopEndMs
+                                                if (start == null) {
+                                                    abLoopStartMs = player.currentPosition.coerceAtLeast(0L)
+                                                    abLoopEndMs = null
+                                                    status = "A–B loop point A set at " + formatTime(player.currentPosition)
+                                                } else if (end == null) {
+                                                    val current = player.currentPosition.coerceAtLeast(0L)
+                                                    if (current > start) {
+                                                        abLoopEndMs = current
+                                                        status = "A–B loop enabled: " + formatTime(start) + " – " + formatTime(current)
+                                                    } else status = "Point B must be after point A"
+                                                } else {
+                                                    abLoopStartMs = null
+                                                    abLoopEndMs = null
+                                                    status = "A–B loop cleared"
+                                                }
+                                            }) {
+                                                Icon(Icons.Default.RepeatOne, contentDescription = "Set or clear A-B loop",
+                                                    tint = if (abLoopStartMs != null) Lavender else Color.White)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(when { abLoopStartMs == null -> "Set A"; abLoopEndMs == null -> "Set B"; else -> "Clear A–B" },
+                                                    color = if (abLoopStartMs != null) Lavender else Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                shuffleEnabled = !shuffleEnabled
+                                                player.shuffleModeEnabled = shuffleEnabled
+                                                prefs.edit().putBoolean("shuffle_enabled", shuffleEnabled).apply()
+                                                status = if (shuffleEnabled) "Shuffle enabled" else "Shuffle disabled"
+                                            }) {
+                                                Icon(Icons.Default.Shuffle, contentDescription = null, tint = if (shuffleEnabled) Mint else Color.White)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Shuffle", color = if (shuffleEnabled) Mint else Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                repeatMode = when (repeatMode) {
+                                                    Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                                                    Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                                                    else -> Player.REPEAT_MODE_OFF
+                                                }
+                                                player.repeatMode = repeatMode
+                                                prefs.edit().putInt("repeat_mode", repeatMode).apply()
+                                                status = when (repeatMode) {
+                                                    Player.REPEAT_MODE_ALL -> "Repeat all enabled"
+                                                    Player.REPEAT_MODE_ONE -> "Repeat current video enabled"
+                                                    else -> "Repeat disabled"
+                                                }
+                                            }) {
+                                                Icon(if (repeatMode == Player.REPEAT_MODE_ONE) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                                                    contentDescription = null, tint = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(when (repeatMode) {
+                                                    Player.REPEAT_MODE_ALL -> "Repeat all"
+                                                    Player.REPEAT_MODE_ONE -> "Repeat one"
+                                                    else -> "Repeat off"
+                                                }, color = if (repeatMode != Player.REPEAT_MODE_OFF) Mint else Color.White)
+                                            }
+                                            TextButton(onClick = { showSleepTimerDialog = true }) {
+                                                Icon(Icons.Default.Bedtime, contentDescription = null, tint = if (sleepTimerActive) Mint else Color.White)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(if (sleepTimerActive) "Sleep timer on" else "Sleep timer", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                try {
+                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                        context.findActivity()?.enterPictureInPictureMode(
+                                                            PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
+                                                        )
+                                                    } else status = "Picture-in-Picture requires Android 8.0 or newer."
+                                                } catch (_: Exception) { status = "Picture-in-Picture could not be started on this device." }
+                                            }) {
+                                                Icon(Icons.Default.PictureInPictureAlt, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("PiP", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                controlsLocked = true
+                                                status = "Player controls locked · Tap Unlock controls to restore"
+                                            }) {
+                                                Icon(Icons.Default.Lock, contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Lock", color = Color.White)
+                                            }
+                                            TextButton(onClick = {
+                                                fullScreen = !fullScreen
+                                                status = if (fullScreen) "Immersive full-screen enabled" else "Immersive full-screen disabled"
+                                            }) {
+                                                Icon(if (fullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                                    contentDescription = null, tint = Mint)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(if (fullScreen) "Exit immersive" else "Immersive", color = Color.White)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                         if (!fullScreen && !isLandscape && !controlsLocked) {
                         Row(
