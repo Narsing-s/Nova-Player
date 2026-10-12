@@ -1402,9 +1402,11 @@ private fun NovaHome(player: Player) {
                                             if (!controlsLocked && selectedUri != null) {
                                                 val forward = offset.x >= size.width / 2f
                                                 val duration = player.duration
-                                                val target = (player.currentPosition + if (forward) skipIntervalSeconds * 1_000L else -skipIntervalSeconds * 1_000L)
-                                                    .coerceAtLeast(0L)
-                                                    .let { if (duration > 0L) it.coerceAtMost(duration) else it }
+                                                val target = clampSeekPosition(
+                                                    player.currentPosition,
+                                                    if (forward) skipIntervalSeconds * 1_000L else -skipIntervalSeconds * 1_000L,
+                                                    duration
+                                                )
                                                 player.seekTo(target)
                                                 status = (if (forward) "Forward " else "Rewind ") + "$skipIntervalSeconds seconds"
                                             }
@@ -1716,9 +1718,7 @@ private fun NovaHome(player: Player) {
                             }
                         }
                         if (isSeekingGesture && !controlsLocked) {
-                            val previewPosition = (player.currentPosition + seekPreviewDeltaMs)
-                                .coerceAtLeast(0L)
-                                .let { if (player.duration > 0L) it.coerceAtMost(player.duration) else it }
+                            val previewPosition = clampSeekPosition(player.currentPosition, seekPreviewDeltaMs, player.duration)
                             Surface(
                                 modifier = Modifier.align(Alignment.Center),
                                 color = Color(0xE6101829),
