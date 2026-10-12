@@ -523,6 +523,49 @@ private fun NovaHome(player: Player) {
         } else status = "Start a video before loading external subtitles."
     }
 
+    val exportPlaylistsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { writer ->
+                    writer.write(serializePlaylistsJson(playlists))
+                } ?: throw java.io.IOException("Could not open the selected destination.")
+                status = "Exported ${playlists.size} playlists"
+            } catch (_: Exception) {
+                status = "Playlist export failed. Choose another destination and try again."
+            }
+        }
+    }
+
+    val importPlaylistsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            uiScope.launch {
+                try {
+                    val raw = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                            ?: throw java.io.IOException("Could not read the selected file.")
+                    }
+                    val imported = parsePlaylistsJson(raw)
+                    if (imported.isEmpty()) {
+                        status = "No valid playlists were found in that backup."
+                    } else {
+                        val merged = playlists.toMutableList()
+                        imported.forEach { incoming ->
+                            val existingIndex = merged.indexOfFirst { it.name.equals(incoming.name, ignoreCase = true) }
+                            if (existingIndex >= 0) merged[existingIndex] = incoming else merged.add(incoming)
+                        }
+                        playlists = merged
+                        savePlaylists(prefs, merged)
+                        status = "Imported ${imported.size} playlists; matching names were updated"
+                    }
+                } catch (_: Exception) {
+                    status = "Import failed. Choose a valid Nova Player playlist JSON backup."
+                }
+            }
+        }
+    }
+
     val libraryPermission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO else Manifest.permission.READ_EXTERNAL_STORAGE
     val libraryPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -1002,6 +1045,12 @@ private fun NovaHome(player: Player) {
                         Column(Modifier.weight(1f)) {
                             Text("SAVED PLAYLISTS", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                             Text("Stored on this device · Works offline", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                        }
+                        IconButton(onClick = { importPlaylistsLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }) {
+                            Icon(Icons.Default.FileDownload, "Import playlist backup", tint = Mint)
+                        }
+                        IconButton(onClick = { exportPlaylistsLauncher.launch("nova-playlists-backup.json") }, enabled = playlists.isNotEmpty()) {
+                            Icon(Icons.Default.FileUpload, "Export playlist backup", tint = if (playlists.isNotEmpty()) Mint else Color(0xFF46516A))
                         }
                         Button(onClick = { playlistName = ""; showCreatePlaylistDialog = true }, colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
                             Icon(Icons.Default.Add, null); Spacer(Modifier.width(5.dp)); Text("Save queue")
@@ -2354,6 +2403,44 @@ private fun formatBytes(bytes: Long): String {
 
 private data class HistoryEntry(val uri: String, val title: String)
 private data class PlaylistEntry(val name: String, val items: List<HistoryEntry>)
+
+internal fun serializePlaylistsJson(playlists: List<PlaylistEntry>): String {
+    val root = JSONObject()
+        .put("format", "nova-player-playlists")
+        .put("version", 1)
+    val array = JSONArray()
+    playlists.forEach { playlist ->
+        val items = JSONArray()
+        playlist.items.forEach { item ->
+            items.put(JSONObject().put("uri", item.uri).put("title", item.title))
+        }
+        array.put(JSONObject().put("name", playlist.name).put("items", items))
+    }
+    root.put("playlists", array)
+    return root.toString(2)
+}
+
+internal fun parsePlaylistsJson(raw: String): List<PlaylistEntry> {
+    require(raw.length <= 5_000_000) { "Backup file is too large" }
+    val root = JSONObject(raw)
+    require(root.optString("format") == "nova-player-playlists") { "Unknown backup format" }
+    require(root.optInt("version", -1) == 1) { "Unsupported backup version" }
+    val array = root.optJSONArray("playlists") ?: throw IllegalArgumentException("Missing playlists")
+    require(array.length() <= 2_000) { "Too many playlists" }
+    return (0 until array.length()).mapNotNull { index ->
+        val item = array.optJSONObject(index) ?: return@mapNotNull null
+        val name = item.optString("name").trim().take(120)
+        val sourceItems = item.optJSONArray("items") ?: JSONArray()
+        if (name.isBlank() || sourceItems.length() > 20_000) return@mapNotNull null
+        val entries = (0 until sourceItems.length()).mapNotNull { itemIndex ->
+            val entry = sourceItems.optJSONObject(itemIndex) ?: return@mapNotNull null
+            val uri = entry.optString("uri").trim()
+            val title = entry.optString("title").trim().take(500)
+            if (uri.isBlank() || title.isBlank()) null else HistoryEntry(uri, title)
+        }
+        PlaylistEntry(name, entries)
+    }
+}
 
 private fun readHistory(prefs: android.content.SharedPreferences): List<HistoryEntry> {
     return try {
