@@ -164,7 +164,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [ ] Physical-device playback testing across common video formats
 - [ ] Verify background playback, notification controls and PiP across Android versions
 - [ ] Add device-level regression tests for rotation, immersive landscape controls, background playback and PiP
-- [ ] Add seek-preview thumbnails during drag scrubbing (current preview shows target time/offset only)
+- [x] Add debounced video-frame thumbnails during drag scrubbing when the media provider can extract a frame
 - [ ] Validate remote-control focus order, TV-sized layouts and playback controls on physical Android TV devices
 - [ ] Expand automated test coverage, complete accessibility review and improve damaged-file recovery guidance
 - [ ] Verify a signed release APK on physical devices
