@@ -76,6 +76,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Add videos from the library or player overlay.
 - Play from any queue position, reorder entries, remove individual items or clear the queue.
 - Save named playlists locally and play, merge or delete them later.
+- **Playlist backup and restore:** export saved playlists to a versioned JSON file using Android's document picker, or import a backup later. Imports validate the format, ignore malformed entries, and update same-named playlists while preserving unrelated playlists. Only playlist metadata and content URIs are exported—not the video files themselves.
 - Queue order persists across app restarts. Opening a standalone file or reapplying subtitle timing should not silently clear the saved Up Next list.
 - Background playback is implemented with a Media3 session service and media notification support; verify device-specific behavior during testing.
 
@@ -112,6 +113,7 @@ The JVM test suite includes regression coverage for:
 - Playback time formatting for short clips, long videos and negative inputs.
 - SRT and WebVTT subtitle timing shifts, including zero-offset preservation and hour-boundary formatting.
 - Negative subtitle timestamps clamped to zero, including an extreme negative offset that must not overflow.
+- Playlist backup JSON round-trips, malformed entries, and unsupported backup format/version handling.
 
 The Android CI workflow runs these tests before building the debug APK. Android Lint is uploaded as a report and remains advisory for now. A green CI run confirms the configured automated checks passed; it does not replace physical-device playback, TalkBack, PiP, notification, or signed-upgrade testing.
 
@@ -145,6 +147,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Grid/list layouts, favorites, recent history and watched filters
 - [x] Per-video resume checkpoints and Continue Watching progress in grid and list
 - [x] Persistent queue and named local playlists
+- [x] Import/export playlist backups through Android's document picker with versioned JSON validation
 - [x] Swipe gestures, touch lock, seek presets and pinch-to-zoom
 - [x] Landscape immersive mode and adaptive screen fitting
 - [x] External subtitle loading, timing sync and appearance controls
