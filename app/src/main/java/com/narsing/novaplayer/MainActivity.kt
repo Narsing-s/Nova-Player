@@ -2457,7 +2457,38 @@ private fun NovaHome(player: Player) {
                         }
                     }
                 },
-                confirmButton = { TextButton(onClick = { showDiagnosticsDialog = false }) { Text("Close", color = Mint) } },
+                confirmButton = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TextButton(onClick = {
+                            val report = buildString {
+                                appendLine("Nova Player · Playback diagnostics")
+                                appendLine("Title: ${activeItem?.mediaMetadata?.title?.toString() ?: selectedTitle.ifBlank { "No media selected" }}")
+                                appendLine("State: ${playbackStateLabel(player.playbackState)}")
+                                appendLine("Playing: ${player.isPlaying}")
+                                appendLine("Play when ready: ${player.playWhenReady}")
+                                appendLine("Position: ${formatTime(player.currentPosition)}")
+                                appendLine("Duration: ${if (player.duration > 0L) formatTime(player.duration) else "Unknown / live"}")
+                                appendLine("Video format: ${videoFormats.firstOrNull()?.let { it.sampleMimeType ?: it.codecs ?: "Unknown codec" } ?: "No active video track"}")
+                                appendLine("Resolution: ${videoFormats.firstOrNull()?.let { if (it.width > 0 && it.height > 0) "${it.width} × ${it.height}" else "Not reported by decoder" } ?: "Not available"}")
+                                appendLine("Frame rate: ${videoFormats.firstOrNull()?.let { if (it.frameRate > 0f) "%.2f fps".format(it.frameRate) else "Not reported" } ?: "Not available"}")
+                                appendLine("Video codecs: ${videoFormats.mapNotNull { it.codecs ?: it.sampleMimeType }.distinct().joinToString().ifBlank { "Not reported" }}")
+                                appendLine("Audio codecs: ${audioFormats.mapNotNull { it.codecs ?: it.sampleMimeType }.distinct().joinToString().ifBlank { "No active audio track" }}")
+                                appendLine("Tracks detected: ${formats.size}")
+                                appendLine("Last status: ${status}")
+                                appendLine("Privacy: media URIs and local file paths are excluded.")
+                            }
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Nova Player diagnostics", report))
+                            status = "Sanitized diagnostics copied to clipboard"
+                            showDiagnosticsDialog = false
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null)
+                            Spacer(Modifier.width(5.dp))
+                            Text("Copy report", color = Mint)
+                        }
+                        TextButton(onClick = { showDiagnosticsDialog = false }) { Text("Close", color = Mint) }
+                    }
+                },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 textContentColor = Color.White

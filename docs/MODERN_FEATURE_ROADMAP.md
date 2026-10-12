@@ -10,6 +10,7 @@ This roadmap reflects the current repository rather than an aspirational feature
 - [x] Local settings for Midnight/AMOLED theme, orientation, screen-awake behavior, seek interval and gesture toggles; remember the selected library tab and persist gesture changes immediately.
 - [x] Keep all bottom navigation tab names on one line; use compact button padding and horizontal scrolling on narrow screens.
 - [x] Playback diagnostics for state, position/duration, active track details and reported video format.
+- [x] One-tap copy of a sanitized playback diagnostics report; local paths and content URIs are excluded.
 - [x] Debounced seek-preview frame extraction during scrubbing with a time-based fallback.
 - [x] Versioned playlist backup/restore with input validation, preference backup/restore, safe value clamping and compatibility with older playlist-only backups.
 - [x] Android TV Leanback declaration and D-pad/media-key handling for seek and playback actions.
