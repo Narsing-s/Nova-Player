@@ -250,6 +250,8 @@ private fun NovaHome(player: Player) {
     var watchedUris by remember { mutableStateOf(prefs.getStringSet("watched_video_uris", emptySet())?.toSet() ?: emptySet()) }
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
     var activeTab by remember { mutableStateOf("Videos") }
+    var themeMode by remember { mutableStateOf(prefs.getString("theme_mode", "Midnight") ?: "Midnight") }
+    var showDiagnosticsDialog by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
     var selectedVideoInfo by remember { mutableStateOf<LocalVideo?>(null) }
 
@@ -581,8 +583,9 @@ private fun NovaHome(player: Player) {
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = Color(0xFF0A0E1A)) {
-        Column(Modifier.fillMaxSize().background(Color(0xFF0A0E1A))) {
+    val canvasColor = if (themeMode == "AMOLED") Color.Black else Color(0xFF0A0E1A)
+    Surface(Modifier.fillMaxSize(), color = canvasColor) {
+        Column(Modifier.fillMaxSize().background(canvasColor)) {
             if (!fullScreen && !(selectedUri != null && isLandscape)) Row(
                 Modifier.fillMaxWidth().background(Color(0xFF12182A)).padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -1241,6 +1244,115 @@ private fun NovaHome(player: Player) {
                             }) { Icon(Icons.Default.DeleteOutline, "Remove favorite", tint = Color(0xFF9BA8C7)) }
                         }
                         HorizontalDivider(color = Color(0xFF202A40))
+                    }
+                }
+            }
+
+            if (selectedUri == null && activeTab == "Settings") {
+                Column(
+                    Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text("PERSONALIZE NOVA", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Preferences stay on this device. Existing playback controls remain unchanged.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Appearance", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Choose the player canvas", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("Midnight", "AMOLED").forEach { option ->
+                                    FilterChip(
+                                        selected = themeMode == option,
+                                        onClick = {
+                                            themeMode = option
+                                            prefs.edit().putString("theme_mode", option).apply()
+                                            status = "$option appearance saved"
+                                        },
+                                        label = { Text(option) },
+                                        leadingIcon = { Icon(if (option == "AMOLED") Icons.Default.DarkMode else Icons.Default.Palette, null) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Playback", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("Keep screen awake", color = Color.White)
+                                    Text("Prevent display timeout while watching", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                                }
+                                Switch(checked = keepScreenOn, onCheckedChange = {
+                                    keepScreenOn = it
+                                    prefs.edit().putBoolean("keep_screen_on", it).apply()
+                                })
+                            }
+                            Text("Default orientation", color = Color.White)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                listOf("Auto", "Landscape", "Portrait").forEach { option ->
+                                    FilterChip(
+                                        selected = orientationMode == option,
+                                        onClick = {
+                                            orientationMode = option
+                                            prefs.edit().putString("player_orientation", option).apply()
+                                            status = "Default orientation: $option"
+                                        },
+                                        label = { Text(option) }
+                                    )
+                                }
+                            }
+                            Text("Double-tap seek interval", color = Color.White)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                listOf(5, 10, 15, 30).forEach { seconds ->
+                                    FilterChip(
+                                        selected = skipIntervalSeconds == seconds,
+                                        onClick = {
+                                            skipIntervalSeconds = seconds
+                                            prefs.edit().putInt("skip_interval_seconds", seconds).apply()
+                                        },
+                                        label = { Text("${seconds}s") }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Gesture controls", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            @Composable fun GestureSetting(label: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(label, color = Color.White)
+                                        Text(description, color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                                    }
+                                    Switch(checked = checked, onCheckedChange = onChange)
+                                }
+                            }
+                            GestureSetting("Swipe to seek", "Horizontal swipes move through the video", gestureSeekEnabled) {
+                                gestureSeekEnabled = it
+                                prefs.edit().putBoolean("gesture_seek_enabled", it).apply()
+                            }
+                            GestureSetting("Brightness gesture", "Vertical swipe on the left side", gestureBrightnessEnabled) {
+                                gestureBrightnessEnabled = it
+                                prefs.edit().putBoolean("gesture_brightness_enabled", it).apply()
+                            }
+                            GestureSetting("Volume gesture", "Vertical swipe on the right side", gestureVolumeEnabled) {
+                                gestureVolumeEnabled = it
+                                prefs.edit().putBoolean("gesture_volume_enabled", it).apply()
+                            }
+                        }
+                    }
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Troubleshooting", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text("Inspect the current playback state, active video format, resolution and track codecs.", color = Color(0xFF9BA8C7), fontSize = 12.sp)
+                            Button(onClick = { showDiagnosticsDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.MonitorHeart, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Open playback diagnostics")
+                            }
+                        }
                     }
                 }
             }
@@ -1941,10 +2053,10 @@ private fun NovaHome(player: Player) {
 
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).semantics { liveRegion = LiveRegionMode.Polite }.padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists").forEach { tab ->
+                listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists", "Settings").forEach { tab ->
                     TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
+                            Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; "Settings" -> Icons.Default.Settings; "Recent" -> Icons.Default.History; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
@@ -2196,6 +2308,47 @@ private fun NovaHome(player: Player) {
                         prefs.edit().putInt("subtitle_delay_ms", 0).apply()
                     }) { Text("Reset") }
                 },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                textContentColor = Color.White
+            )
+        }
+        if (showDiagnosticsDialog) {
+            val activeItem = player.currentMediaItem
+            val formats = player.currentTracks.groups.flatMap { group ->
+                (0 until group.length).map { index -> group.getTrackFormat(index) }
+            }
+            val videoFormats = formats.filter { it.sampleMimeType?.startsWith("video/") == true }
+            val audioFormats = formats.filter { it.sampleMimeType?.startsWith("audio/") == true }
+            AlertDialog(
+                onDismissRequest = { showDiagnosticsDialog = false },
+                title = { Text("Playback diagnostics", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        Text(activeItem?.mediaMetadata?.title?.toString() ?: selectedTitle.ifBlank { "No media selected" }, color = Mint, fontWeight = FontWeight.SemiBold)
+                        HorizontalDivider(color = Color(0xFF35415B))
+                        listOf(
+                            "State" to playbackStateLabel(player.playbackState),
+                            "Playing" to player.isPlaying.toString(),
+                            "Play when ready" to player.playWhenReady.toString(),
+                            "Position" to formatTime(player.currentPosition),
+                            "Duration" to if (player.duration > 0L) formatTime(player.duration) else "Unknown / live",
+                            "Video format" to (videoFormats.firstOrNull()?.let { it.sampleMimeType ?: it.codecs ?: "Unknown codec" } ?: "No active video track"),
+                            "Resolution" to (videoFormats.firstOrNull()?.let { if (it.width > 0 && it.height > 0) "${it.width} × ${it.height}" else "Not reported by decoder" } ?: "Not available"),
+                            "Frame rate" to (videoFormats.firstOrNull()?.let { if (it.frameRate > 0f) "%.2f fps".format(it.frameRate) else "Not reported" } ?: "Not available"),
+                            "Video codecs" to (videoFormats.mapNotNull { it.codecs ?: it.sampleMimeType }.distinct().joinToString().ifBlank { "Not reported" }),
+                            "Audio codecs" to (audioFormats.mapNotNull { it.codecs ?: it.sampleMimeType }.distinct().joinToString().ifBlank { "No active audio track" }),
+                            "Tracks detected" to formats.size.toString(),
+                            "Last status" to status
+                        ).forEach { (label, value) ->
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(label, color = Color(0xFF9BA8C7), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Text(value, color = Color.White, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { showDiagnosticsDialog = false }) { Text("Close", color = Mint) } },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 textContentColor = Color.White
