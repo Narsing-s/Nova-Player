@@ -224,6 +224,7 @@ private fun NovaHome(player: Player) {
     var orientationMode by remember { mutableStateOf(prefs.getString("player_orientation", "Auto") ?: "Auto") }
     var controlsLocked by remember { mutableStateOf(false) }
     var showLandscapeDock by remember { mutableStateOf(true) }
+    var landscapeToolGroup by remember { mutableStateOf("Display") }
     var keepScreenOn by remember { mutableStateOf(prefs.getBoolean("keep_screen_on", true)) }
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
@@ -1826,7 +1827,35 @@ private fun NovaHome(player: Player) {
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
-                                            // Frequently used display and track actions stay together.
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                FilterChip(
+                                                    selected = landscapeToolGroup == "Display",
+                                                    onClick = { landscapeToolGroup = "Display" },
+                                                    label = { Text("Display & tracks", fontSize = 11.sp) },
+                                                    leadingIcon = { Icon(Icons.Default.AspectRatio, null, modifier = Modifier.size(15.dp)) },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = Mint.copy(alpha = 0.18f),
+                                                        selectedLabelColor = Mint,
+                                                        labelColor = Color(0xFFBAC6DF)
+                                                    )
+                                                )
+                                                FilterChip(
+                                                    selected = landscapeToolGroup == "Playback",
+                                                    onClick = { landscapeToolGroup = "Playback" },
+                                                    label = { Text("Playback & more", fontSize = 11.sp) },
+                                                    leadingIcon = { Icon(Icons.Default.Tune, null, modifier = Modifier.size(15.dp)) },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = Lavender.copy(alpha = 0.18f),
+                                                        selectedLabelColor = Color.White,
+                                                        labelColor = Color(0xFFBAC6DF)
+                                                    )
+                                                )
+                                            }
+                                            // Display and track settings share a compact page.
+                                            if (landscapeToolGroup == "Display") {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1860,7 +1889,9 @@ private fun NovaHome(player: Player) {
                                                 Text("Audio tracks", color = Color.White)
                                             }
                                             }
-                                            // Playback state and session actions are separated from display settings.
+                                            }
+                                            // Playback state and session actions are kept on a separate compact page.
+                                            if (landscapeToolGroup == "Playback") {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -1975,6 +2006,7 @@ private fun NovaHome(player: Player) {
                                                     contentDescription = null, tint = Mint)
                                                 Spacer(Modifier.width(4.dp))
                                                 Text(if (fullScreen) "Exit immersive" else "Immersive", color = Color.White)
+                                            }
                                             }
                                             }
                                         }
