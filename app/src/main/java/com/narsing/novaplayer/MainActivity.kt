@@ -1375,7 +1375,7 @@ private fun NovaHome(player: Player) {
                                     )
                                 }
                             }
-                            Text("Double-tap seek interval", color = Color.White)
+                            Text("Seek button interval", color = Color.White)
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 listOf(5, 10, 15, 30).forEach { seconds ->
                                     FilterChip(
