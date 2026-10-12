@@ -2340,7 +2340,9 @@ private fun NovaHome(player: Player) {
         if (showDiagnosticsDialog) {
             val activeItem = player.currentMediaItem
             val formats = player.currentTracks.groups.flatMap { group ->
-                (0 until group.length).map { index -> group.getTrackFormat(index) }
+                (0 until group.length)
+                    .filter { index -> group.isTrackSelected(index) }
+                    .map { index -> group.getTrackFormat(index) }
             }
             val videoFormats = formats.filter { it.sampleMimeType?.startsWith("video/") == true }
             val audioFormats = formats.filter { it.sampleMimeType?.startsWith("audio/") == true }
