@@ -42,3 +42,5 @@ This checklist complements the existing app features. It intentionally separates
 ## Current known verification boundary
 
 The repository README describes the current feature set and provides a physical-device checklist. Items above are recommendations/checks, not claims that the features are already implemented or that device testing has passed. Prioritize fixing any broken existing operation before adding new features.
+
+For the next feature priorities—reliability tests, onboarding/settings, playback diagnostics, seek previews, optional network sources and TV support—see the [Modern Feature Roadmap](MODERN_FEATURE_ROADMAP.md). These are proposals until implemented and verified; preserve existing playback and saved data throughout modernization.
