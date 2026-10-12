@@ -1,5 +1,6 @@
 package com.narsing.novaplayer
 
+import android.content.pm.ActivityInfo
 import androidx.media3.common.Player
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -29,4 +30,20 @@ class PlaybackDiagnosticsTest {
         assertEquals("Ready", playbackStateLabel(Player.STATE_READY))
         assertEquals("Ended", playbackStateLabel(Player.STATE_ENDED))
     }
+    @Test
+    fun orientationModeMapsToExpectedActivityRequests() {
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, requestedOrientationForMode("Portrait"))
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, requestedOrientationForMode("Landscape"))
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR, requestedOrientationForMode("Auto"))
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR, requestedOrientationForMode("unexpected"))
+    }
+
+    @Test
+    fun immersivePlaybackOnlyUsesLandscapeWhenMediaIsSelected() {
+        assertEquals(true, shouldUseImmersivePlayback(fullScreen = true, hasSelectedMedia = false, isLandscape = false))
+        assertEquals(true, shouldUseImmersivePlayback(fullScreen = false, hasSelectedMedia = true, isLandscape = true))
+        assertEquals(false, shouldUseImmersivePlayback(fullScreen = false, hasSelectedMedia = false, isLandscape = true))
+        assertEquals(false, shouldUseImmersivePlayback(fullScreen = false, hasSelectedMedia = true, isLandscape = false))
+    }
+
 }
