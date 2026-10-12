@@ -55,6 +55,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.focus.focusable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -417,15 +421,11 @@ private fun NovaHome(player: Player) {
 
     LaunchedEffect(orientationMode, selectedUri) {
         val activity = context.findActivity() ?: return@LaunchedEffect
-        activity.requestedOrientation = when (orientationMode) {
-            "Portrait" -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            "Landscape" -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
-        }
+        activity.requestedOrientation = requestedOrientationForMode(orientationMode)
         prefs.edit().putString("player_orientation", orientationMode).apply()
     }
 
-    val immersivePlayback = fullScreen || (selectedUri != null && isLandscape)
+    val immersivePlayback = shouldUseImmersivePlayback(fullScreen, selectedUri != null, isLandscape)
 
     LaunchedEffect(immersivePlayback) {
         val activity = context.findActivity() ?: return@LaunchedEffect
@@ -1374,7 +1374,32 @@ private fun NovaHome(player: Player) {
 
             if (selectedUri != null) {
                 Card(
-                    modifier = if (fullScreen || isLandscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f),
+                    modifier = (if (fullScreen || isLandscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f))
+                        .onPreviewKeyEvent { event ->
+                            if (event.type != KeyEventType.KeyDown || selectedUri == null) {
+                                false
+                            } else {
+                                when (event.key) {
+                                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.MediaPlayPause -> {
+                                        if (player.isPlaying) player.pause() else player.play()
+                                        status = if (player.isPlaying) "Playing" else "Paused"
+                                        true
+                                    }
+                                    Key.DirectionLeft, Key.MediaRewind -> {
+                                        player.seekTo(clampSeekPosition(player.currentPosition, -skipIntervalSeconds * 1_000L, player.duration))
+                                        status = "Rewound $skipIntervalSeconds seconds"
+                                        true
+                                    }
+                                    Key.DirectionRight, Key.MediaFastForward -> {
+                                        player.seekTo(clampSeekPosition(player.currentPosition, skipIntervalSeconds * 1_000L, player.duration))
+                                        status = "Skipped forward $skipIntervalSeconds seconds"
+                                        true
+                                    }
+                                    else -> false
+                                }
+                            }
+                        }
+                        .focusable(),
                     colors = CardDefaults.cardColors(containerColor = Color.Black),
                     shape = if (fullScreen || isLandscape) RoundedCornerShape(0.dp) else RoundedCornerShape(12.dp)
                 ) {
