@@ -319,6 +319,8 @@ private fun NovaHome(player: Player) {
     var showDiagnosticsDialog by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
     var selectedVideoInfo by remember { mutableStateOf<LocalVideo?>(null) }
+    var showNetworkUrlDialog by remember { mutableStateOf(false) }
+    var networkUrl by remember { mutableStateOf("") }
 
     LaunchedEffect(queueItems) {
         saveQueue(prefs, queueItems)
@@ -775,6 +777,9 @@ private fun NovaHome(player: Player) {
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = { videoPicker.launch(arrayOf("video/*")) }) {
                         Icon(Icons.Default.FolderOpen, "Browse files", tint = Color(0xFF39E7D5))
+                    }
+                    IconButton(onClick = { networkUrl = ""; showNetworkUrlDialog = true }) {
+                        Icon(Icons.Default.Link, "Play HTTPS stream", tint = Lavender)
                     }
                 }
                 Row(
@@ -2280,6 +2285,63 @@ private fun NovaHome(player: Player) {
                     }
                 }
             }
+        }
+        if (showNetworkUrlDialog) {
+            AlertDialog(
+                onDismissRequest = { showNetworkUrlDialog = false },
+                containerColor = Panel,
+                title = { Text("Play network video", color = Color.White, fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            "Paste a direct HTTPS video or stream URL. The server must expose a media format supported by AndroidX Media3.",
+                            color = Color(0xFFBAC6DF),
+                            fontSize = 12.sp
+                        )
+                        OutlinedTextField(
+                            value = networkUrl,
+                            onValueChange = { networkUrl = it.trimStart() },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("HTTPS video URL") },
+                            placeholder = { Text("https://example.com/video.mp4") },
+                            leadingIcon = { Icon(Icons.Default.Link, null, tint = Mint) },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri,
+                                imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Mint,
+                                unfocusedBorderColor = Color(0xFF35415B),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedLabelColor = Mint,
+                                unfocusedLabelColor = Color(0xFF9BA8C7)
+                            )
+                        )
+                        Text("HTTPS is required; insecure HTTP URLs are not accepted.", color = Color(0xFF9BA8C7), fontSize = 11.sp)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val raw = networkUrl.trim()
+                        val parsed = runCatching { Uri.parse(raw) }.getOrNull()
+                        if (parsed != null && parsed.scheme.equals("https", ignoreCase = true) && !parsed.host.isNullOrBlank()) {
+                            val title = parsed.lastPathSegment?.substringBefore('?')?.takeIf { it.isNotBlank() }
+                                ?.replace(Regex("%20"), " ") ?: parsed.host.orEmpty()
+                            showNetworkUrlDialog = false
+                            playMedia(parsed, title)
+                        } else {
+                            status = "Enter a valid HTTPS video URL."
+                        }
+                    }, enabled = networkUrl.trim().startsWith("https://", ignoreCase = true)) {
+                        Text("Play", color = Mint)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showNetworkUrlDialog = false }) { Text("Cancel", color = Color(0xFFBAC6DF)) }
+                }
+            )
         }
         if (showCreatePlaylistDialog) {
             AlertDialog(
