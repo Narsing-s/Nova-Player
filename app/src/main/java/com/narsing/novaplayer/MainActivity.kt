@@ -1423,7 +1423,7 @@ private fun NovaHome(player: Player) {
 
             if (selectedUri != null) {
                 Card(
-                    modifier = (if (fullScreen || isLandscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f))
+                    modifier = (if (fullScreen) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f))
                         .onPreviewKeyEvent { event ->
                             val nativeEvent = event.nativeKeyEvent
                             if (nativeEvent.action != android.view.KeyEvent.ACTION_DOWN || selectedUri == null) {
