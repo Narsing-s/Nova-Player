@@ -1789,7 +1789,7 @@ private fun NovaHome(player: Player) {
                         }
 
                         // Keep advanced landscape actions in a dedicated footer instead of covering the video.
-                        if (isLandscape && !controlsLocked) {
+                        if (isLandscape && !controlsLocked && !fullScreen) {
                             Surface(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 5.dp),
                                 color = Color(0xF212182A),
