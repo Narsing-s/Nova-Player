@@ -55,10 +55,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.focus.focusable
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -1424,21 +1422,32 @@ private fun NovaHome(player: Player) {
                 Card(
                     modifier = (if (fullScreen || isLandscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth().weight(1f))
                         .onPreviewKeyEvent { event ->
-                            if (event.type != KeyEventType.KeyDown || selectedUri == null) {
+                            val nativeEvent = event.nativeKeyEvent
+                            if (nativeEvent.action != android.view.KeyEvent.ACTION_DOWN || selectedUri == null) {
                                 false
                             } else {
-                                when (event.key) {
-                                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.MediaPlayPause -> {
-                                        if (player.isPlaying) player.pause() else player.play()
-                                        status = if (player.isPlaying) "Playing" else "Paused"
+                                when (nativeEvent.keyCode) {
+                                    android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                                    android.view.KeyEvent.KEYCODE_ENTER,
+                                    android.view.KeyEvent.KEYCODE_NUMPAD_ENTER,
+                                    android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                                        if (player.isPlaying) {
+                                            player.pause()
+                                            status = "Paused"
+                                        } else {
+                                            player.play()
+                                            status = "Playing"
+                                        }
                                         true
                                     }
-                                    Key.DirectionLeft, Key.MediaRewind -> {
+                                    android.view.KeyEvent.KEYCODE_DPAD_LEFT,
+                                    android.view.KeyEvent.KEYCODE_MEDIA_REWIND -> {
                                         player.seekTo(clampSeekPosition(player.currentPosition, -skipIntervalSeconds * 1_000L, player.duration))
                                         status = "Rewound $skipIntervalSeconds seconds"
                                         true
                                     }
-                                    Key.DirectionRight, Key.MediaFastForward -> {
+                                    android.view.KeyEvent.KEYCODE_DPAD_RIGHT,
+                                    android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
                                         player.seekTo(clampSeekPosition(player.currentPosition, skipIntervalSeconds * 1_000L, player.duration))
                                         status = "Skipped forward $skipIntervalSeconds seconds"
                                         true
