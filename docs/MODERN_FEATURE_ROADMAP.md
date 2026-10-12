@@ -8,6 +8,7 @@ This roadmap reflects the current repository rather than an aspirational feature
 - [x] Media3 playback with queue controls, previous/next, playback speed, shuffle/repeat, A–B loop, sleep timer, pinch zoom, touch lock, brightness/volume gestures and immersive landscape controls.
 - [x] Subtitle loading and timing adjustment, audio/video track selection where exposed by the media, and Picture-in-Picture support where available.
 - [x] Local settings for Midnight/AMOLED theme, orientation, screen-awake behavior, seek interval and gesture toggles; remember the selected library tab and persist gesture changes immediately.
+- [x] Keep all bottom navigation tab names on one line; use compact button padding and horizontal scrolling on narrow screens.
 - [x] Playback diagnostics for state, position/duration, active track details and reported video format.
 - [x] Debounced seek-preview frame extraction during scrubbing with a time-based fallback.
 - [x] Versioned playlist backup/restore with input validation, preference backup/restore, safe value clamping and compatibility with older playlist-only backups.

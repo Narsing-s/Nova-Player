@@ -2161,10 +2161,10 @@ private fun NovaHome(player: Player) {
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).semantics { liveRegion = LiveRegionMode.Polite }.padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists", "Settings").forEach { tab ->
-                    TextButton(onClick = { activeTab = tab; prefs.edit().putString("active_library_tab", tab).apply() }, modifier = Modifier.weight(1f).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
+                    TextButton(onClick = { activeTab = tab; prefs.edit().putString("active_library_tab", tab).apply() }, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp), modifier = Modifier.widthIn(min = 56.dp).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; "Settings" -> Icons.Default.Settings; "Recent" -> Icons.Default.History; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
-                            Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
+                            Text(tab, fontSize = 10.sp, maxLines = 1, softWrap = false, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
                         }
                     }
                 }
