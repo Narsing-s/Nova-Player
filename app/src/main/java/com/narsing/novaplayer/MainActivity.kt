@@ -223,8 +223,8 @@ private fun NovaHome(player: Player) {
     var fullScreen by remember { mutableStateOf(false) }
     var orientationMode by remember { mutableStateOf(prefs.getString("player_orientation", "Auto") ?: "Auto") }
     var controlsLocked by remember { mutableStateOf(false) }
-    var showLandscapeDock by remember { mutableStateOf(true) }
-    var landscapeToolGroup by remember { mutableStateOf("Display") }
+    var showLandscapeDock by remember { mutableStateOf(prefs.getBoolean("landscape_dock_visible", true)) }
+    var landscapeToolGroup by remember { mutableStateOf(prefs.getString("landscape_tool_group", "Display")?.takeIf { it in setOf("Display", "Playback") } ?: "Display") }
     var keepScreenOn by remember { mutableStateOf(prefs.getBoolean("keep_screen_on", true)) }
     var abLoopStartMs by remember { mutableStateOf<Long?>(null) }
     var abLoopEndMs by remember { mutableStateOf<Long?>(null) }
@@ -1811,12 +1811,12 @@ private fun NovaHome(player: Player) {
                                             Text("PLAYBACK TOOLS", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                                         }
                                         if (!showLandscapeDock) {
-                                            TextButton(onClick = { showLandscapeDock = true; status = "Playback dock shown" }) {
+                                            TextButton(onClick = { showLandscapeDock = true; prefs.edit().putBoolean("landscape_dock_visible", true).apply(); status = "Playback dock shown" }) {
                                                 Icon(Icons.Default.ExpandLess, contentDescription = null, tint = Mint)
                                                 Text("Show tools", color = Mint)
                                             }
                                         } else {
-                                            TextButton(onClick = { showLandscapeDock = false; status = "Playback dock hidden" }) {
+                                            TextButton(onClick = { showLandscapeDock = false; prefs.edit().putBoolean("landscape_dock_visible", false).apply(); status = "Playback dock hidden" }) {
                                                 Icon(Icons.Default.ExpandMore, contentDescription = null, tint = Color.White)
                                                 Text("Collapse", color = Color.White)
                                             }
@@ -1834,7 +1834,7 @@ private fun NovaHome(player: Player) {
                                                 FilterChip(
                                                     modifier = Modifier.weight(1f),
                                                     selected = landscapeToolGroup == "Display",
-                                                    onClick = { landscapeToolGroup = "Display" },
+                                                    onClick = { landscapeToolGroup = "Display"; prefs.edit().putString("landscape_tool_group", "Display").apply() },
                                                     label = { Text("Display & tracks", fontSize = 11.sp, maxLines = 1) },
                                                     leadingIcon = { Icon(Icons.Default.AspectRatio, null, modifier = Modifier.size(15.dp)) },
                                                     colors = FilterChipDefaults.filterChipColors(
@@ -1846,7 +1846,7 @@ private fun NovaHome(player: Player) {
                                                 FilterChip(
                                                     modifier = Modifier.weight(1f),
                                                     selected = landscapeToolGroup == "Playback",
-                                                    onClick = { landscapeToolGroup = "Playback" },
+                                                    onClick = { landscapeToolGroup = "Playback"; prefs.edit().putString("landscape_tool_group", "Playback").apply() },
                                                     label = { Text("Playback & more", fontSize = 11.sp, maxLines = 1) },
                                                     leadingIcon = { Icon(Icons.Default.Tune, null, modifier = Modifier.size(15.dp)) },
                                                     colors = FilterChipDefaults.filterChipColors(
