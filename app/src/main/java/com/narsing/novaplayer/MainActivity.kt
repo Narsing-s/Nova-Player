@@ -2401,8 +2401,8 @@ private fun formatBytes(bytes: Long): String {
     return "%.2f GB".format(bytes / (1024.0 * 1024.0 * 1024.0))
 }
 
-private data class HistoryEntry(val uri: String, val title: String)
-private data class PlaylistEntry(val name: String, val items: List<HistoryEntry>)
+internal data class HistoryEntry(val uri: String, val title: String)
+internal data class PlaylistEntry(val name: String, val items: List<HistoryEntry>)
 
 internal fun serializePlaylistsJson(playlists: List<PlaylistEntry>): String {
     val root = JSONObject()
