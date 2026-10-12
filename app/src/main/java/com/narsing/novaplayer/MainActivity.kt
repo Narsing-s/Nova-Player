@@ -1064,7 +1064,7 @@ private fun NovaHome(player: Player) {
                                         ) {
                                             Text("RESUME ${formatTime(videoResumePosition)}", color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                             Spacer(Modifier.weight(1f))
-                                            Text("${((lastSavedPosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
+                                            Text("${((videoResumePosition.toFloat() / video.duration.toFloat()).coerceIn(0f, 1f) * 100).toInt()}% watched", color = Color(0xFF9BA8C7), fontSize = 9.sp, maxLines = 1)
                                         }
                                     }
                                 }
