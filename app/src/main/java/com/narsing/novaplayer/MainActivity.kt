@@ -126,6 +126,7 @@ private fun shiftedSubtitleUri(context: Context, source: Uri, offsetMs: Long): U
     }
 }
 
+@OptIn(UnstableApi::class)
 class MainActivity : ComponentActivity() {
     private val playbackPlayer = mutableStateOf<Player?>(null)
     private var controllerFuture: ListenableFuture<MediaController>? = null
