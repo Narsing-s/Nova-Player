@@ -15,6 +15,7 @@
 <p align="center">
   <a href="https://github.com/Narsing-s/Nova-Player/actions">⬇ Download test APK</a> ·
   <a href="https://github.com/Narsing-s/Nova-Player/releases">Releases</a> ·
+  <a href="https://github.com/Narsing-s/Nova-Player/issues/new?template=feedback.yml">Share feedback</a> ·
   <a href="https://github.com/Narsing-s/Nova-Player/issues">Report an issue</a>
 </p>
 
