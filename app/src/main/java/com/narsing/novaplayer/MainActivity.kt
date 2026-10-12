@@ -586,8 +586,8 @@ private fun NovaHome(player: Player) {
                             ?: throw java.io.IOException("Could not read the selected file.")
                     }
                     val imported = parsePlaylistsJson(raw)
-                    if (imported.isEmpty()) {
-                        status = "No valid playlists were found in that backup."
+                    if (imported.isEmpty() && parsePlayerPreferencesBackup(raw) == null) {
+                        status = "No valid playlists or player preferences were found in that backup."
                     } else {
                         val merged = playlists.toMutableList()
                         imported.forEach { incoming ->
@@ -1124,7 +1124,7 @@ private fun NovaHome(player: Player) {
                         IconButton(onClick = { importPlaylistsLauncher.launch(arrayOf("application/json", "text/json", "*/*")) }) {
                             Icon(Icons.Default.FileDownload, "Import playlist backup", tint = Mint)
                         }
-                        IconButton(onClick = { exportPlaylistsLauncher.launch("nova-playlists-backup.json") }, enabled = playlists.isNotEmpty()) {
+                        IconButton(onClick = { exportPlaylistsLauncher.launch("nova-playlists-backup.json") }, enabled = true) {
                             Icon(Icons.Default.FileUpload, "Export playlist backup", tint = if (playlists.isNotEmpty()) Mint else Color(0xFF46516A))
                         }
                         Button(onClick = { playlistName = ""; showCreatePlaylistDialog = true }, colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Midnight)) {
