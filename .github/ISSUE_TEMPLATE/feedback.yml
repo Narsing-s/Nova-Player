@@ -1,7 +1,6 @@
 name: Nova Player feedback
 description: Share ideas, usability feedback, or playback feedback for offline Nova Player.
 title: "[Feedback]: "
-labels: ["feedback"]
 body:
   - type: markdown
     attributes:
