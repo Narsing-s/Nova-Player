@@ -1832,9 +1832,10 @@ private fun NovaHome(player: Player) {
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                                             ) {
                                                 FilterChip(
+                                                    modifier = Modifier.weight(1f),
                                                     selected = landscapeToolGroup == "Display",
                                                     onClick = { landscapeToolGroup = "Display" },
-                                                    label = { Text("Display & tracks", fontSize = 11.sp) },
+                                                    label = { Text("Display & tracks", fontSize = 11.sp, maxLines = 1) },
                                                     leadingIcon = { Icon(Icons.Default.AspectRatio, null, modifier = Modifier.size(15.dp)) },
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = Mint.copy(alpha = 0.18f),
@@ -1843,9 +1844,10 @@ private fun NovaHome(player: Player) {
                                                     )
                                                 )
                                                 FilterChip(
+                                                    modifier = Modifier.weight(1f),
                                                     selected = landscapeToolGroup == "Playback",
                                                     onClick = { landscapeToolGroup = "Playback" },
-                                                    label = { Text("Playback & more", fontSize = 11.sp) },
+                                                    label = { Text("Playback & more", fontSize = 11.sp, maxLines = 1) },
                                                     leadingIcon = { Icon(Icons.Default.Tune, null, modifier = Modifier.size(15.dp)) },
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = Lavender.copy(alpha = 0.18f),
