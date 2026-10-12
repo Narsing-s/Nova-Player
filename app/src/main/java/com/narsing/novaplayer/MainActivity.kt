@@ -381,7 +381,7 @@ private fun NovaHome(player: Player) {
             }
 
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                status = "Playback failed (${error.errorCodeName}). Try reopening the file or choosing another video."
+                status = playbackErrorGuidance(error.errorCodeName)
             }
         }
         player.addListener(listener)

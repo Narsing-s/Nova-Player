@@ -33,3 +33,27 @@ internal fun requestedOrientationForMode(mode: String): Int = when (mode) {
 /** Immersive playback is active for explicit full-screen or landscape playback. */
 internal fun shouldUseImmersivePlayback(fullScreen: Boolean, hasSelectedMedia: Boolean, isLandscape: Boolean): Boolean =
     fullScreen || (hasSelectedMedia && isLandscape)
+
+
+/** Turns Media3 error codes into practical next steps without exposing private media paths. */
+internal fun playbackErrorGuidance(errorCodeName: String): String {
+    val code = errorCodeName.uppercase()
+    return when {
+        "FILE_NOT_FOUND" in code ->
+            "This video file could not be found. It may have moved or been deleted. Choose the file again."
+        "DECODER" in code || "DECODING" in code ->
+            "This media codec may not be supported on this device. Try another audio/video track or another file."
+        "PARSING" in code || "MALFORMED" in code ->
+            "This file may be damaged or use an unsupported format. Try another copy or a different format."
+        "NETWORK_CONNECTION_TIMEOUT" in code || "NETWORK_CONNECTION_FAILED" in code ->
+            "The stream could not be reached. Check your connection and try again."
+        "BAD_HTTP_STATUS" in code || "INVALID_HTTP_CONTENT_TYPE" in code ->
+            "The stream server rejected the request. Check the stream URL or access permissions and try again."
+        "CLEARTEXT_NOT_PERMITTED" in code ->
+            "This stream uses an insecure HTTP connection that Android blocks. Use an HTTPS source if available."
+        "DRM" in code ->
+            "This media requires a protection system that could not be initialized on this device."
+        else ->
+            "Playback failed ($errorCodeName). Try again or choose another video."
+    }
+}

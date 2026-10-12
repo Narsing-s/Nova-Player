@@ -31,6 +31,26 @@ class PlaybackDiagnosticsTest {
         assertEquals("Ended", playbackStateLabel(Player.STATE_ENDED))
     }
     @Test
+    fun playbackErrorsGiveActionableGuidance() {
+        assertEquals(
+            "This video file could not be found. It may have moved or been deleted. Choose the file again.",
+            playbackErrorGuidance("ERROR_CODE_IO_FILE_NOT_FOUND")
+        )
+        assertEquals(
+            "This media codec may not be supported on this device. Try another audio/video track or another file.",
+            playbackErrorGuidance("ERROR_CODE_DECODER_INIT_FAILED")
+        )
+        assertEquals(
+            "The stream could not be reached. Check your connection and try again.",
+            playbackErrorGuidance("ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT")
+        )
+        assertEquals(
+            "Playback failed (ERROR_CODE_UNEXPECTED). Try again or choose another video.",
+            playbackErrorGuidance("ERROR_CODE_UNEXPECTED")
+        )
+    }
+
+    @Test
     fun orientationModeMapsToExpectedActivityRequests() {
         assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, requestedOrientationForMode("Portrait"))
         assertEquals(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, requestedOrientationForMode("Landscape"))
