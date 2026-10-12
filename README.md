@@ -48,7 +48,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Left-side brightness and right-side volume gestures, each independently configurable.
 - Touch lock with a visible unlock action, now also reachable directly from the landscape quick-control dock.
 - Shuffle, repeat-all, repeat-one, and A–B scene looping.
-- **Remembered landscape dock:** the collapsed/expanded playback-tools dock and selected Display & tracks / Playback & more group are saved locally, so your preferred landscape controls return next time.
+- **Landscape navigation tabs:** Display & tracks and Playback & more use compact icon-over-label tabs, matching the main-screen navigation style while keeping only one action row visible at a time. The selected tab and collapsed/expanded dock state are saved locally.
 - **Landscape quick Favorite:** add or remove the current video from Favorites while staying in playback; the heart state reflects the saved favorite.
 - **Landscape A–B loop shortcut:** tap **Set A** at the section start, **Set B** after that point to define the loop, then **Clear A–B** to reset both markers. Point B must be later than point A; invalid taps show a status message.
 - Sleep timer for 15, 30, 45, 60 or 90 minutes, with cancel/replace support.
