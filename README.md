@@ -39,6 +39,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Orientation choices:** Auto, Landscape and Portrait, with the preference remembered locally.
 - **Playback speed:** quick presets from 0.25× to 3×.
 - **Keep screen awake** while watching, or allow normal screen timeout.
+- **Personal settings:** choose the midnight or AMOLED-black canvas, set the default orientation, tune the double-tap seek interval, and enable or disable individual gestures. Preferences are stored locally.
 
 ### 🕹️ MX Player-inspired controls
 - Double-tap and dedicated Previous / Next controls for queued media.
@@ -81,7 +82,9 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - Background playback is implemented with a Media3 session service and media notification support; verify device-specific behavior during testing.
 
 ### 🛟 Useful extras
+- **Playback diagnostics:** inspect playback state, current position and duration, active video/audio track codecs, reported resolution, frame rate, and the last player status to help narrow down unsupported or damaged media.
 - Retry playback or return to the library when Media3 reports an error.
+- **Android TV entry point:** the app declares a Leanback launcher category and does not require a touchscreen, allowing installation/launch on compatible TV devices. Remote navigation and layout still need testing on physical Android TV hardware.
 - Accessibility polish: library status updates are exposed as polite screen-reader announcements, navigation tabs expose selected state, and the library scan indicator announces when scanning is active.
 - Picture-in-Picture action on supported Android devices.
 - Local preferences for playback speed, repeat/shuffle, subtitle appearance, seek interval and display mode.
@@ -114,6 +117,7 @@ The JVM test suite includes regression coverage for:
 - SRT and WebVTT subtitle timing shifts, including zero-offset preservation and hour-boundary formatting.
 - Negative subtitle timestamps clamped to zero, including an extreme negative offset that must not overflow.
 - Playlist backup JSON round-trips, malformed entries, and unsupported backup format/version handling.
+- Gesture seek boundaries, unknown-duration seeking, integer-overflow protection, and readable playback-state labels.
 
 The Android CI workflow runs these tests before building the debug APK. Android Lint is uploaded as a report and remains advisory for now. A green CI run confirms the configured automated checks passed; it does not replace physical-device playback, TalkBack, PiP, notification, or signed-upgrade testing.
 
@@ -148,6 +152,10 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Per-video resume checkpoints and Continue Watching progress in grid and list
 - [x] Persistent queue and named local playlists
 - [x] Import/export playlist backups through Android's document picker with versioned JSON validation
+- [x] Local settings for AMOLED canvas, orientation, screen-awake behavior and gesture toggles
+- [x] Playback diagnostics for state, position, active track codecs and reported video format
+- [x] Unit tests for safe seek boundaries and playback-state diagnostics
+- [x] Android TV Leanback launcher declaration and optional touchscreen feature
 - [x] Swipe gestures, touch lock, seek presets and pinch-to-zoom
 - [x] Landscape immersive mode and adaptive screen fitting
 - [x] External subtitle loading, timing sync and appearance controls
@@ -155,6 +163,9 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] CI unit-test step, advisory lint report, debug build and APK artifact upload
 - [ ] Physical-device playback testing across common video formats
 - [ ] Verify background playback, notification controls and PiP across Android versions
+- [ ] Add device-level regression tests for rotation, immersive landscape controls, background playback and PiP
+- [ ] Add seek-preview thumbnails during drag scrubbing (current preview shows target time/offset only)
+- [ ] Validate remote-control focus order, TV-sized layouts and playback controls on physical Android TV devices
 - [ ] Expand automated test coverage, complete accessibility review and improve damaged-file recovery guidance
 - [ ] Verify a signed release APK on physical devices
 
