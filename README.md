@@ -39,11 +39,11 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Orientation choices:** Auto, Landscape and Portrait, with the preference remembered locally.
 - **Playback speed:** quick presets from 0.25× to 3×.
 - **Keep screen awake** while watching, or allow normal screen timeout.
-- **Personal settings:** choose the midnight or AMOLED-black canvas, set the default orientation, tune the double-tap seek interval, and enable or disable individual gestures. Preferences are stored locally. Nova also remembers the last library tab you used, and gesture toggles are saved immediately. Bottom navigation labels stay on a single line with compact spacing, and the tab strip can scroll on narrow screens.
+- **Personal settings:** choose the midnight or AMOLED-black canvas, set the default orientation, tune the dedicated-button and remote seek interval, and enable or disable individual gestures. Preferences are stored locally. Nova also remembers the last library tab you used, and gesture toggles are saved immediately. Bottom navigation labels stay on a single line with compact spacing, and the tab strip can scroll on narrow screens.
 
 ### 🕹️ MX Player-inspired controls
-- Double-tap and dedicated Previous / Next controls for queued media.
-- Configurable 5, 10, 15 or 30-second skip intervals.
+- Single-tap seeking: tap the left half of the video to rewind 10 seconds or the right half to skip forward 10 seconds.
+- Dedicated rewind/forward buttons and D-pad controls use the configurable 5, 10, 15 or 30-second skip interval; Previous / Next controls navigate queued media.
 - Horizontal swipe seeking with a live time preview.
 - Left-side brightness and right-side volume gestures, each independently configurable.
 - Touch lock with a visible unlock action, now also reachable directly from the landscape quick-control dock.
@@ -225,7 +225,7 @@ When a video is playing in landscape, an on-video quick-action dock keeps playba
 - [ ] Confirm play, pause, seek bar, previous/next, queue order, shuffle and all repeat modes.
 - [ ] Rotate between portrait and landscape and confirm the video surface expands to the available screen instead of remaining thumbnail-sized.
 - [ ] Confirm Auto / Fit / Fill / Zoom behavior with both landscape movies and portrait clips.
-- [ ] Test double-tap seeking, horizontal seek gestures, brightness and volume gestures.
+- [ ] Test single-tap 10-second seeking on both video halves, configurable button/remote seeking, horizontal seek gestures, brightness and volume gestures.
 - [ ] Lock controls, verify touches are blocked, then use the visible unlock action.
 - [ ] Verify speed presets, keep-screen-awake, sleep timer and timer cancellation.
 - [ ] Confirm playback position is restored after leaving and reopening a video.
