@@ -251,7 +251,7 @@ When a video is playing in landscape, an on-video quick-action dock keeps playba
 - [ ] Publish only a release APK signed with the project's private release key. Never commit a keystore or signing passwords.
 - [ ] Verify the installed release APK upgrades the previous release without losing local preferences and saved lists.
 
-**Current verification boundary:** GitHub Actions has reported a successful build. The physical-device checklist above is not claimed complete until each item has actually been tested. Media format support and Picture-in-Picture behavior can vary by Android version and device.
+**Current verification boundary:** use the [latest Android CI run](https://github.com/Narsing-s/Nova-Player/actions/workflows/android-ci.yml) as the source of truth for automated build status. A successful CI run does not prove physical-device behavior; the checklist above is not complete until each item has actually been tested. Media format support and Picture-in-Picture behavior can vary by Android version and device.
 
 
 ## 🧭 Modernization and release-readiness

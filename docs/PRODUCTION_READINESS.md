@@ -1,46 +1,51 @@
 # Nova Player — Modernization & Release Readiness
 
-This checklist complements the existing app features. It intentionally separates implemented capabilities from items that still need verification; a successful build alone does not prove device behavior.
+This checklist complements the implemented app features and separates code/CI coverage from physical-device verification. Preserve existing playback and saved data while modernizing.
 
-## Priority 0 — Protect the experience already implemented
+## Implemented capabilities (code present; device verification still required)
 
-- [ ] Run the app on a physical Android 14/15 device in portrait and landscape.
-- [ ] Verify landscape playback uses the full available video surface (not a tiny portrait-sized view), and that system bars and the quick-control dock can be restored predictably.
-- [ ] Exercise every visible player action: play/pause, previous/next, seek, speed, fit modes, zoom reset, touch lock/unlock, brightness, volume, favorite, A–B loop, shuffle, repeat, timer/cancel, subtitle load/sync, audio/video track selection, PiP and exit.
-- [ ] Confirm unsupported actions are disabled or explain why they are unavailable; avoid buttons that appear active but do nothing.
-- [ ] Confirm cancellation paths exist for timers, dialogs, overlays and queued operations. Do not leave unexplained blank space or duplicate controls.
-- [ ] Test deleted/moved files, permission denial, empty library, corrupt media, unavailable network streams and rapid orientation changes.
+- [x] Compose / Material 3 library with search, sorting, grid/list, folders, favorites, history, watched filters and per-video resume checkpoints.
+- [x] Playback controls, speed, queue, shuffle/repeat, A–B loop, sleep timer, touch lock, seek/brightness/volume gestures and landscape quick-control dock.
+- [x] External subtitles, subtitle timing and appearance controls, and available audio/video track selection.
+- [x] Midnight/AMOLED theme settings, orientation preference, keep-screen-awake and configurable gesture toggles.
+- [x] Playback diagnostics and debounced seek-preview thumbnails with a fallback when frame extraction is unavailable.
+- [x] Validated playlist plus player-preference backup/restore, with old playlist-only backup compatibility.
+- [x] Leanback launcher declaration and Android TV remote key handling.
+- [x] JVM tests for seek safety, orientation/immersive policy, subtitle timing and backup validation.
+- [x] CI workflow for unit tests, advisory lint, debug APK build and artifact upload.
 
-## Priority 1 — Reliability and data safety
+## P0 — Physical-device playback and regression checks
 
-- [ ] Add automated unit tests for resume checkpoint rules, watched-state transitions, queue reorder/remove/clear, playlist persistence and A–B loop validation.
-- [ ] Add UI/instrumentation smoke tests for opening a local video, rotating, returning to the library and reopening Continue Watching.
-- [ ] Ensure preference/database writes are resilient to malformed or older saved data; recover safely instead of crashing.
-- [ ] Verify a file's content URI permission remains usable when selected from Android's document picker, and handle revoked access gracefully.
-- [ ] Verify Media3 player/service lifecycle and audio focus across screen-off, incoming calls, app backgrounding and process recreation.
-- [ ] Add clear error states for unsupported codecs, broken files and stream timeouts, with Retry and Back actions.
+- [ ] Confirm the latest [Android CI run](https://github.com/Narsing-s/Nova-Player/actions) passes unit tests and debug APK compilation.
+- [ ] Test portrait ↔ landscape rotation during playback, including repeated quick rotations; verify the video uses the available screen area and controls remain reachable.
+- [ ] Exercise every visible player action: play/pause, previous/next, seek, speed, fit modes, zoom reset, touch lock/unlock, brightness, volume, favorite, A–B loop, shuffle, repeat, timer/cancel, subtitle load/sync, track selection, PiP and exit.
+- [ ] Verify empty-library and permission-denied states, plus opening a video through Android's document picker.
+- [ ] Test missing/moved files, revoked URI access, corrupt media, unsupported codecs, unavailable network streams and playback error recovery.
+- [ ] Confirm resume position, queue, playlists, favorites, history and settings persist after app backgrounding and process recreation.
+- [ ] Verify background playback, media notification controls and audio focus across screen-off and interruption scenarios.
 
-## Priority 2 — Modern UX polish
+## P1 — TV, accessibility and layout
 
-- [ ] Accessibility pass: meaningful labels for icon-only controls, TalkBack order, scalable text, adequate contrast and minimum touch targets.
-- [ ] Add a first-run permission explanation and useful empty-library onboarding with a clear “Choose video” action.
-- [ ] Respect system dark/light mode or provide a complete in-app theme option consistently across library, dialogs and player overlays.
-- [ ] Add a settings screen section for gesture sensitivity, default fit mode, default subtitle style, resume behavior and playback controls.
-- [ ] Provide haptic feedback only where appropriate and allow it to be disabled.
-- [ ] Validate responsive layouts on small phones, large phones and tablets; avoid controls overlapping cutouts or gesture navigation.
-- [ ] Keep the player uncluttered: primary playback controls first, advanced actions in a clearly labeled expandable panel, with an obvious close/cancel route.
+- [ ] Test D-pad focus order, seek, play/pause and focus recovery on Android TV emulator or physical TV hardware.
+- [ ] Validate small phones, large phones, tablets, display cutouts and gesture-navigation insets.
+- [ ] Check icon-only controls for meaningful TalkBack labels and all interactive elements for selected/checked state.
+- [ ] Verify TalkBack order, font scaling, contrast and touch targets; confirm announcements do not become excessively chatty.
+- [ ] Confirm controls that cannot operate for the selected media are disabled or explain why.
 
-## Priority 3 — Release quality
+## P2 — Data safety and release readiness
 
-- [ ] Add Android Lint and unit-test steps to CI once the current project baseline passes them.
-- [ ] Test install, upgrade and uninstall/reinstall behavior; confirm local data expectations are documented.
-- [ ] Produce a signed release only when keystore secrets are configured; never publish a debug APK as a production release.
-- [ ] Verify APK signing, package/version metadata, release notes, checksums and a stable GitHub Releases download.
-- [ ] Publish a privacy notice describing local media access, local preferences and any optional network features.
-- [ ] Review dependency updates and third-party licenses before each public release.
+- [ ] Export playlists and preferences to a JSON file, import it on a clean install and verify settings plus playlist contents.
+- [ ] Test malformed, oversized, unsupported-version and settings-only backups; confirm invalid values are clamped and imports fail safely.
+- [ ] Confirm old playlist-only backups still import and unrelated playlists are preserved during merge.
+- [ ] Verify seek-preview fallback and storage behavior when frame extraction fails; evaluate cache cleanup before expanding thumbnail generation.
+- [ ] Review Android Lint report and third-party dependency licenses.
+- [ ] Verify package/version metadata, APK signing, release notes and checksums.
+- [ ] Test an upgrade over the previous signed release without losing saved data.
+- [ ] Publish a privacy notice describing local media access, local preferences and optional network features before public production distribution.
+- [ ] Never commit signing keystores or passwords; only publish a production release when release signing secrets are correctly configured.
 
-## Current known verification boundary
+## Verification boundary
 
-The repository README describes the current feature set and provides a physical-device checklist. Items above are recommendations/checks, not claims that the features are already implemented or that device testing has passed. Prioritize fixing any broken existing operation before adding new features.
+Checked items above mean the capability is represented in source/tests, not that every device scenario has passed. Record actual device results before marking physical checks complete. CI compilation alone is not a release certification.
 
-For the next feature priorities—reliability tests, onboarding/settings, playback diagnostics, seek previews, optional network sources and TV support—see the [Modern Feature Roadmap](MODERN_FEATURE_ROADMAP.md). These are proposals until implemented and verified; preserve existing playback and saved data throughout modernization.
+See [Modern Feature Roadmap](MODERN_FEATURE_ROADMAP.md) for planned additions and engineering guardrails.

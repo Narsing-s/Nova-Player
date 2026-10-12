@@ -1,46 +1,63 @@
 # Nova Player — Modern Feature Roadmap
 
-This roadmap is additive: preserve the current library, playback gestures, queue, playlists, subtitle tools, landscape dock, resume checkpoints, and existing navigation. Ship improvements behind small, testable changes and keep the debug APK build green after each change.
+This roadmap reflects the current repository rather than an aspirational feature list. Improvements must remain additive: preserve the existing library, playback gestures, queue, playlists, subtitle tools, landscape dock, resume checkpoints, and navigation.
 
-## Recommended next upgrades
+## Implemented in the current codebase
 
-### P0 — Reliability before more features
-- [ ] Add regression tests for queue ordering, playlist save/load/merge, favorites, watched state, per-video resume, sleep timer cancellation, and A–B loop validation.
-- [ ] Add Compose UI smoke tests for first launch, permission denied/granted, empty library, opening a document-picker URI, rotation during playback, and returning to Continue Watching.
-- [ ] Add playback error classification (missing file, unsupported format, decoder failure, network timeout, revoked URI access) with useful Retry / Choose another file / Back actions.
-- [ ] Verify Media3 session/service lifecycle, audio focus, notification actions, process recreation, and playback when the screen turns off.
-- [ ] Review Android Lint findings and make CI fail on unit-test or APK-build regressions; keep advisory checks clearly labeled until the baseline is clean.
+- [x] Modern Compose / Material 3 interface, adaptive library grid/list, search, sorting, folders, favorites, history, watched filters and per-video Continue Watching.
+- [x] Media3 playback with queue controls, previous/next, playback speed, shuffle/repeat, A–B loop, sleep timer, pinch zoom, touch lock, brightness/volume gestures and immersive landscape controls.
+- [x] Subtitle loading and timing adjustment, audio/video track selection where exposed by the media, and Picture-in-Picture support where available.
+- [x] Local settings for Midnight/AMOLED theme, orientation, screen-awake behavior, seek interval and gesture toggles.
+- [x] Playback diagnostics for state, position/duration, active track details and reported video format.
+- [x] Debounced seek-preview frame extraction during scrubbing with a time-based fallback.
+- [x] Versioned playlist backup/restore with input validation, preference backup/restore, safe value clamping and compatibility with older playlist-only backups.
+- [x] Android TV Leanback declaration and D-pad/media-key handling for seek and playback actions.
+- [x] JVM tests for seek boundaries/overflow, playback-state labels, orientation/immersive policy, subtitle timing and playlist/preference backup validation.
+- [x] GitHub Actions workflow for JVM unit tests, advisory Android lint report, debug APK build and APK artifact upload.
 
-### P1 — Modern everyday experience
-- [ ] Add a first-run welcome/permission explanation with a prominent **Choose video** action; do not block users who prefer the document picker.
-- [ ] Add a focused Settings page for default fit mode, resume behavior, seek interval, gesture sensitivity, subtitle defaults, haptics, and theme.
-- [ ] Offer System / Dark / Light appearance consistently across the library, dialogs, and player overlays.
-- [ ] Improve library browsing with pinned folders, optional hide/exclude folders, and clear filter chips; keep scanning local and avoid silently uploading filenames or media.
-- [ ] Add export/import of playlists and preferences with a versioned, validated file format. Never export private media itself by default.
-- [ ] Add a playback diagnostics panel showing file name, container/codec when available, resolution, frame rate/bitrate when available, selected audio/subtitle track, and a copyable sanitized report.
+## P0 — Verify and protect existing behavior
 
-### P2 — Advanced player capabilities (only after testing)
-- [ ] Investigate seek-preview thumbnails for long videos; generate/cache them off the main thread and allow the feature to be disabled to control storage and battery use.
+- [ ] Confirm the latest CI run completes unit tests, lint reporting and debug APK compilation successfully.
+- [ ] Add automated tests for queue reorder/remove/clear, playlist persistence/merge, favorites, watched-state transitions, resume checkpoint rules, sleep timer cancellation and A–B loop validation.
+- [ ] Add Android instrumentation/UI smoke tests for first launch, permissions, empty library, opening a document-picker URI, rotation during playback and returning to Continue Watching.
+- [ ] Classify playback failures (missing/revoked URI, unsupported format, decoder failure, network timeout) and offer actionable Retry / Choose another file / Back paths.
+- [ ] Verify Media3 session/service lifecycle, audio focus, notifications, process recreation and screen-off playback.
+- [ ] Review high-severity Android Lint findings and make the check blocking only after the existing baseline is understood and clean.
+
+## P1 — Modern everyday experience
+
+- [ ] Add a lightweight first-run explanation with a prominent **Choose video** action; never block document-picker access.
+- [ ] Consider a complete System / Light / Dark theme choice across the library, dialogs and overlays while retaining the existing Midnight/AMOLED options.
+- [ ] Add optional haptics and adjustable gesture sensitivity.
+- [ ] Improve library navigation with optional pinned/excluded folders and visible filter chips without silently uploading filenames or media.
+- [ ] Provide a sanitized, copyable diagnostics report; exclude full local paths, private URI values and unrelated personal metadata by default.
+- [ ] Complete an accessibility pass: meaningful TalkBack labels, selected/checked state, 48 dp touch targets where practical, font scaling, contrast and focus order.
+
+## P2 — Optional capabilities, only after testing
+
 - [ ] Add chapter/embedded metadata display where the media exposes it.
-- [ ] Consider network sources (for example, user-selected HTTP(S) URLs or LAN shares) as an explicit opt-in feature with timeout, authentication, and privacy handling; local playback must continue to work without a network.
-- [ ] Consider Android TV / D-pad navigation and external keyboard support without compromising phone layouts.
-- [ ] Consider casting only after selecting a supported protocol/library and documenting network permissions and compatibility; do not present a cast button until a real target connection works.
-- [ ] Consider optional playback bookmarks and per-video notes, stored locally and searchable.
+- [ ] Consider user-initiated HTTP(S) URLs or LAN shares with explicit opt-in, timeouts and privacy handling; local playback must remain fully usable offline.
+- [ ] Improve Android TV layout and focus traversal through device/emulator tests; retain phone-first layout quality.
+- [ ] Consider casting only after a supported protocol and real target connection are implemented. Do not display a nonfunctional Cast button.
+- [ ] Consider local playback bookmarks and per-video notes.
+- [ ] Evaluate thumbnail cache limits and cleanup so seek previews do not grow storage without bound.
 
 ## Engineering guardrails
-- Preserve existing public behavior and saved data. If migrating SharedPreferences to DataStore or a database, add a one-time migration, migration tests, and a rollback-safe fallback before removing the old path.
-- Keep heavy work (library scanning, thumbnail generation, metadata inspection, import/export) off the main thread and make cancellation explicit.
-- Use stable IDs/keys for library items and playlists; handle renamed, moved, duplicate, and deleted files gracefully.
-- Use Android's document-picker/content-URI flow and persist URI permissions only when supported and needed.
-- Provide meaningful TalkBack labels, selected/checked state, 48 dp touch targets where practical, font scaling, contrast, and landscape/split-screen coverage.
-- No feature is complete until its visible controls perform a real operation, failures are explained, automated tests pass, and device testing is recorded.
-- Do not add an account, analytics SDK, or cloud upload by default. Clearly disclose any future optional network behavior.
 
-## Suggested release gate
-1. Run `gradle testDebugUnitTest` and `gradle assembleDebug`.
-2. Review the Android Lint report and fix high-severity findings.
-3. Install the exact APK on a physical device and test portrait/landscape playback, document-picker access, queue, subtitles, notification controls, PiP, and saved state.
-4. Test an upgrade over the previous signed build before publishing a release.
-5. Publish only a correctly signed release artifact; never commit keystores or signing secrets.
+- Preserve saved data and existing public behavior. Any future persistence migration must include a one-time migration, tests and rollback-safe fallback before the old path is removed.
+- Keep scanning, thumbnail extraction, metadata inspection and import/export work off the main thread; provide cancellation where practical.
+- Handle renamed, moved, duplicate and deleted files gracefully.
+- Keep content-URI access within Android's document-picker permission model.
+- Do not add an account, analytics SDK or cloud upload by default. Clearly disclose optional network behavior.
+- A feature is complete only when its visible controls work, failures are explained, automated tests pass and device testing is recorded.
 
-This document is a plan, not a claim that unchecked features have already been implemented or physically tested.
+## Release gate
+
+1. Run `gradle --no-daemon testDebugUnitTest`, `gradle --no-daemon lintDebug` and `gradle --no-daemon assembleDebug`.
+2. Review the Lint report; document any remaining advisory findings.
+3. Install the exact CI APK on a physical device and test portrait/landscape playback, document-picker access, queue, subtitles, notifications, PiP and saved state.
+4. Test TV remote navigation on a TV device or emulator.
+5. Test upgrades over the previous signed build before publishing.
+6. Publish only a correctly signed release artifact; never commit keystores or signing secrets.
+
+This document distinguishes implemented code from remaining work. A green CI run does not replace physical-device testing.
