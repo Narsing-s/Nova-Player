@@ -183,13 +183,14 @@ private fun NovaHome(player: Player) {
     var isSeekingGesture by remember { mutableStateOf(false) }
     var seekPreviewDeltaMs by remember { mutableStateOf(0L) }
     val seekPreviewBitmap by produceState<Bitmap?>(initialValue = null, key1 = selectedUri, key2 = isSeekingGesture, key3 = seekPreviewDeltaMs) {
-        if (isSeekingGesture && selectedUri != null) {
+        val previewUri = selectedUri
+        if (isSeekingGesture && previewUri != null) {
             delay(180)
             val previewPositionMs = clampSeekPosition(player.currentPosition, seekPreviewDeltaMs, player.duration)
             value = withContext(Dispatchers.IO) {
                 val retriever = MediaMetadataRetriever()
                 try {
-                    retriever.setDataSource(context, selectedUri)
+                    retriever.setDataSource(context, previewUri)
                     retriever.getFrameAtTime(
                         previewPositionMs.coerceAtMost(Long.MAX_VALUE / 1_000L) * 1_000L,
                         MediaMetadataRetriever.OPTION_CLOSEST_SYNC
@@ -1343,24 +1344,15 @@ private fun NovaHome(player: Player) {
                     Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Gesture controls", color = Color.White, fontWeight = FontWeight.SemiBold)
-                            @Composable fun GestureSetting(label: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(label, color = Color.White)
-                                        Text(description, color = Color(0xFF9BA8C7), fontSize = 11.sp)
-                                    }
-                                    Switch(checked = checked, onCheckedChange = onChange)
-                                }
-                            }
-                            GestureSetting("Swipe to seek", "Horizontal swipes move through the video", gestureSeekEnabled) {
+                            GestureSettingRow("Swipe to seek", "Horizontal swipes move through the video", gestureSeekEnabled) {
                                 gestureSeekEnabled = it
                                 prefs.edit().putBoolean("gesture_seek_enabled", it).apply()
                             }
-                            GestureSetting("Brightness gesture", "Vertical swipe on the left side", gestureBrightnessEnabled) {
+                            GestureSettingRow("Brightness gesture", "Vertical swipe on the left side", gestureBrightnessEnabled) {
                                 gestureBrightnessEnabled = it
                                 prefs.edit().putBoolean("gesture_brightness_enabled", it).apply()
                             }
-                            GestureSetting("Volume gesture", "Vertical swipe on the right side", gestureVolumeEnabled) {
+                            GestureSettingRow("Volume gesture", "Vertical swipe on the right side", gestureVolumeEnabled) {
                                 gestureVolumeEnabled = it
                                 prefs.edit().putBoolean("gesture_volume_enabled", it).apply()
                             }
@@ -2489,6 +2481,17 @@ private fun NovaHome(player: Player) {
                 textContentColor = Color.White
             )
         }
+    }
+}
+
+@Composable
+private fun GestureSettingRow(label: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(label, color = Color.White)
+            Text(description, color = Color(0xFF9BA8C7), fontSize = 11.sp)
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 
