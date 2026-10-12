@@ -1828,33 +1828,38 @@ private fun NovaHome(player: Player) {
                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
                                             Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                modifier = Modifier.fillMaxWidth().background(Color(0xFF0D1322), RoundedCornerShape(12.dp)).padding(3.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                FilterChip(
+                                                TextButton(
                                                     modifier = Modifier.weight(1f),
-                                                    selected = landscapeToolGroup == "Display",
                                                     onClick = { landscapeToolGroup = "Display"; prefs.edit().putString("landscape_tool_group", "Display").apply() },
-                                                    label = { Text("Display & tracks", fontSize = 11.sp, maxLines = 1) },
-                                                    leadingIcon = { Icon(Icons.Default.AspectRatio, null, modifier = Modifier.size(15.dp)) },
-                                                    colors = FilterChipDefaults.filterChipColors(
-                                                        selectedContainerColor = Mint.copy(alpha = 0.18f),
-                                                        selectedLabelColor = Mint,
-                                                        labelColor = Color(0xFFBAC6DF)
+                                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                                                    colors = ButtonDefaults.textButtonColors(
+                                                        containerColor = if (landscapeToolGroup == "Display") Mint.copy(alpha = 0.14f) else Color.Transparent,
+                                                        contentColor = if (landscapeToolGroup == "Display") Mint else Color(0xFF9BA8C7)
                                                     )
-                                                )
-                                                FilterChip(
+                                                ) {
+                                                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                                        Icon(Icons.Default.AspectRatio, contentDescription = null, modifier = Modifier.size(17.dp))
+                                                        Text("Display & tracks", fontSize = 10.sp, maxLines = 1, softWrap = false)
+                                                    }
+                                                }
+                                                TextButton(
                                                     modifier = Modifier.weight(1f),
-                                                    selected = landscapeToolGroup == "Playback",
                                                     onClick = { landscapeToolGroup = "Playback"; prefs.edit().putString("landscape_tool_group", "Playback").apply() },
-                                                    label = { Text("Playback & more", fontSize = 11.sp, maxLines = 1) },
-                                                    leadingIcon = { Icon(Icons.Default.Tune, null, modifier = Modifier.size(15.dp)) },
-                                                    colors = FilterChipDefaults.filterChipColors(
-                                                        selectedContainerColor = Lavender.copy(alpha = 0.18f),
-                                                        selectedLabelColor = Color.White,
-                                                        labelColor = Color(0xFFBAC6DF)
+                                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                                                    colors = ButtonDefaults.textButtonColors(
+                                                        containerColor = if (landscapeToolGroup == "Playback") Lavender.copy(alpha = 0.16f) else Color.Transparent,
+                                                        contentColor = if (landscapeToolGroup == "Playback") Color.White else Color(0xFF9BA8C7)
                                                     )
-                                                )
+                                                ) {
+                                                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(17.dp))
+                                                        Text("Playback & more", fontSize = 10.sp, maxLines = 1, softWrap = false)
+                                                    }
+                                                }
                                             }
                                             // Display and track settings share a compact page.
                                             if (landscapeToolGroup == "Display") {
