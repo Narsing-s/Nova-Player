@@ -1822,11 +1822,16 @@ private fun NovaHome(player: Player) {
                                         }
                                     }
                                     if (showLandscapeDock) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
+                                            // Frequently used display and track actions stay together.
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
                                             TextButton(onClick = { showPlaybackSpeedDialog = true }) {
                                                 Icon(Icons.Default.Speed, contentDescription = null, tint = Mint)
                                                 Spacer(Modifier.width(4.dp))
@@ -1854,6 +1859,13 @@ private fun NovaHome(player: Player) {
                                                 Spacer(Modifier.width(4.dp))
                                                 Text("Audio tracks", color = Color.White)
                                             }
+                                            }
+                                            // Playback state and session actions are separated from display settings.
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
                                             TextButton(onClick = {
                                                 val uri = selectedUri?.toString()
                                                 if (uri == null) status = "Play a video before changing favorites."
@@ -1963,6 +1975,7 @@ private fun NovaHome(player: Player) {
                                                     contentDescription = null, tint = Mint)
                                                 Spacer(Modifier.width(4.dp))
                                                 Text(if (fullScreen) "Exit immersive" else "Immersive", color = Color.White)
+                                            }
                                             }
                                         }
                                     }
