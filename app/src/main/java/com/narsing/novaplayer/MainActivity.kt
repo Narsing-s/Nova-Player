@@ -182,6 +182,8 @@ private fun NovaHome(player: Player) {
     var lastSavedPosition by remember { mutableLongStateOf(prefs.getLong(KEY_LAST_POSITION, 0L)) }
     var resumePositions by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     var status by remember { mutableStateOf("Loading videos on this device…") }
+    var seekFeedback by remember { mutableStateOf<String?>(null) }
+    var seekFeedbackJob by remember { mutableStateOf<Job?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
     var seekPreviewDeltaMs by remember { mutableStateOf(0L) }
@@ -1507,6 +1509,12 @@ private fun NovaHome(player: Player) {
                                                 )
                                                 player.seekTo(target)
                                                 status = if (forward) "Forward 10 seconds" else "Rewind 10 seconds"
+                                                seekFeedbackJob?.cancel()
+                                                seekFeedback = if (forward) "＋10 seconds" else "−10 seconds"
+                                                seekFeedbackJob = uiScope.launch {
+                                                    delay(750)
+                                                    seekFeedback = null
+                                                }
                                             } else if (controlsLocked) {
                                                 status = "Player controls are locked · Tap Unlock controls"
                                             }
@@ -1609,6 +1617,28 @@ private fun NovaHome(player: Player) {
                                 ))
                             }
                         )
+                        if (seekFeedback != null) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = Color(0xE6101829),
+                                shape = RoundedCornerShape(24.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Mint.copy(alpha = 0.55f)),
+                                shadowElevation = 10.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 22.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        if (seekFeedback!!.startsWith("＋")) Icons.Default.FastForward else Icons.Default.FastRewind,
+                                        contentDescription = null,
+                                        tint = Mint
+                                    )
+                                    Text(seekFeedback!!, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                                }
+                            }
+                        }
                         // Landscape quick controls: keep advanced playback actions reachable
                         // without leaving the immersive video surface.
                         if (isLandscape && !controlsLocked && showLandscapeDock) {
