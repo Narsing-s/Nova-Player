@@ -63,3 +63,10 @@ This roadmap reflects the current repository rather than an aspirational feature
 6. Publish only a correctly signed release artifact; never commit keystores or signing secrets.
 
 This document distinguishes implemented code from remaining work. A green CI run does not replace physical-device testing.
+
+
+## Single-tap seeking update
+
+- [x] A single tap on the right half of the video skips forward 10 seconds.
+- [x] A single tap on the left half rewinds 10 seconds.
+- [x] Seek targets are clamped to valid media positions and player-lock behavior is respected.

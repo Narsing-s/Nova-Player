@@ -1496,17 +1496,19 @@ private fun NovaHome(player: Player) {
                                 }
                                 .pointerInput(selectedUri, controlsLocked) {
                                     detectTapGestures(
-                                        onDoubleTap = { offset ->
+                                        onTap = { offset ->
                                             if (!controlsLocked && selectedUri != null) {
+                                                // A single tap on either half of the video seeks by exactly 10 seconds.
                                                 val forward = offset.x >= size.width / 2f
-                                                val duration = player.duration
                                                 val target = clampSeekPosition(
                                                     player.currentPosition,
-                                                    if (forward) skipIntervalSeconds * 1_000L else -skipIntervalSeconds * 1_000L,
-                                                    duration
+                                                    if (forward) 10_000L else -10_000L,
+                                                    player.duration
                                                 )
                                                 player.seekTo(target)
-                                                status = (if (forward) "Forward " else "Rewind ") + "$skipIntervalSeconds seconds"
+                                                status = if (forward) "Forward 10 seconds" else "Rewind 10 seconds"
+                                            } else if (controlsLocked) {
+                                                status = "Player controls are locked · Tap Unlock controls"
                                             }
                                         }
                                     )
