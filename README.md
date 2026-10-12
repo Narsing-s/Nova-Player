@@ -153,6 +153,7 @@ Alternatively, download the latest artifact from [GitHub Actions](https://github
 - [x] Per-video resume checkpoints and Continue Watching progress in grid and list
 - [x] Persistent queue and named local playlists
 - [x] Import/export playlist backups through Android's document picker with versioned JSON validation
+- [x] Include validated player preferences in backups and restore theme, orientation, playback speed, seek interval, subtitles and gesture options; older playlist-only backups remain supported
 - [x] Local settings for AMOLED canvas, orientation, screen-awake behavior and gesture toggles
 - [x] Playback diagnostics for state, position, active track codecs and reported video format
 - [x] Unit tests for safe seek boundaries and playback-state diagnostics
