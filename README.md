@@ -32,11 +32,6 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 
 ## 🚀 Feature highlights
 
-### 🌐 Network playback
-- Open a direct **HTTPS** video or stream URL from the Videos screen without leaving the library.
-- Uses AndroidX Media3 playback and keeps normal playback controls, history and resume checkpoints available where the stream supports them.
-- HTTPS-only by design; insecure HTTP links are rejected and the app does not enable cleartext traffic globally.
-
 ### 🎥 A better viewing experience
 - **Adaptive Auto / Fit / Fill / Zoom:** landscape movies can crop-to-fill in landscape mode; portrait reels remain fully visible in Auto mode.
 - **Immersive landscape playback:** expands the video edge-to-edge, hides library chrome and system bars, and keeps an on-video way back.
