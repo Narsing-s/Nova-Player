@@ -276,7 +276,7 @@ private fun NovaHome(player: Player) {
     var watchFilter by remember { mutableStateOf(prefs.getString("library_watch_filter", "All videos") ?: "All videos") }
     var watchedUris by remember { mutableStateOf(prefs.getStringSet("watched_video_uris", emptySet())?.toSet() ?: emptySet()) }
     var gridView by remember { mutableStateOf(prefs.getBoolean("library_grid_view", true)) }
-    var activeTab by remember { mutableStateOf("Videos") }
+    var activeTab by remember { mutableStateOf(prefs.getString("active_library_tab", "Videos")?.takeIf { it in setOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists", "Settings") } ?: "Videos") }
     var themeMode by remember { mutableStateOf(prefs.getString("theme_mode", "Midnight") ?: "Midnight") }
     var showDiagnosticsDialog by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
@@ -2161,7 +2161,7 @@ private fun NovaHome(player: Player) {
             if (selectedUri == null) Text(status, color = if (status.startsWith("Use") || status.startsWith("Choose an") || status.startsWith("Start a")) Color(0xFFFFB4AB) else Color(0xFFBAC6DF), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().background(Color(0xFF12182A)).semantics { liveRegion = LiveRegionMode.Polite }.padding(horizontal = 14.dp, vertical = 8.dp))
             if (selectedUri == null) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(Color(0xFF12182A)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("Videos", "Folders", "Recent", "Favorites", "Queue", "Playlists", "Settings").forEach { tab ->
-                    TextButton(onClick = { activeTab = tab }, modifier = Modifier.weight(1f).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
+                    TextButton(onClick = { activeTab = tab; prefs.edit().putString("active_library_tab", tab).apply() }, modifier = Modifier.weight(1f).semantics { stateDescription = if (activeTab == tab) "Selected" else "Not selected" }) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(when (tab) { "Videos" -> Icons.Default.VideoLibrary; "Folders" -> Icons.Default.Folder; "Favorites" -> Icons.Default.Favorite; "Queue" -> Icons.AutoMirrored.Filled.QueueMusic; "Playlists" -> Icons.Default.LibraryMusic; "Settings" -> Icons.Default.Settings; "Recent" -> Icons.Default.History; else -> Icons.Default.History }, null, tint = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF6F7D9C))
                             Text(tab, fontSize = 10.sp, color = if (activeTab == tab) Color(0xFF39E7D5) else Color(0xFF9BA8C7))
@@ -2343,21 +2343,21 @@ private fun NovaHome(player: Player) {
                                 Text("Horizontal swipe to seek", color = Color.White)
                                 Text("Swipe left or right to jump through a video", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                             }
-                            Switch(checked = gestureSeekEnabled, onCheckedChange = { gestureSeekEnabled = it })
+                            Switch(checked = gestureSeekEnabled, onCheckedChange = { gestureSeekEnabled = it; prefs.edit().putBoolean("gesture_seek_enabled", it).apply() })
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Left-side brightness", color = Color.White)
                                 Text("Swipe vertically on the left half", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                             }
-                            Switch(checked = gestureBrightnessEnabled, onCheckedChange = { gestureBrightnessEnabled = it })
+                            Switch(checked = gestureBrightnessEnabled, onCheckedChange = { gestureBrightnessEnabled = it; prefs.edit().putBoolean("gesture_brightness_enabled", it).apply() })
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Right-side volume", color = Color.White)
                                 Text("Swipe vertically on the right half", color = Color(0xFF9BA8C7), fontSize = 11.sp)
                             }
-                            Switch(checked = gestureVolumeEnabled, onCheckedChange = { gestureVolumeEnabled = it })
+                            Switch(checked = gestureVolumeEnabled, onCheckedChange = { gestureVolumeEnabled = it; prefs.edit().putBoolean("gesture_volume_enabled", it).apply() })
                         }
                     }
                 },

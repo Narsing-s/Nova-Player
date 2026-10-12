@@ -39,7 +39,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 - **Orientation choices:** Auto, Landscape and Portrait, with the preference remembered locally.
 - **Playback speed:** quick presets from 0.25× to 3×.
 - **Keep screen awake** while watching, or allow normal screen timeout.
-- **Personal settings:** choose the midnight or AMOLED-black canvas, set the default orientation, tune the double-tap seek interval, and enable or disable individual gestures. Preferences are stored locally.
+- **Personal settings:** choose the midnight or AMOLED-black canvas, set the default orientation, tune the double-tap seek interval, and enable or disable individual gestures. Preferences are stored locally. Nova also remembers the last library tab you used, and gesture toggles are saved immediately.
 
 ### 🕹️ MX Player-inspired controls
 - Double-tap and dedicated Previous / Next controls for queued media.
