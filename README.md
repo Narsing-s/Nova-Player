@@ -84,7 +84,7 @@ Nova Player combines a cinematic dark interface with practical, power-user playb
 ### 🛟 Useful extras
 - **Playback diagnostics:** inspect playback state, current position and duration, active video/audio track codecs, reported resolution, frame rate, and the last player status to help narrow down unsupported or damaged media.
 - Retry playback or return to the library when Media3 reports an error.
-- **Android TV entry point:** the app declares a Leanback launcher category and does not require a touchscreen, allowing installation/launch on compatible TV devices. Remote navigation and layout still need testing on physical Android TV hardware.
+- **Android TV and remote playback:** the app declares a Leanback launcher category and does not require a touchscreen. When the player surface has focus, D-pad left/right seeks by the configured interval, while center/Enter and media play-pause toggle playback. Physical TV focus order and layout still need device validation.
 - Accessibility polish: library status updates are exposed as polite screen-reader announcements, navigation tabs expose selected state, and the library scan indicator announces when scanning is active.
 - Picture-in-Picture action on supported Android devices.
 - Local preferences for playback speed, repeat/shuffle, subtitle appearance, seek interval and display mode.
@@ -118,6 +118,7 @@ The JVM test suite includes regression coverage for:
 - Negative subtitle timestamps clamped to zero, including an extreme negative offset that must not overflow.
 - Playlist backup JSON round-trips, malformed entries, and unsupported backup format/version handling.
 - Gesture seek boundaries, unknown-duration seeking, integer-overflow protection, and readable playback-state labels.
+- Orientation-mode mapping and immersive-playback policy for portrait, landscape, auto, selected-media, and full-screen combinations.
 
 The Android CI workflow runs these tests before building the debug APK. Android Lint is uploaded as a report and remains advisory for now. A green CI run confirms the configured automated checks passed; it does not replace physical-device playback, TalkBack, PiP, notification, or signed-upgrade testing.
 
