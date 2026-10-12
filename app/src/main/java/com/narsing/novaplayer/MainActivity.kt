@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -181,6 +182,28 @@ private fun NovaHome(player: Player) {
     var isPlaying by remember { mutableStateOf(false) }
     var isSeekingGesture by remember { mutableStateOf(false) }
     var seekPreviewDeltaMs by remember { mutableStateOf(0L) }
+    val seekPreviewBitmap by produceState<Bitmap?>(initialValue = null, key1 = selectedUri, key2 = isSeekingGesture, key3 = seekPreviewDeltaMs) {
+        if (isSeekingGesture && selectedUri != null) {
+            delay(180)
+            val previewPositionMs = clampSeekPosition(player.currentPosition, seekPreviewDeltaMs, player.duration)
+            value = withContext(Dispatchers.IO) {
+                val retriever = MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(context, selectedUri)
+                    retriever.getFrameAtTime(
+                        previewPositionMs.coerceAtMost(Long.MAX_VALUE / 1_000L) * 1_000L,
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                    )
+                } catch (_: Exception) {
+                    null
+                } finally {
+                    try { retriever.release() } catch (_: Exception) { }
+                }
+            }
+        } else {
+            value = null
+        }
+    }
     var dragTotal by remember { mutableStateOf(0f) }
     var recentItems by remember { mutableStateOf(readHistory(prefs)) }
     var favoriteItems by remember { mutableStateOf(readFavorites(prefs)) }
@@ -1730,12 +1753,21 @@ private fun NovaHome(player: Player) {
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    Icon(
-                                        if (seekPreviewDeltaMs >= 0L) Icons.Default.FastForward else Icons.Default.FastRewind,
-                                        contentDescription = null,
-                                        tint = Mint,
-                                        modifier = Modifier.size(28.dp)
-                                    )
+                                    if (seekPreviewBitmap != null) {
+                                        Image(
+                                            bitmap = seekPreviewBitmap!!.asImageBitmap(),
+                                            contentDescription = "Video frame preview",
+                                            modifier = Modifier.size(112.dp, 63.dp).clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            if (seekPreviewDeltaMs >= 0L) Icons.Default.FastForward else Icons.Default.FastRewind,
+                                            contentDescription = null,
+                                            tint = Mint,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
                                     Column {
                                         Text(
                                             (if (seekPreviewDeltaMs >= 0L) "+" else "−") + formatTime(abs(seekPreviewDeltaMs)),
