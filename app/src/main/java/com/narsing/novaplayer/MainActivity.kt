@@ -555,9 +555,22 @@ private fun NovaHome(player: Player) {
         if (uri != null) {
             try {
                 context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { writer ->
-                    writer.write(serializePlaylistsJson(playlists))
+                    writer.write(serializePlaylistsJson(playlists, JSONObject()
+                        .put("themeMode", themeMode)
+                        .put("playbackSpeed", playbackSpeed)
+                        .put("skipIntervalSeconds", skipIntervalSeconds)
+                        .put("orientationMode", orientationMode)
+                        .put("keepScreenOn", keepScreenOn)
+                        .put("gestureSeekEnabled", gestureSeekEnabled)
+                        .put("gestureBrightnessEnabled", gestureBrightnessEnabled)
+                        .put("gestureVolumeEnabled", gestureVolumeEnabled)
+                        .put("subtitleScale", subtitleScale)
+                        .put("subtitleBackground", subtitleBackgroundEnabled)
+                        .put("subtitleDelayMs", subtitleDelayMs)
+                        .put("shuffleEnabled", shuffleEnabled)
+                        .put("repeatMode", repeatMode)))
                 } ?: throw java.io.IOException("Could not open the selected destination.")
-                status = "Exported ${playlists.size} playlists"
+                status = "Exported ${playlists.size} playlists and player preferences"
             } catch (_: Exception) {
                 status = "Playlist export failed. Choose another destination and try again."
             }
@@ -583,7 +596,42 @@ private fun NovaHome(player: Player) {
                         }
                         playlists = merged
                         savePlaylists(prefs, merged)
-                        status = "Imported ${imported.size} playlists; matching names were updated"
+                        val settings = parsePlayerPreferencesBackup(raw)
+                        if (settings != null) {
+                            themeMode = settings.optString("themeMode", themeMode)
+                            playbackSpeed = settings.optDouble("playbackSpeed", playbackSpeed.toDouble()).toFloat()
+                            skipIntervalSeconds = settings.optInt("skipIntervalSeconds", skipIntervalSeconds)
+                            orientationMode = settings.optString("orientationMode", orientationMode)
+                            keepScreenOn = settings.optBoolean("keepScreenOn", keepScreenOn)
+                            gestureSeekEnabled = settings.optBoolean("gestureSeekEnabled", gestureSeekEnabled)
+                            gestureBrightnessEnabled = settings.optBoolean("gestureBrightnessEnabled", gestureBrightnessEnabled)
+                            gestureVolumeEnabled = settings.optBoolean("gestureVolumeEnabled", gestureVolumeEnabled)
+                            subtitleScale = settings.optDouble("subtitleScale", subtitleScale.toDouble()).toFloat()
+                            subtitleBackgroundEnabled = settings.optBoolean("subtitleBackground", subtitleBackgroundEnabled)
+                            subtitleDelayMs = settings.optInt("subtitleDelayMs", subtitleDelayMs)
+                            shuffleEnabled = settings.optBoolean("shuffleEnabled", shuffleEnabled)
+                            repeatMode = settings.optInt("repeatMode", repeatMode)
+                            prefs.edit()
+                                .putString("theme_mode", themeMode)
+                                .putFloat("playback_speed", playbackSpeed)
+                                .putInt("skip_interval_seconds", skipIntervalSeconds)
+                                .putString("player_orientation", orientationMode)
+                                .putBoolean("keep_screen_on", keepScreenOn)
+                                .putBoolean("gesture_seek_enabled", gestureSeekEnabled)
+                                .putBoolean("gesture_brightness_enabled", gestureBrightnessEnabled)
+                                .putBoolean("gesture_volume_enabled", gestureVolumeEnabled)
+                                .putFloat("subtitle_scale", subtitleScale)
+                                .putBoolean("subtitle_background", subtitleBackgroundEnabled)
+                                .putInt("subtitle_delay_ms", subtitleDelayMs)
+                                .putBoolean("shuffle_enabled", shuffleEnabled)
+                                .putInt("repeat_mode", repeatMode)
+                                .apply()
+                        }
+                        status = if (settings != null) {
+                            "Restored ${imported.size} playlists and player preferences"
+                        } else {
+                            "Imported ${imported.size} playlists; no preferences found in this older backup"
+                        }
                     }
                 } catch (_: Exception) {
                     status = "Import failed. Choose a valid Nova Player playlist JSON backup."
@@ -2619,10 +2667,11 @@ private fun formatBytes(bytes: Long): String {
 internal data class HistoryEntry(val uri: String, val title: String)
 internal data class PlaylistEntry(val name: String, val items: List<HistoryEntry>)
 
-internal fun serializePlaylistsJson(playlists: List<PlaylistEntry>): String {
+internal fun serializePlaylistsJson(playlists: List<PlaylistEntry>, preferences: JSONObject = JSONObject()): String {
     val root = JSONObject()
         .put("format", "nova-player-playlists")
         .put("version", 1)
+        .put("preferences", sanitizePlayerPreferences(preferences))
     val array = JSONArray()
     playlists.forEach { playlist ->
         val items = JSONArray()
@@ -2633,6 +2682,37 @@ internal fun serializePlaylistsJson(playlists: List<PlaylistEntry>): String {
     }
     root.put("playlists", array)
     return root.toString(2)
+}
+
+internal fun sanitizePlayerPreferences(source: JSONObject): JSONObject {
+    val result = JSONObject()
+    val theme = source.optString("themeMode", "Midnight")
+    result.put("themeMode", if (theme == "AMOLED") "AMOLED" else "Midnight")
+    val speed = source.optDouble("playbackSpeed", 1.0).takeIf { it.isFinite() && it in 0.25..4.0 } ?: 1.0
+    result.put("playbackSpeed", speed)
+    result.put("skipIntervalSeconds", source.optInt("skipIntervalSeconds", 10).coerceIn(5, 30))
+    val orientation = source.optString("orientationMode", "Auto")
+    result.put("orientationMode", if (orientation in setOf("Auto", "Landscape", "Portrait")) orientation else "Auto")
+    listOf("keepScreenOn", "gestureSeekEnabled", "gestureBrightnessEnabled", "gestureVolumeEnabled", "subtitleBackground", "shuffleEnabled").forEach { key ->
+        result.put(key, source.optBoolean(key, key != "shuffleEnabled"))
+    }
+    result.put("subtitleScale", source.optDouble("subtitleScale", 0.065).takeIf { it.isFinite() && it in 0.03..0.12 } ?: 0.065)
+    result.put("subtitleDelayMs", source.optInt("subtitleDelayMs", 0).coerceIn(-120_000, 120_000))
+    result.put("repeatMode", source.optInt("repeatMode", Player.REPEAT_MODE_OFF).coerceIn(Player.REPEAT_MODE_OFF, Player.REPEAT_MODE_ALL))
+    return result
+}
+
+internal fun parsePlayerPreferencesBackup(raw: String): JSONObject? {
+    return try {
+        require(raw.length <= 5_000_000) { "Backup file is too large" }
+        val root = JSONObject(raw)
+        require(root.optString("format") == "nova-player-playlists") { "Unknown backup format" }
+        require(root.optInt("version", -1) == 1) { "Unsupported backup version" }
+        val settings = root.optJSONObject("preferences") ?: return null
+        sanitizePlayerPreferences(settings)
+    } catch (_: Exception) {
+        null
+    }
 }
 
 internal fun parsePlaylistsJson(raw: String): List<PlaylistEntry> {
